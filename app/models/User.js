@@ -1,11 +1,12 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-const saltRounds = 10;
+const validator = require('validator')
+const jwt = require('jsonwebtoken')
 
-//Define a schema
-const Schema = mongoose.Schema;
+const saltRounds = 8;
 
-const UserSchema = new Schema({
+// user schema
+const UserSchema = new mongoose.Schema({
     name: {
         type: String,
         trim: true,
@@ -14,17 +15,75 @@ const UserSchema = new Schema({
     email: {
         type: String,
         trim: true,
-        required: true
+        required: true,
+        unique: true,
+        lowercase: true,
+        validate(email) {
+            if (!validator.isEmail(email)) {
+                throw new Error('Invalid emailid')
+            }
+        }
     },
     password: {
         type: String,
         trim: true,
-        required: true
-    }
+        required: true,
+        minlength: 6,
+        validate(password) {
+            if (password.toLowerCase().includes('password')) {
+                throw new Error('Password cannot be password')
+            }
+        }
+    },
+    tokens: [{
+        token: {
+            type: String,
+            required: true
+        }
+    }]
 });
 
+
+// generate auth token
+// Schema Methods, needs to be invoked by an instance of a Mongoose document
+UserSchema.methods.generateAuthToken = async function () {
+    const user = this
+    const token = jwt.sign({ _id: user._id.toString() }, process.env.SECRET)
+
+    user.token = user.tokens.concat({ token: token })
+    await user.save()
+
+    return token
+}
+
+// Schema Statics are methods that can be invoked directly by a Model 
+UserSchema.statics.findByCredentials = async (email, password) => {
+    const user = await User.findOne({
+        email: email
+    })
+
+    if (!user) {
+        throw new Error('Unable to login')
+    } else {
+        const isMatch = await bcrypt.compare(password, user.password)
+        if (!isMatch) {
+            throw new Error('Unable to login')
+        } else {
+            return user
+        }
+    }
+}
+
 // hash user password before saving into database
-UserSchema.pre('save', function (next) {
-    this.password = bcrypt.hashSync(this.password, saltRounds);
+UserSchema.pre('save', async function (next) {
+    const user = this
+
+    if (user.isModified('password')) {
+        user.password = await bcrypt.hash(user.password, saltRounds);
+    }
+
     next();
-}); module.exports = mongoose.model('User', UserSchema);
+});
+
+const User = mongoose.model('User', UserSchema)
+module.exports = User

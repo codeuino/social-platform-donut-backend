@@ -1,33 +1,44 @@
-const userModel = require('../models/User');
-const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const User = require('../models/User');
 
 module.exports = {
-    create: function (req, res, next) {
-        userModel.create({ name: req.body.name, email: req.body.email, password: req.body.password }, function (err, result) {
-            if (err) {
-                next(err);
-            }
-            else {
-                res.json({ status: "success", message: "User added successfully!!!", data: null });
-            }
-        });
+    createUser: async (req, res, next) => {
+        const user = new User(req.body)
+        try {
+            await user.save()
+            const token = await user.generateAuthToken()
+            res.status(201).send({ user: user, token: token })
+        } catch (error) {
+            console.log(error)
+            res.status(400).send({ error: error })
+        }
     },
-    authenticate: function (req, res, next) {
-        userModel.findOne({ email: req.body.email }, function (err, userInfo) {
-            if (err) {
-                next(err);
-            } else {
-                if (bcrypt.compareSync(req.body.password, userInfo.password)) {
-                    const token = jwt.sign({ id: userInfo._id }, req.app.get('secretKey'), { expiresIn: '1h' });
-                    res.json({ status: "success", message: "user found!!!", data: { user: userInfo, token: token } });
-                } else {
-                    res.json({ status: "error", message: "Invalid email/password!!!", data: null });
-                }
-            }
-        });
+    authenticateUser: async function (req, res, next) {
+        const email = req.body.email
+        const password = req.body.password
+        try {
+            const user = await User.findByCredentials(email, password)
+            const token = await user.generateAuthToken()
+            res.send({ user: user, token: token })
+        } catch (error) {
+            console.log('error ', error)
+            res.status(400).send({ error: error })
+        }
     },
-    test: function (req, res, next) {
-        res.json({ success: 'ulllu' })
-    }
+    logout: function (req, res, next) {
+        res.json({ success: 'ok' })
+    },
+    logoutAll: function (req, res, next) {
+        res.json({ success: 'ok' })
+    },
+    userProfile: function (req, res, next) {
+        res.json({ success: 'ok' })
+    },
+    userProfileUpdate: function (req, res, next) {
+        res.json({ success: 'ok' })
+    },
+    userDelete: function (req, res, next) {
+        res.json({ success: 'ok' })
+    },
 }
