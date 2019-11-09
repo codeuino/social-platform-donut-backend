@@ -43,14 +43,24 @@ const UserSchema = new mongoose.Schema({
     }]
 });
 
+userSchema.methods.toJSON = function () {
+    const user = this
+    const userObject = user.toObject()
+
+    delete userObject.password
+    delete userObject.tokens
+
+    return userObject
+}
+
 
 // generate auth token
 // Schema Methods, needs to be invoked by an instance of a Mongoose document
 UserSchema.methods.generateAuthToken = async function () {
     const user = this
-    const token = jwt.sign({ _id: user._id.toString() }, process.env.SECRET)
+    const token = jwt.sign({ _id: user._id.toString() }, process.env.JWT_SECRET)
 
-    user.token = user.tokens.concat({ token: token })
+    user.tokens = user.tokens.concat({ token: token })
     await user.save()
 
     return token

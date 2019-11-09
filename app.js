@@ -1,4 +1,3 @@
-require('dotenv').config()
 require('./config/mongoose')
 const express = require('express');
 const logger = require('morgan');
