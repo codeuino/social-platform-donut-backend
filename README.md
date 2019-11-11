@@ -1,5 +1,14 @@
 # social-platform-donut-backend
 
+<p align="center">
+    <a href="https://travis-ci.org/devesh-verma/social-platform-donut-backend" alt="BuildInfo">
+        <img src="https://travis-ci.org/devesh-verma/social-platform-donut-backend.svg?branch=development" />
+    </a>
+    <a href="https://codecov.io/gh/devesh-verma/social-platform-donut-backend">
+        <img src="https://codecov.io/gh/devesh-verma/social-platform-donut-backend/branch/development/graph/badge.svg" />
+    </a>
+</p>
+
 ### STEPS
 
 ```.sh
@@ -14,4 +23,3 @@ npm install
 - mongoose :- Mongoose is a MongoDB object modeling tool designed to work in an asynchronous environment.
 - morgan :- HTTP request logger middleware for node.js.
 - nodemon :- nodemon will watch the files in the directory in which nodemon was started, and if any files change, nodemon will automatically restart your node application.
-
