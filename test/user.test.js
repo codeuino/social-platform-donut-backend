@@ -39,9 +39,9 @@ test('Should signup new user', async () => {
     const response = await request(app)
         .post('/user')
         .send({
-            name: demoUser.name,
-            email: demoUser.email,
-            password: demoUser.password
+            name: testUser.name,
+            email: testUser.email,
+            password: testUser.password
         })
         .expect(201)
 
