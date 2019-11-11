@@ -15,6 +15,11 @@ const testUser = {
         token: jwt.sign({ _id: testUserId }, process.env.JWT_SECRET)
     }]
 }
+const demoUser = {
+    name: 'demo user',
+    email: 'demouser@demo.com',
+    password: 'demoUser@123'
+}
 
 
 /**
@@ -34,11 +39,28 @@ test('Should signup new user', async () => {
     const response = await request(app)
         .post('/user')
         .send({
-            name: testUser.name,
-            email: testUser.email,
-            password: testUser.password
+            name: demoUser.name,
+            email: demoUser.email,
+            password: demoUser.password
         })
         .expect(201)
+
+    // Assert that db was changed
+    const user = await User.findById(response.body.user._id)
+    expect(user).not.toBeNull()
+
+    // Assertions about the response
+    // expect(response.body.user.name).toBe('Devesh')
+    // OR
+    expect(response.body).toMatchObject({
+        user: {
+            name: 'demo user',
+            email: 'demouser@demo.com'
+        },
+        token: user.tokens[0].token
+    })
+
+    expect(user.password).not.toBe('devesh@123')
 })
 
 
