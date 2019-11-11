@@ -5,7 +5,7 @@
   "scripts": {
     "start": "env-cmd -f .env.prod node ./bin/www",
     "dev": "env-cmd -f .env.dev nodemon ./bin/www",
-    "test": "env-cmd -f .env.prod jest --detectOpenHandles && codecov -t ${CODECOV_TOKEN}"
+    "test": "env-cmd -f .env.test jest --detectOpenHandles && codecov -t ${CODECOV_TOKEN}"
   },
   "dependencies": {
     "bcrypt": "^3.0.6",
