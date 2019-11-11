@@ -71,6 +71,7 @@ typings/
 # dotenv environment variables file
 .env
 .env.prod
+.env.test
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -98,3 +99,5 @@ public
 .dynamodb/
 
 .DS_Store
+
+.vscode/
