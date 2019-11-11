@@ -3,8 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www",
-    "dev": "env-cmd -f .env.dev nodemon ./bin/www"
+    "start": "env-cmd -f .env.prod node ./bin/www",
+    "dev": "env-cmd -f .env.dev nodemon ./bin/www",
+    "test": "env-cmd -f .env.prod jest --detectOpenHandles && codecov -t ${CODECOV_TOKEN}"
   },
   "dependencies": {
     "bcrypt": "^3.0.6",
@@ -18,8 +19,16 @@
     "morgan": "^1.9.1",
     "validator": "^10.11.0"
   },
+  "jest": {
+    "testEnvironment": "node",
+    "coverageDirectory": "./coverage/",
+    "collectCoverage": true
+  },
   "devDependencies": {
+    "codecov": "^3.6.1",
     "env-cmd": "^10.0.1",
-    "nodemon": "^1.18.9"
+    "jest": "^24.9.0",
+    "nodemon": "^1.18.9",
+    "supertest": "^4.0.2"
   }
 }
