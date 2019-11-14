@@ -7,6 +7,15 @@
     <a href="https://codecov.io/gh/devesh-verma/social-platform-donut-backend">
         <img src="https://codecov.io/gh/devesh-verma/social-platform-donut-backend/branch/development/graph/badge.svg" />
     </a>
+    <a href="https://opencollective.com/donut">
+        <img src="https://img.shields.io/opencollective/all/donut?logo=Open-Collective&label=financial+contributors" />
+    </a>
+    <a href="https://github.com/codeuino/social-platform-donut-backend/issues">
+        <img alt="GitHub issues" src="https://img.shields.io/github/issues/codeuino/social-platform-donut-backend?style=plastic">
+    </a>
+    <a href="https://github.com/codeuino/social-platform-donut-backend/blob/master/LICENSE">
+        <img alt="GitHub license" src="https://img.shields.io/github/license/codeuino/social-platform-donut-backend">
+    </a>
 </p>
 
 ### STEPS
