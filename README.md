@@ -16,6 +16,9 @@
     <a href="https://github.com/codeuino/social-platform-donut-backend/blob/master/LICENSE">
         <img alt="GitHub license" src="https://img.shields.io/github/license/codeuino/social-platform-donut-backend">
     </a>
+    <a href="https://www.codefactor.io/repository/github/devesh-verma/social-platform-donut-backend">
+        <img src="https://www.codefactor.io/repository/github/devesh-verma/social-platform-donut-backend/badge" alt="CodeFactor" />
+    </a>
 </p>
 
 ### STEPS
