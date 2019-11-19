@@ -6,6 +6,7 @@ const createError = require('http-errors');
 const path = require('path');
 
 const indexRouter = require('./app/routes/index');
+const authRouter = require('./app/routes/auth');
 const usersRouter = require('./app/routes/user');
 const postRouter = require('./app/routes/post');
 
@@ -22,8 +23,10 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
+app.use('/auth', authRouter);
 app.use('/user', usersRouter);
-app.use('/post', postRouter)
+app.use('/post', postRouter);
+
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
