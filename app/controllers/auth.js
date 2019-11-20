@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const User = require('../models/User');
 
 module.exports = {
-    authenticateUser: async function (req, res, next) {
+    authenticateUser: async (req, res, next) => {
         const email = req.body.email
         const password = req.body.password
         try {
@@ -11,14 +11,16 @@ module.exports = {
             const token = await user.generateAuthToken()
             res.send({ user: user, token: token })
         } catch (error) {
-            console.log('error ', error)
+            if(process.env.NODE_ENV !== 'production'){
+                console.log('error ', error)
+            }
             res.status(400).send({ error: error })
         }
     },
-    logout: function (req, res, next) {
+    logout: (req, res, next) => {
         res.json({ success: 'ok' })
     },
-    logoutAll: function (req, res, next) {
+    logoutAll: (req, res, next) => {
         res.json({ success: 'ok' })
     }
 }

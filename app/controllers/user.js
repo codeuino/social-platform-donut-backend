@@ -14,13 +14,13 @@ module.exports = {
             res.status(400).send({ error: error })
         }
     },
-    userProfile: function (req, res, next) {
+    userProfile: (req, res, next) => {
         res.json({ success: 'ok' })
     },
-    userProfileUpdate: function (req, res, next) {
+    userProfileUpdate: (req, res, next) => {
         res.json({ success: 'ok' })
     },
-    userDelete: function (req, res, next) {
+    userDelete: (req, res, next) => {
         res.json({ success: 'ok' })
     },
 }
