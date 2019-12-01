@@ -22,9 +22,7 @@ app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
 app.use(express.static(path.join(__dirname, 'public')))
 
-app.use('/', function handleRedirect(req, res) {
-  res.redirect(process.env.DOCUMENTATION_URL);
-})
+app.use('/', indexRouter)
 app.use('/auth', authRouter)
 app.use('/user', usersRouter)
 app.use('/post', postRouter)
