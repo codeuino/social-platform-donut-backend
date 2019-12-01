@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "env-cmd -f .env.prod node ./bin/www",
+    "start": "node ./bin/www",
     "dev": "env-cmd -f .env.dev nodemon ./bin/www",
     "pretest": "eslint --ignore-path .gitignore .",
     "test": "env-cmd -f .env.test jest --detectOpenHandles && codecov -t b6320503-8a85-439e-8fa3-e41d8b6e3114"
