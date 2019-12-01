@@ -25,6 +25,7 @@ let server
  * This will pe performed once at the begining of the test
  */
 beforeAll(async (done) => {
+  await User.deleteMany()
   server = app.listen(4000, () => {
     global.agent = request.agent(server)
     done()
@@ -139,6 +140,8 @@ test('Should not delete profile of unauthenticated user', async () => {
 afterAll(async () => {
   // close server
   await server.close()
+  // delete all the users post testing
+  await User.deleteMany()
   // Closing the DB connection allows Jest to exit successfully.
   await mongoose.connection.close()
 })
