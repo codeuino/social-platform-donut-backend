@@ -3,8 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www",
+    "start": "env-cmd -f .env.prod node ./bin/www",
     "dev": "env-cmd -f .env.dev nodemon ./bin/www",
+    "pretest": "eslint --ignore-path .gitignore .",
     "test": "env-cmd -f .env.test jest --detectOpenHandles && codecov -t b6320503-8a85-439e-8fa3-e41d8b6e3114"
   },
   "dependencies": {
@@ -27,6 +28,12 @@
   "devDependencies": {
     "codecov": "^3.6.1",
     "env-cmd": "^10.0.1",
+    "eslint": "^6.7.1",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-node": "^10.0.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
     "jest": "^24.9.0",
     "nodemon": "^1.18.9",
     "supertest": "^4.0.2"
