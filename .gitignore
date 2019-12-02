@@ -70,7 +70,7 @@ typings/
 
 # dotenv environment variables file
 .env
-.env.test
+.env.prod
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -83,7 +83,6 @@ typings/
 
 # gatsby files
 .cache/
-public
 
 # vuepress build output
 .vuepress/dist
@@ -97,3 +96,6 @@ public
 # DynamoDB Local files
 .dynamodb/
 
+.DS_Store
+
+.vscode/
