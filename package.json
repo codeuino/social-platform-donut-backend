@@ -6,7 +6,7 @@
     "start": "node ./bin/www",
     "dev": "env-cmd -f .env.dev nodemon ./bin/www",
     "pretest": "eslint --ignore-path .gitignore .",
-    "test": "env-cmd -f .env.test jest --detectOpenHandles && codecov -t b6320503-8a85-439e-8fa3-e41d8b6e3114"
+    "test": "env-cmd -f .env.test jest --detectOpenHandles && codecov -t 2b12ad97-07e0-45b2-a569-8aa2fd3e8c54"
   },
   "dependencies": {
     "bcrypt": "^3.0.6",
