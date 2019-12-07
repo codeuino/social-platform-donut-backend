@@ -17,7 +17,7 @@ module.exports = {
   },
   userProfileUpdate: async (req, res, next) => {
     const updates = Object.keys(req.body)
-    const allowedUpdates = ['name', 'email', 'password', 'company', 'website', 'location', 'about']
+    const allowedUpdates = ['name', 'email', 'password']
     const isValidOperation = updates.every((update) => {
       return allowedUpdates.includes(update)
     })

@@ -27,7 +27,7 @@ const UserSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      trim: false,
+      trim: true,
       required: true,
       minlength: 6,
       validate (password) {
@@ -35,29 +35,6 @@ const UserSchema = new mongoose.Schema(
           throw new Error('Password cannot be password')
         }
       }
-    },
-    company: {
-      type: String,
-      trim: true
-    },
-    website: {
-      type: String,
-      trim: true,
-      validate (website) {
-        if(!validator.isMatch('(\b(https?|ftp|file)://)?[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]')) {
-          throw new Error('Website is not a valid URL')
-        }
-      }
-    },
-    location: {
-      type: String,
-      trim: true,
-      maxlength: 50
-    },
-    about: {
-      type: String,
-      trim: true,
-      maxlength: 300
     },
     tokens: [{
       token: {
