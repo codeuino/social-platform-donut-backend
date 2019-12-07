@@ -1,11 +1,11 @@
 # social-platform-donut-backend
 
 <p align="center">
-    <a href="https://travis-ci.org/devesh-verma/social-platform-donut-backend" alt="BuildInfo">
-        <img src="https://travis-ci.org/devesh-verma/social-platform-donut-backend.svg?branch=development" />
+    <a href="https://travis-ci.org/codeuino/social-platform-donut-backend" alt="BuildInfo">
+        <img src="https://travis-ci.org/codeuino/social-platform-donut-backend.svg?branch=master" />
     </a>
     <a href="https://codecov.io/gh/devesh-verma/social-platform-donut-backend">
-        <img src="https://codecov.io/gh/devesh-verma/social-platform-donut-backend/branch/development/graph/badge.svg" />
+    <img src="https://codecov.io/gh/devesh-verma/social-platform-donut-backend/branch/master/graph/badge.svg" />
     </a>
     <a href="https://opencollective.com/donut">
         <img src="https://img.shields.io/opencollective/all/donut?logo=Open-Collective&label=financial+contributors" />
