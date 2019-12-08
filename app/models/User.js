@@ -6,70 +6,87 @@ const jwt = require('jsonwebtoken')
 const saltRounds = 8
 
 // user schema
-const UserSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      trim: true,
-      required: true
-    },
-    email: {
-      type: String,
-      trim: true,
-      required: true,
-      unique: true,
-      lowercase: true,
-      validate (email) {
-        if (!validator.isEmail(email)) {
-          throw new Error('Invalid emailid')
-        }
+const UserSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    trim: true,
+    required: true,
+    validate (name) {
+      if (validator.isEmpty(name)) {
+        throw new Error('Name field can not be empty!')
       }
-    },
-    password: {
-      type: String,
-      trim: true,
-      required: true,
-      minlength: 6,
-      validate (password) {
-        if (password.toLowerCase().includes('password')) {
-          throw new Error('Password cannot be password')
-        }
-      }
-    },
-    company: {
-      type: String,
-      trim: true
-    },
-    website: {
-      type: String,
-      trim: true,
-      validate (website) {
-        if (!validator.isURL(website)) {
-          throw new Error('Website is not a valid URL')
-        }
-      }
-    },
-    location: {
-      type: String,
-      trim: true,
-      maxlength: 50
-    },
-    about: {
-      type: String,
-      trim: true,
-      maxlength: 300
-    },
-    tokens: [{
-      token: {
-        type: String,
-        required: true
-      }
-    }]
+    }
   },
-  {
-    versionKey: false,
-    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
-  }
+  email: {
+    type: String,
+    trim: true,
+    required: true,
+    unique: true,
+    lowercase: true,
+    validate (email) {
+      if (!validator.isEmail(email)) {
+        throw new Error('Invalid emailId')
+      }
+    }
+  },
+  phone: {
+    type: String,
+    trim: true,
+    unique: true,
+    required: true,
+    minlength: 10,
+    validate (phone) {
+      if (!validator.isLength(phone, { min: 10, max: 10 })) {
+        throw new Error('Phone number is invalid!')
+      }
+    }
+  },
+  password: {
+    type: String,
+    trim: true,
+    required: true,
+    minlength: 6,
+    validate (password) {
+      if (!validator.isLength(password, { min: 6 })) {
+        throw new Error('Password should be min 6 characters long!')
+      }
+      if (validator.toLowerCase().includes('password')) {
+        throw new Error('Password cannot be password')
+      }
+    }
+  },
+  socialMedia: {
+    youtube: {
+      type: String
+    },
+    facebook: {
+      type: String
+    },
+    twitter: {
+      type: String
+    },
+    instagram: {
+      type: String
+    },
+    linkedin: {
+      type: String
+    }
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now()
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now()
+  },
+  tokens: [{
+    token: {
+      type: String,
+      required: true
+    }
+  }]
+}
 )
 
 // generate auth token

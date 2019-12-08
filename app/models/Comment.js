@@ -2,20 +2,24 @@ const mongoose = require('mongoose')
 const validator = require('validator')
 const Schema = mongoose.Schema
 
-const PostSchema = new Schema({
+const commentSchema = new Schema({
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  postId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Post'
+  },
   content: {
     type: String,
     trim: true,
     required: true,
     validate (content) {
       if (validator.isEmpty(content)) {
-        throw new Error('Post content can not be empty!')
+        throw new Error('Comment can not be empty!')
       }
     }
-  },
-  image: {
-    data: Buffer,
-    contentType: String
   },
   votes: [
     {
@@ -23,20 +27,16 @@ const PostSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'User'
       },
-      upVote: {
+      upVotes: {
         type: Number,
         default: 0
       },
-      downVote: {
+      downVotes: {
         type: Number,
         default: 0
       }
     }
   ],
-  comments: {
-    type: Schema.Types.ObjectId,
-    ref: 'Comment'
-  },
   createdAt: {
     type: Date,
     default: Date.now()
@@ -47,4 +47,4 @@ const PostSchema = new Schema({
   }
 })
 
-module.exports = mongoose.model('Post', PostSchema)
+module.exports = mongoose.model('Comment', commentSchema)
