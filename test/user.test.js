@@ -10,6 +10,10 @@ const testUser = {
   name: 'test user',
   email: 'testuser@mailinator.com',
   password: 'testUser@123',
+  about: 'I serve to test.',
+  company: 'Codeuino',
+  website: 'http://www.codeuino.com',
+  location: 'Github',
   tokens: [{
     token: jwt.sign({ _id: testUserId }, process.env.JWT_SECRET)
   }]
@@ -17,7 +21,11 @@ const testUser = {
 const demoUser = {
   name: 'demo user',
   email: 'demouser@demo.com',
-  password: 'demoUser@123'
+  password: 'demoUser@123',
+  about: 'I am a demo',
+  company: 'Codeuino',
+  website: 'http://www.codeuino.com',
+  location: 'Github'
 }
 
 let server
@@ -50,7 +58,11 @@ test('Should signup new user', async () => {
     .send({
       name: demoUser.name,
       email: demoUser.email,
-      password: demoUser.password
+      password: demoUser.password,
+      about: demoUser.about,
+      company: demoUser.company,
+      website: demoUser.website,
+      location: demoUser.location
     })
     .expect(201)
 
@@ -64,12 +76,16 @@ test('Should signup new user', async () => {
   expect(response.body).toMatchObject({
     user: {
       name: 'demo user',
-      email: 'demouser@demo.com'
+      email: 'demouser@demo.com',
+      about: 'I am a demo',
+      company: 'Codeuino',
+      website: 'http://www.codeuino.com',
+      location: 'Github'
     },
     token: user.tokens[0].token
   })
 
-  expect(user.password).not.toBe('devesh@123')
+  expect(user.password).not.toBe('demoUser@123')
 })
 
 /** Testing user login */
