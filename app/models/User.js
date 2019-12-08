@@ -44,7 +44,7 @@ const UserSchema = new mongoose.Schema(
       type: String,
       trim: true,
       validate (website) {
-        if (!validator.matches(website, '(\b(https?|ftp|file)://)?[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]')) {
+        if (!validator.isURL(website)) {
           throw new Error('Website is not a valid URL')
         }
       }
