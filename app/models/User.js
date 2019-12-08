@@ -36,6 +36,29 @@ const UserSchema = new mongoose.Schema(
         }
       }
     },
+    company: {
+      type: String,
+      trim: true
+    },
+    website: {
+      type: String,
+      trim: true,
+      validate (website) {
+        if (!validator.isURL(website)) {
+          throw new Error('Website is not a valid URL')
+        }
+      }
+    },
+    location: {
+      type: String,
+      trim: true,
+      maxlength: 50
+    },
+    about: {
+      type: String,
+      trim: true,
+      maxlength: 300
+    },
     tokens: [{
       token: {
         type: String,
