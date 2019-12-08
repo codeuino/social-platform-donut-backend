@@ -38,7 +38,8 @@ const UserSchema = new mongoose.Schema(
     },
     company: {
       type: String,
-      trim: true
+      trim: true,
+      maxlength: 20
     },
     website: {
       type: String,
