@@ -26,6 +26,15 @@ module.exports = {
       }
     })
   },
+  delete: function (req, res, next) {
+    userModel.findByIdAndRemove(req.params.id, function (err) {
+      if (err) {
+        next(err)
+      } else {
+        res.json({ status: 'success', message: 'user has been deleted successfully' })
+      }
+    })
+  },
   test: function (req, res, next) {
     res.json({ success: 'ulllu' })
   }

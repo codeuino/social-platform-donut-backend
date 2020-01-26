@@ -29,7 +29,7 @@ router.patch(
 // DELETE A TASK
 router.delete(
   '/:id',
-  userController.test
+  userController.delete
 )
 
 module.exports = router
