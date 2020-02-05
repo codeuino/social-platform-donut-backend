@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const userController = require('../controllers/user')
 const auth = require('../middleware/auth')
-
+const passport=require('passport')
 // create a user
 router.post(
   '/',
@@ -12,7 +12,7 @@ router.post(
 // get user profile
 router.get(
   '/me',
-  auth,
+  passport.authenticate('jwt',{session:false}),
   userController.userProfile
 )
 

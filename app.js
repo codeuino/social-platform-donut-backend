@@ -1,10 +1,11 @@
 require('./config/mongoose')
+require('./app/config/passport')
 const express = require('express')
 const logger = require('morgan')
 const cookieParser = require('cookie-parser')
 const createError = require('http-errors')
 const path = require('path')
-
+const passport=require('passport')
 const indexRouter = require('./app/routes/index')
 const authRouter = require('./app/routes/auth')
 const usersRouter = require('./app/routes/user')
@@ -21,7 +22,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
 app.use(express.static(path.join(__dirname, 'public')))
-
+app.use(passport.initialize());
 app.use('/', indexRouter)
 app.use('/auth', authRouter)
 app.use('/user', usersRouter)

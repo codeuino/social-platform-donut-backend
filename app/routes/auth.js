@@ -1,13 +1,9 @@
 const express = require('express')
 const router = express.Router()
 const authController = require('../controllers/auth')
-
+const passport=require('passport')
 // user login
-router.post(
-  '/login',
-  authController.authenticateUser
-)
-
+router.post('/login',authController.authenticateUser)
 // user logout
 router.post(
   '/logout',
