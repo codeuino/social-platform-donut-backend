@@ -26,6 +26,15 @@ module.exports = {
       }
     })
   },
+  update: function (req, res, next) {
+    userModel.findByIdAndUpdate(req.params.id, { name: req.body.name, email: req.body.email, password: req.body.password }, function (err, result) {
+      if (err) {
+        throw err
+      } else {
+        res.json({ status: 'success', message: 'User updated successfully!!', data: null })
+      }
+    })
+  },
   test: function (req, res, next) {
     res.json({ success: 'ulllu' })
   }

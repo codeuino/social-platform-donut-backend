@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const userController = require('../controllers/post')
+const checkAuth = require('../middleware/auth')
 
 // CREATE A POST
 router.post(
@@ -23,10 +24,12 @@ router.get(
 // UPDATE A TASK
 router.patch(
   '/:id',
-  userController.test
+  checkAuth,
+  userController.update
 )
 
 // DELETE A TASK
+
 router.delete(
   '/:id',
   userController.test
