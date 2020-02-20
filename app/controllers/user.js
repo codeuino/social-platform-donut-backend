@@ -1,10 +1,22 @@
 const User = require('../models/User')
+const nodemailer = require('nodemailer')
+const sendgridTransport = require('nodemailer-sendgrid-transport')
+const emailServices = require('../services/email')
+
+const transporter = nodemailer.createTransport(
+  sendgridTransport({
+    auth: {
+      api_key: process.env.SENDGRID_API_KEY
+    }
+  })
+)
 
 module.exports = {
   createUser: async (req, res, next) => {
     const user = new User(req.body)
     try {
       await user.save()
+      emailServices.sendSuccessfulSignupEmail(req.body.email, req.body.name)
       const token = await user.generateAuthToken()
       res.status(201).json({ user: user, token: token })
     } catch (error) {
@@ -17,8 +29,16 @@ module.exports = {
   },
   userProfileUpdate: async (req, res, next) => {
     const updates = Object.keys(req.body)
-    const allowedUpdates = ['name', 'email', 'password', 'company', 'website', 'location', 'about']
-    const isValidOperation = updates.every((update) => {
+    const allowedUpdates = [
+      'name',
+      'email',
+      'password',
+      'company',
+      'website',
+      'location',
+      'about'
+    ]
+    const isValidOperation = updates.every(update => {
       return allowedUpdates.includes(update)
     })
 
@@ -27,7 +47,7 @@ module.exports = {
     }
 
     try {
-      updates.forEach((update) => {
+      updates.forEach(update => {
         req.user[update] = req.body[update]
       })
       await req.user.save()
