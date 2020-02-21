@@ -95,4 +95,4 @@ module.exports = `<html>
 </tr>
 </table>
 </body>
-</html>`;
+</html>`
