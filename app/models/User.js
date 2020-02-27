@@ -28,7 +28,6 @@ const UserSchema = new mongoose.Schema(
     password: {
       type: String,
       trim: true,
-      required: true,
       minlength: 6,
       validate (password) {
         if (password.toLowerCase().includes('password')) {
@@ -59,6 +58,14 @@ const UserSchema = new mongoose.Schema(
       type: String,
       trim: true,
       maxlength: 300
+    },
+    provider: {
+      type: String,
+      trim: true
+    },
+    providerID:{
+      type: String,
+      trim: true
     },
     tokens: [{
       token: {

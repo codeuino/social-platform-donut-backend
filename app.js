@@ -9,13 +9,26 @@ const indexRouter = require('./app/routes/index')
 const authRouter = require('./app/routes/auth')
 const usersRouter = require('./app/routes/user')
 const postRouter = require('./app/routes/post')
-
+const passport = require('passport')
+const cors = require('cors');
 const app = express()
+const session = require('express-session');
+
+app.use(
+  session({
+    secret: "OAuth Session",
+    saveUninitialized: true,
+    resave: true
+  })
+);
+
+app.use(cors());
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'ejs')
 
+app.use(passport.initialize());
 app.use(logger('dev'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
