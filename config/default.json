@@ -1,0 +1,8 @@
+{
+    "Nodemailer": {
+      "dbConfig": {
+        "email": "",//email service to be added
+        "password":""//password
+      }
+    }
+  }
