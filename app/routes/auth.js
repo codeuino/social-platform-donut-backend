@@ -19,5 +19,13 @@ router.post(
   '/logoutAll',
   authController.logoutAll
 )
+router.post('/forgetpassword',authController.forgetpassword)
 
+//url to be hit by frontend to check the validity of token
+router.get('/reset',authController.checkvalidity);
+
+//post request to be hit by page when the forget password link will be active
+router.post('/changepassword',authController.changepassword)
+
+//url to be routed after 
 module.exports = router
