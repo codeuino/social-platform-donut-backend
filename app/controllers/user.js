@@ -1,7 +1,7 @@
 const User = require('../models/User')
 const nodemailer = require('nodemailer')
 const sendgridTransport = require('nodemailer-sendgrid-transport')
-const emailTemplate = require('../../views/emailTemplate')
+const emailServices = require('../services/email')
 
 const transporter = nodemailer.createTransport(
   sendgridTransport({
@@ -16,13 +16,7 @@ module.exports = {
     const user = new User(req.body)
     try {
       await user.save()
-
-      transporter.sendMail({
-        to: req.body.email,
-        from: 'services@codeuino.com',
-        subject: `Welcome to Donut ${req.body.name}`,
-        html: emailTemplate
-      })
+      emailServices.sendSuccessfulSignupEmail(req.body.email, req.body.name)
       const token = await user.generateAuthToken()
       res.status(201).json({ user: user, token: token })
     } catch (error) {
