@@ -50,6 +50,9 @@ const UserSchema = new mongoose.Schema(
         }
       }
     },
+    integratedApps:{
+      type: Array
+    },
     location: {
       type: String,
       trim: true,
