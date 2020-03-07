@@ -2,11 +2,12 @@ const mongoose = require('mongoose')
 const bcrypt = require('bcrypt')
 const validator = require('validator')
 const jwt = require('jsonwebtoken')
+const Schema = mongoose.Schema
 
 const saltRounds = 8
 
 // user schema
-const UserSchema = new mongoose.Schema({
+const UserSchema = new Schema({
   name: {
     firstName: {
       type: String,
@@ -136,6 +137,18 @@ const UserSchema = new mongoose.Schema({
       }
     }
   },
+  followers: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  followings: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  blockedUser: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   createdAt: {
     type: Date,
     required: true,

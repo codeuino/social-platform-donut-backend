@@ -81,22 +81,12 @@ const orgSchema = new Schema({
     ]
   },
   adminInfo: {
-    type: Object,
-    required: true,
-    validate (adminInfo) {
-      if (validator.isEmpty(adminInfo)) {
-        throw new Error('Admin info is required!')
-      }
-    }
+    type: Schema.Types.ObjectId,
+    ref: 'User'
   },
   moderatorInfo: {
-    type: Object,
-    required: true,
-    validate (adminInfo) {
-      if (validator.isEmpty(adminInfo)) {
-        throw new Error('Admin info is required!')
-      }
-    }
+    type: Schema.Types.ObjectId,
+    ref: 'User'
   },
   createdAt: {
     type: Date,

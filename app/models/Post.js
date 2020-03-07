@@ -3,6 +3,20 @@ const validator = require('validator')
 const Schema = mongoose.Schema
 
 const PostSchema = new Schema({
+  postTitle: {
+    type: String,
+    required: true,
+    trim: true,
+    minlength: 5,
+    validate (postTitle) {
+      if (validator.isEmpty(postTitle)) {
+        throw new Error('Post title is required!')
+      }
+      if (!validator.isLength(postTitle, { min: 5 })) {
+        throw new Error('Title should be min 5 characters long!')
+      }
+    }
+  },
   content: {
     type: String,
     trim: true,
@@ -12,10 +26,6 @@ const PostSchema = new Schema({
         throw new Error('Post content can not be empty!')
       }
     }
-  },
-  image: {
-    data: Buffer,
-    contentType: String
   },
   votes: {
     upVotes: {

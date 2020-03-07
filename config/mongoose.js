@@ -6,3 +6,9 @@ mongoose.connect(process.env.DATABASE_URL, {
   useUnifiedTopology: true,
   useFindAndModify: false
 })
+  .then(() => {
+    console.log('Mongo connected!')
+  })
+  .catch((Err) => {
+    console.log('Mongo Error ', Err)
+  })

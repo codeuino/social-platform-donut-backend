@@ -71,6 +71,10 @@ const eventSchema = new Schema({
       }
     }
   },
+  slotTimes: [{
+    start: Date,
+    end: Date
+  }],
   location: {
     type: String,
     required: true,
