@@ -115,13 +115,30 @@ const UserSchema = new mongoose.Schema({
       education: [
         {
           school: {
-            schoolName: {
-              type: String,
-              trim: true
-            },
-            year: {
-              type: String
-            }
+            type: String,
+            required: true
+          },
+          degree: {
+            type: String,
+            required: true
+          },
+          fieldofstudy: {
+            type: String,
+            required: true
+          },
+          from: {
+            type: Date,
+            required: true
+          },
+          to: {
+            type: Date
+          },
+          current: {
+            type: Boolean,
+            default: false
+          },
+          description: {
+            type: String
           }
         }
       ],
