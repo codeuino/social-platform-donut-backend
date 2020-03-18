@@ -1,21 +1,23 @@
-var express = require('express')
-var router = express.Router()
+const express = require('express')
+const router = express.Router()
 const Url = require('../models/ShortUrl');
+const regex = '^(https?:\\/\\/)?'+ 
+'((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|'+ 
+'((\\d{1,3}\\.){3}\\d{1,3}))'+ 
+'(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ 
+'(\\?[;&amp;a-z\\d%_.~+=-]*)?'+ 
+'(\\#[-a-z\\d_]*)?$';
+
 
 function validURL(myURL) {
-    var pattern = new RegExp('^(https?:\\/\\/)?'+ 
-    '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|'+ 
-    '((\\d{1,3}\\.){3}\\d{1,3}))'+ 
-    '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ 
-    '(\\?[;&amp;a-z\\d%_.~+=-]*)?'+ 
-    '(\\#[-a-z\\d_]*)?$','i');
+    var pattern = new RegExp(regex,'i');
     return pattern.test(myURL);
  }
 
 router.post('/shorten',async (req,res) => {
-    const longurl =  req.body;
+    var longurl =  req.body;
     var baseurl = req.get('host');
-    const urlcode = Date.now();
+    var urlcode = Date.now();
     if(validURL(longurl.longurl)){
         try {
             var url = await Url.findOne(longurl)
