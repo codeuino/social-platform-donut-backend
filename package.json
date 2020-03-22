@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "codecov": "^3.6.1",
+    "dotenv": "^8.2.0",
     "env-cmd": "^10.0.1",
     "eslint": "^6.7.1",
     "eslint-config-standard": "^14.1.0",
