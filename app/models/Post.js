@@ -27,6 +27,19 @@ const PostSchema = new Schema({
       }
     }
   },
+  image: {
+    data: Buffer,
+    contentType: String
+  },
+  imgUrl: {
+    type: String,
+    trim: true,
+    validator (imgUrl) {
+      if (!validator.isURL(imgUrl)) {
+        throw new Error('Invalid image URL!')
+      }
+    }
+  },
   votes: {
     upVotes: {
       count: {

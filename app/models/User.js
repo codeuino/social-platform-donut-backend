@@ -115,6 +115,7 @@ const UserSchema = new Schema({
       },
       education: [
         {
+          _id: false,
           school: {
             schoolName: {
               type: String,

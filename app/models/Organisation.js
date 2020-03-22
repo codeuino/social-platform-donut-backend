@@ -46,6 +46,19 @@ const orgSchema = new Schema({
       }
     }
   },
+  logo: {
+    type: Buffer,
+    contentType: String
+  },
+  logoUrl: {
+    type: String,
+    trim: true,
+    validator (logoUrl) {
+      if (!validator.isURL(logoUrl)) {
+        throw new Error('Invalid logo URL!')
+      }
+    }
+  },
   contactInfo: {
     emailId: {
       type: String,
