@@ -114,6 +114,7 @@ const UserSchema = new mongoose.Schema({
       },
       education: [
         {
+          _id: false,
           school: {
             schoolName: {
               type: String,
