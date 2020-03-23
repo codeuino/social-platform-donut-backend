@@ -38,14 +38,9 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
     "jest": "^24.9.0",
-<<<<<<< HEAD
     "nodemon": "^1.18.9",
     "supertest": "^4.0.2",
     "nodemailer": "^6.4.2",
     "nodemailer-sendgrid-transport": "^0.2.0"
-=======
-    "nodemon": "^1.19.4",
-    "supertest": "^4.0.2"
->>>>>>> bab92525d259d0a892a991abe182da4e3ac3bb67
   }
 }
