@@ -1,15 +1,5 @@
 const User = require('../models/User')
-const nodemailer = require('nodemailer')
-const sendgridTransport = require('nodemailer-sendgrid-transport')
 const emailServices = require('../services/email')
-
-const transporter = nodemailer.createTransport(
-  sendgridTransport({
-    auth: {
-      api_key: process.env.SENDGRID_API_KEY
-    }
-  })
-)
 
 module.exports = {
   createUser: async (req, res, next) => {
