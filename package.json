@@ -13,6 +13,7 @@
     "body-parser": "^1.19.0",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
+    "dotenv": "^8.2.0",
     "ejs": "~2.6.1",
     "express": "^4.16.4",
     "jsonwebtoken": "^8.5.1",
@@ -27,7 +28,6 @@
   },
   "devDependencies": {
     "codecov": "^3.6.1",
-    "dotenv": "^8.2.0",
     "env-cmd": "^10.0.1",
     "eslint": "^6.7.1",
     "eslint-config-standard": "^14.1.0",
