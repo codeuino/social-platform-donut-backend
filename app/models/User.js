@@ -68,6 +68,12 @@ const UserSchema = new mongoose.Schema({
       }
     }
   },
+  resetPassToken: {
+    type: String
+  },
+  resetPassTokenExpireIn: {
+    type: Date
+  },
   socialMedia: {
     youtube: {
       type: String
