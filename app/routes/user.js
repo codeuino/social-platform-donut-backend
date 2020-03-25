@@ -25,13 +25,13 @@ router.patch(
 
 // user forgot password request
 router.post(
-  '/changepassword',
+  '/password_reset',
   userController.forgotPasswordRequest
 )
 
 // update password
 router.post(
-  '/reset/:token',
+  '/password_reset/:token',
   userController.updatePassword
 )
 // delete a user
