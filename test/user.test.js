@@ -4,33 +4,57 @@ const jwt = require('jsonwebtoken')
 const request = require('supertest')
 const User = require('../app/models/User')
 
+const demoUser = {
+  name: {
+    firstName: 'test',
+    lastName: 'test'
+  },
+  email: 'test3@mailinator.com',
+  phone: '1234567890',
+  password: 'abc12345',
+  info: {
+    about: {
+      shortDescription: 'this is short description',
+      longDescription: 'this is a very long description',
+      website: 'https://www.google.com',
+      designation: 'software engg',
+      skills: [
+        'c++',
+        'java'
+      ],
+      education: [{
+        school: {
+          schoolName: 'firstSchoolName',
+          year: '2017-2021'
+        }
+      },
+      {
+        school: {
+          schoolName: 'secondSchoolName',
+          year: '2007-2014'
+        }
+      }
+      ],
+      location: 'location'
+    }
+  }
+}
+
 const testUserId = new mongoose.Types.ObjectId()
 const testUser = {
   _id: testUserId,
-  name: 'test user',
-  email: 'testuser@mailinator.com',
-  password: 'testUser@123',
-  about: 'I serve to test.',
-  company: 'Codeuino',
-  website: 'http://www.codeuino.com',
-  location: 'Github',
+  ...demoUser,
+  email: 'test@mailinator.com',
+  phone: '1234567891',
   tokens: [{
-    token: jwt.sign({ _id: testUserId }, process.env.JWT_SECRET)
+    token: jwt.sign({
+      _id: testUserId
+    }, process.env.JWT_SECRET)
   }]
 }
-const demoUser = {
-  name: 'demo user',
-  email: 'demouser@demo.com',
-  password: 'demoUser@123',
-  about: 'I am a demo',
-  company: 'Codeuino',
-  website: 'http://www.codeuino.com',
-  location: 'Github'
-}
-
 let server
 /**
- * This will pe performed once at the begining of the test
+ * This will pe performed once at the beginning of the test
  */
 beforeAll(async (done) => {
   await User.deleteMany()
@@ -55,15 +79,7 @@ beforeEach(async () => {
 test('Should signup new user', async () => {
   const response = await request(app)
     .post('/user')
-    .send({
-      name: demoUser.name,
-      email: demoUser.email,
-      password: demoUser.password,
-      about: demoUser.about,
-      company: demoUser.company,
-      website: demoUser.website,
-      location: demoUser.location
-    })
+    .send(demoUser)
     .expect(201)
 
   // Assert that db was changed
@@ -71,21 +87,31 @@ test('Should signup new user', async () => {
   expect(user).not.toBeNull()
 
   // Assertions about the response
-  // expect(response.body.user.name).toBe('Devesh')
+  // expect(response.body.user.name.firstName).toBe('Rupesh')
   // OR
   expect(response.body).toMatchObject({
     user: {
-      name: 'demo user',
-      email: 'demouser@demo.com',
-      about: 'I am a demo',
-      company: 'Codeuino',
-      website: 'http://www.codeuino.com',
-      location: 'Github'
+      name: {
+        firstName: demoUser.name.firstName,
+        lastName: demoUser.name.lastName
+      },
+      email: demoUser.email,
+      phone: demoUser.phone,
+      info: {
+        about: {
+          skills: demoUser.info.about.skills,
+          shortDescription: demoUser.info.about.shortDescription,
+          longDescription: demoUser.info.about.longDescription,
+          website: demoUser.info.about.website,
+          designation: demoUser.info.about.designation,
+          education: demoUser.info.about.education,
+          location: demoUser.info.about.location
+        }
+      }
     },
     token: user.tokens[0].token
   })
-
-  expect(user.password).not.toBe('demoUser@123')
+  expect(user.password).not.toBe('abc12345') // to check hashing
 })
 
 /** Testing user login */

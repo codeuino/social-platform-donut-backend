@@ -23,6 +23,17 @@ router.patch(
   userController.userProfileUpdate
 )
 
+// user forgot password request
+router.post(
+  '/password_reset',
+  userController.forgotPasswordRequest
+)
+
+// update password
+router.post(
+  '/password_reset/:token',
+  userController.updatePassword
+)
 // delete a user
 router.delete(
   '/me',

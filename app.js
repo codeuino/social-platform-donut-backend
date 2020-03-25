@@ -9,6 +9,7 @@ const indexRouter = require('./app/routes/index')
 const authRouter = require('./app/routes/auth')
 const usersRouter = require('./app/routes/user')
 const postRouter = require('./app/routes/post')
+const shortUrlRouter = require('./app/routes/urlShortner')
 
 const app = express()
 
@@ -16,7 +17,7 @@ const app = express()
 app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'ejs')
 
-app.use(logger('dev'))
+app.use(logger('tiny'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
@@ -26,6 +27,7 @@ app.use('/', indexRouter)
 app.use('/auth', authRouter)
 app.use('/user', usersRouter)
 app.use('/post', postRouter)
+app.use('/shortUrl', shortUrlRouter)
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
