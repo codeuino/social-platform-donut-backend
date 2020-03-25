@@ -71,6 +71,12 @@ const UserSchema = new mongoose.Schema({
   integratedApps:{
     type: Array
   },
+  resetPassToken: {
+    type: String
+  },
+  resetPassTokenExpireIn: {
+    type: Date
+  },
   socialMedia: {
     youtube: {
       type: String
@@ -122,6 +128,7 @@ const UserSchema = new mongoose.Schema({
       },
       education: [
         {
+          _id: false,
           school: {
             schoolName: {
               type: String,

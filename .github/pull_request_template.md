@@ -28,6 +28,8 @@ How did you solve this problem?
 
 ### **Checklist**
 [ ] My code follows the same style as the codebase
-[ ] My Code change requires change in documentation
+[ ] My Code change requires a change in documentation
 [ ] I have updated the Readme accordingly
 [ ] I made PR against **development branch**
+[ ] I have run the test cases locally and it's passing.
+[ ] I have squashed my commits

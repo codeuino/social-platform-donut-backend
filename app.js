@@ -12,6 +12,7 @@ const usersRouter = require('./app/routes/user')
 const postRouter = require('./app/routes/post')
 const integrationRouter = require('./app/routes/appIntegration')
 const discourseRouter = require('./app/routes/discourse')
+const shortUrlRouter = require('./app/routes/urlShortner')
 
 const app = express()
 
@@ -21,6 +22,7 @@ app.set('view engine', 'ejs')
 
 app.use(cors());
 app.use(logger('dev'))
+app.use(logger('tiny'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
@@ -32,6 +34,7 @@ app.use('/user', usersRouter)
 app.use('/post', postRouter)
 app.use('/apps', integrationRouter);
 app.use('/apps/discourse', discourseRouter);
+app.use('/shortUrl', shortUrlRouter)
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
