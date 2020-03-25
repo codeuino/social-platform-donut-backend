@@ -27,7 +27,7 @@ const projectSchema = new Schema({
         if (validator.isEmpty(short)) {
           throw new Error('Short description for the project is required!')
         }
-        if (!validator.isLength(short,{min:10, max: undefined})) {
+        if (!validator.isLength(short, { min: 10, max: undefined })) {
           throw new Error('Short description should be min 10 characters long!')
         }
       }

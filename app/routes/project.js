@@ -13,7 +13,7 @@ router.get(
   '/',
   projectController.projectInfo
 )
-  
+
 // update a particular project info
 router.patch(
   '/:id',
