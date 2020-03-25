@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const shortnerController = require('../controllers/UrlShortner')
+const shortnerController = require('../controllers/urlShortner')
 
 // Redirects the ShortURL back to LongURL
 router.get(
