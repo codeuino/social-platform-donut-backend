@@ -10,9 +10,9 @@ module.exports = {
       res.send({ user: user, token: token })
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
-        // console.log('error ', error)
+        console.log(error.name, '-', error.message)
       }
-      res.status(400).send({ error: error })
+      res.status(400).json({ error: error.message })
     }
   },
   logout: (req, res, next) => {
