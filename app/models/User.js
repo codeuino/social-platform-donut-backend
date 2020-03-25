@@ -46,7 +46,6 @@ const UserSchema = new mongoose.Schema({
   phone: {
     type: String,
     trim: true,
-    unique: true,
     minlength: 10,
     validate (phone) {
       if (!validator.isLength(phone, { min: 10, max: 10 })) {
@@ -67,12 +66,6 @@ const UserSchema = new mongoose.Schema({
         throw new Error('Password is required!')
       }
     }
-  },
-  resetPassToken: {
-    type: String
-  },
-  resetPassTokenExpireIn: {
-    type: Date
   },
   socialMedia: {
     youtube: {
@@ -181,11 +174,11 @@ UserSchema.statics.findByCredentials = async (email, password) => {
   })
 
   if (!user) {
-    throw new Error('Unable to login')
+    throw new Error('No such user')
   } else {
     const isMatch = await bcrypt.compare(password, user.password)
     if (!isMatch) {
-      throw new Error('Unable to login')
+      throw new Error('Incorrect password provided')
     } else {
       return user
     }
