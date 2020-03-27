@@ -7,7 +7,9 @@ module.exports = {
       await project.save()
       res.send(project)
     } catch (error) {
-      console.log(error)
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(error)
+      }
       res.status(400).json({ error: error })
     }
   },
@@ -20,7 +22,9 @@ module.exports = {
         res.send(projects)
       }
     } catch (error) {
-      console.log(error)
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(error)
+      }
       res.status(404).json({ error: error })
     }
   },
@@ -43,7 +47,9 @@ module.exports = {
         res.send(project)
       }
     } catch (error) {
-      console.log(error)
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(error)
+      }
       res.status(404).json({ error: error })
     }
   },
@@ -56,7 +62,9 @@ module.exports = {
         res.send(project)
       }
     } catch (error) {
-      console.log(error)
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(error)
+      }
       res.status(404).json({ error: error })
     }
   }
