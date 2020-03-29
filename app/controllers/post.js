@@ -1,16 +1,50 @@
 const userModel = require('../models/User')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const PostModel = require('../models/Post')
 
 module.exports = {
-  create: function (req, res, next) {
-    userModel.create({ name: req.body.name, email: req.body.email, password: req.body.password }, function (err, result) {
-      if (err) {
-        next(err)
-      } else {
-        res.json({ status: 'success', message: 'User added successfully!!!', data: null })
-      }
-    })
+  create: async (req, res, next) => {
+    const url = req.protocol + '://' + req.get('host')
+    let post
+    if (req.file) { // WHEN AN IMAGE IS UPLOADED
+      const imgUrl = url + '/public/' + req.file.filename
+      post = new PostModel({
+        imgUrl: imgUrl,
+        content: req.body.content,
+        votes: {
+          upVotes: {
+            count: req.body.votes.upVotes.count,
+            users: req.body.votes.upVotes.users
+          },
+          downVotes: {
+            count: req.body.votes.downVotes.count,
+            users: req.body.votes.downVotes.users
+          }
+        }
+      })
+    } else { // WHEN THE IMAGE IS NOT UPLOADED
+      post = new PostModel({
+        content: req.body.content,
+        votes: {
+          upVotes: {
+            count: req.body.votes.upVotes.count,
+            users: req.body.votes.upVotes.users
+          },
+          downVotes: {
+            count: req.body.votes.downVotes.count,
+            users: req.body.votes.downVotes.users
+          }
+        }
+      })
+    }
+    try {
+      await post.save()
+      res.status(201).json({ post: post })
+    } catch (error) {
+      console.log(error)
+      res.status(400).json({ error: error })
+    }
   },
   authenticate: function (req, res, next) {
     userModel.findOne({ email: req.body.email }, function (err, userInfo) {
@@ -27,6 +61,6 @@ module.exports = {
     })
   },
   test: function (req, res, next) {
-    res.json({ success: 'ulllu' })
+    res.status(201).json({ message: 'Hey, I am working' })
   }
 }
