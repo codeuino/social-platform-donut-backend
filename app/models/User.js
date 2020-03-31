@@ -136,6 +136,10 @@ const UserSchema = new mongoose.Schema({
       }
     }
   },
+  isActivated: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     required: true,

@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const authController = require('../controllers/auth')
+// const isActivated = require('../middleware/activate')
 
 // user login
 router.post(
