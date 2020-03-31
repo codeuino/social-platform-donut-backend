@@ -47,27 +47,22 @@ const eventSchema = new Schema({
       }
     }
   },
-  rsvp: {
-    yes: {
-      type: Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    no: {
-      type: Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    mayBe: {
-      type: Schema.Types.ObjectId,
-      ref: 'User'
-    }
-  },
+
+  rsvp_yes: [{
+    type: mongoose.Types.ObjectId
+  }],
+  rsvp_maybe: [{
+    type: mongoose.Types.ObjectId
+  }],
+  rsvp_no: [{
+    type: mongoose.Types.ObjectId
+  }],
   slots: {
-    type: Number,
-    required: true,
+    type: String,
     default: 0,
     validate (slots) {
-      if (validator.isEmpty(slots)) {
-        throw new Error('Slots is required!')
+      if (!validator.isNumeric(slots)) {
+        throw new Error('Slots should be a number')
       }
     }
   },
@@ -82,13 +77,20 @@ const eventSchema = new Schema({
     }
   },
   eventDate: {
-    type: Date,
+    type: String,
     required: true,
     validate (eventDate) {
+      if (!validator.isISO8601(eventDate)) {
+        throw new Error('Event date is not formated!')
+      }
       if (validator.isEmpty(eventDate)) {
         throw new Error('Event date is required!')
       }
     }
+  },
+  isOnline: {
+    type: Boolean,
+    default: false
   },
   createdAt: {
     type: Date,
