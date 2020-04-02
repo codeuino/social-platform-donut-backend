@@ -50,13 +50,14 @@ router.get(
 // UPDATE A TASK
 router.patch(
   '/:id',
-  userController.test
+  upload.single('imgUrl'),
+  userController.updatePost
 )
 
 // DELETE A TASK
 router.delete(
   '/:id',
-  userController.test
+  userController.delete
 )
 
 module.exports = router

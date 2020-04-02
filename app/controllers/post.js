@@ -46,6 +46,48 @@ module.exports = {
       res.status(400).json({ error: error })
     }
   },
+  delete: async (req, res, next) => {
+    const { id } = req.params
+    console.log(id)
+    try {
+      const post = await PostModel.findByIdAndRemove(id)
+      if (!post) {
+        return res.status(400).json({ message: 'No post exists' })
+      }
+      res.status(200).json({ post: post, message: 'Deleted the post' })
+    } catch (error) {
+      console.log(error)
+      res.status(400).json({ error: error })
+    }
+  },
+  updatePost: async (req, res, next) => {
+    const { id } = req.params
+    console.log(id)
+    const updates = Object.keys(req.body)
+    const allowedUpdates = ['content', 'imgUrl']
+    const isValidOperation = updates.every((update) => {
+      return allowedUpdates.includes(update)
+    })
+
+    if (!isValidOperation) {
+      return res.status(400).json({ message: 'Invalid Update' })
+    }
+    try {
+      const post = await PostModel.findById(id)
+      console.log(post)
+      updates.forEach(update => {
+        post[update] = req.body[update]
+      })
+      if (req.file) {
+        post.imgUrl = req.protocol + '://' + req.get('host') + '/public/' + req.file.filename
+      }
+      await post.save()
+      res.status(204).json({ post: post })
+    } catch (error) {
+      console.log(error)
+      res.status(400).json({ error: error })
+    }
+  },
   authenticate: function (req, res, next) {
     userModel.findOne({ email: req.body.email }, function (err, userInfo) {
       if (err) {
