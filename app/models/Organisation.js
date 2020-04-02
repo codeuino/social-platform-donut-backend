@@ -47,7 +47,7 @@ const orgSchema = new Schema({
     }
   },
   logo: {
-    type: Buffer,
+    image: Buffer,
     contentType: String
   },
   logoUrl: {
@@ -60,7 +60,7 @@ const orgSchema = new Schema({
     }
   },
   contactInfo: {
-    emailId: {
+    communityEmail: {
       type: String,
       required: true,
       validate (emailId) {
@@ -68,6 +68,19 @@ const orgSchema = new Schema({
           throw new Error('EmailId or org is required!')
         }
         if (!validator.isEmail(emailId)) {
+          throw new Error('Invalid emailId')
+        }
+      }
+    },
+    adminEmail: {
+      type: String,
+      trim: true,
+      required: true,
+      validate (adminEmail) {
+        if (validator.isEmpty(adminEmail)) {
+          throw new Error('Admin emailId is required!')
+        }
+        if (!validator.isEmail(adminEmail)) {
           throw new Error('Invalid emailId')
         }
       }
@@ -87,6 +100,7 @@ const orgSchema = new Schema({
     },
     chattingPlatform: [
       {
+        _id: false,
         link: {
           type: String
         }
@@ -94,22 +108,16 @@ const orgSchema = new Schema({
     ]
   },
   adminInfo: {
-    type: Object,
-    required: true,
-    validate (adminInfo) {
-      if (validator.isEmpty(adminInfo)) {
-        throw new Error('Admin info is required!')
-      }
-    }
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   },
   moderatorInfo: {
-    type: Object,
-    required: true,
-    validate (adminInfo) {
-      if (validator.isEmpty(adminInfo)) {
-        throw new Error('Admin info is required!')
-      }
-    }
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  isArchived: {
+    type: Boolean,
+    default: false
   },
   createdAt: {
     type: Date,
