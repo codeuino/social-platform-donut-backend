@@ -16,11 +16,14 @@
     "debug": "~2.6.9",
     "dotenv": "^8.2.0",
     "ejs": "~2.6.1",
-    "express": "^4.16.4",
+    "express": "^4.17.1",
     "jsonwebtoken": "^8.5.1",
-    "mongoose": "^5.7.7",
+    "mongoose": "^5.9.7",
     "morgan": "^1.9.1",
-    "validator": "^10.11.0"
+    "multer": "^1.4.2",
+    "validator": "^10.11.0",
+    "uuid": "^7.0.3",
+    "cors": "^2.8.5"
   },
   "jest": {
     "testEnvironment": "node",

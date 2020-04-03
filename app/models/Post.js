@@ -33,11 +33,10 @@ const PostSchema = new Schema({
         default: 0
       },
       users: {
-        user: {
+        user: [{
           type: Schema.Types.ObjectId,
-          ref: 'User',
-          required: true
-        }
+          ref: 'User'
+        }]
       }
     },
     downVotes: {
@@ -46,11 +45,10 @@ const PostSchema = new Schema({
         default: 0
       },
       users: {
-        user: {
+        user: [{
           type: Schema.Types.ObjectId,
-          ref: 'User',
-          required: true
-        }
+          ref: 'User'
+        }]
       }
     }
   },
