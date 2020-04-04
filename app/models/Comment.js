@@ -6,22 +6,12 @@ const commentSchema = new Schema({
   userId: {
     type: Schema.Types.ObjectId,
     required: true,
-    ref: 'User',
-    validate (userId) {
-      if (validator.isEmpty(userId)) {
-        throw new Error('UserId is required!')
-      }
-    }
+    ref: 'User'
   },
   postId: {
     type: Schema.Types.ObjectId,
     required: true,
-    ref: 'Post',
-    validate (userId) {
-      if (validator.isEmpty(userId)) {
-        throw new Error('PostID is required!')
-      }
-    }
+    ref: 'Post'
   },
   content: {
     type: String,
@@ -40,11 +30,10 @@ const commentSchema = new Schema({
         default: 0
       },
       user: {
-        user_id: {
+        user_id: [{
           type: Schema.Types.ObjectId,
-          required: true,
           ref: 'User'
-        }
+        }]
       }
     },
     downVotes: {
@@ -52,10 +41,11 @@ const commentSchema = new Schema({
         type: Number,
         default: 0
       },
-      user_id: {
-        type: Schema.Types.ObjectId,
-        required: true,
-        ref: 'User'
+      user: {
+        user_id: [{
+          type: Schema.Types.ObjectId,
+          ref: 'User'
+        }]
       }
     }
   },
