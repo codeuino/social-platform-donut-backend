@@ -88,15 +88,9 @@ const projectSchema = new Schema({
   maintainers: [{
     type: Schema.Types.ObjectId,
     ref: 'User'
-  }],
-  createdAt: {
-    type: Date,
-    default: Date.now()
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now()
-  }
+  }]
+}, {
+  timestamps: true
 })
 
 module.exports = mongoose.model('Project', projectSchema)

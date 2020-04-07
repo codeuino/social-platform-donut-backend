@@ -136,24 +136,15 @@ const UserSchema = new mongoose.Schema({
       }
     }
   },
-  createdAt: {
-    type: Date,
-    required: true,
-    default: Date.now()
-  },
-  updatedAt: {
-    type: Date,
-    required: true,
-    default: Date.now()
-  },
   tokens: [{
     token: {
       type: String,
       required: true
     }
   }]
-}
-)
+}, {
+  timestamps: true
+})
 
 // generate auth token
 // Schema Methods, needs to be invoked by an instance of a Mongoose document
