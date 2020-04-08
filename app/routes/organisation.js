@@ -7,16 +7,9 @@ const uploader = require('../utils/uploader')
 // CREATE ORG
 router.post(
   '/',
-  uploader.upload.single('logo'),
+  uploader.upload.single('image'),
   auth,
   OrgController.createOrganization
-)
-
-// GET ALL ORG
-router.get(
-  '/all',
-  auth,
-  OrgController.getAllOrg
 )
 
 // GET ORG DETAILS BY ID
@@ -36,7 +29,7 @@ router.get(
 // UPDATE ORG DETAILS
 router.patch(
   '/:id',
-  uploader.upload.single('logo'),
+  uploader.upload.single('image'),
   auth,
   OrgController.updateOrgDetails
 )
@@ -49,7 +42,7 @@ router.delete(
 )
 
 // ARCHIVE ORG
-router.post(
+router.patch(
   '/archive/:id',
   auth,
   OrgController.archiveOrg

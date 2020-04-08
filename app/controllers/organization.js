@@ -1,5 +1,5 @@
 const Organization = require('../models/Organisation')
-const handler = require('../utils/response-helper')
+const HANDLER = require('../utils/response-helper')
 const STATUS = require('../utils/status-codes')
 const helper = require('../utils/uploader')
 
@@ -13,14 +13,14 @@ module.exports = {
       await org.save()
       res.status(STATUS.CREATED).json({ org })
     } catch (error) {
-      handler.handleError(res, error)
+      HANDLER.handleError(res, error)
     }
   },
 
   updateOrgDetails: async (req, res, next) => {
     const { id } = req.params
     const updates = Object.keys(req.body)
-    const allowedUpdates = ['name', 'description', 'contactInfo', 'logo', 'adminInfo', 'moderatorInfo']
+    const allowedUpdates = ['name', 'description', 'contactInfo', 'image', 'adminInfo', 'moderatorInfo']
     const isValidOperation = updates.every((update) => {
       return allowedUpdates.includes(update)
     })
@@ -39,7 +39,7 @@ module.exports = {
       await org.save()
       res.status(STATUS.UPDATED).json({ organization: org })
     } catch (error) {
-      handler.handleError(res, error)
+      HANDLER.handleError(res, error)
     }
   },
 
@@ -57,23 +57,7 @@ module.exports = {
       }
       res.status(STATUS.OK).json({ organization: orgData })
     } catch (error) {
-      handler.handleError(res, error)
-    }
-  },
-
-  getAllOrg: async (req, res, next) => {
-    try {
-      const orgsData = await Organization.find({})
-        .populate('adminInfo', ['name.firstName', 'name.lastName', 'email', 'isAdmin'])
-        .populate('moderatorInfo', ['name.firstName', 'name.lastName', 'email', 'isAdmin'])
-        .sort({ createdAt: -1 })
-        .exec()
-      if (orgsData.length === 0) {
-        return res.status(STATUS.OK).json({ msg: 'No organizations listed yet!' })
-      }
-      res.status(STATUS.OK).json({ organizations: orgsData })
-    } catch (error) {
-      handler.handleError(res, error)
+      HANDLER.handleError(res, error)
     }
   },
 
@@ -86,7 +70,7 @@ module.exports = {
       }
       res.status(STATUS.OK).json({ organization: org })
     } catch (error) {
-      handler.handleError(res, error)
+      HANDLER.handleError(res, error)
     }
   },
 
@@ -101,7 +85,7 @@ module.exports = {
       await org.save()
       res.status(STATUS.OK).json({ organization: org })
     } catch (error) {
-      handler.handleError(res, error)
+      HANDLER.handleError(res, error)
     }
   },
 
@@ -117,7 +101,7 @@ module.exports = {
       }
       res.status(STATUS.OK).json({ organization: orgs })
     } catch (error) {
-      handler.handleError(res, error)
+      HANDLER.handleError(res, error)
     }
   }
 }

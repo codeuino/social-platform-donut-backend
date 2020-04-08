@@ -140,6 +140,10 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isActivated: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     required: true,

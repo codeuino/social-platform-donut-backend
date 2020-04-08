@@ -46,44 +46,35 @@ const orgSchema = new Schema({
       }
     }
   },
-  logo: {
-    image: Buffer,
+  image: {
+    type: Buffer,
     contentType: String
   },
-  logoUrl: {
+  imgUrl: {
     type: String,
     trim: true,
-    validator (logoUrl) {
-      if (!validator.isURL(logoUrl)) {
-        throw new Error('Invalid logo URL!')
+    validator (imgUrl) {
+      if (!validator.isURL(imgUrl)) {
+        throw new Error('Invalid image URL!')
       }
     }
   },
   contactInfo: {
-    communityEmail: {
+    email: {
       type: String,
       required: true,
-      validate (emailId) {
-        if (validator.isEmpty(emailId)) {
+      validate (email) {
+        if (validator.isEmpty(email)) {
           throw new Error('EmailId or org is required!')
         }
-        if (!validator.isEmail(emailId)) {
+        if (!validator.isEmail(email)) {
           throw new Error('Invalid emailId')
         }
       }
     },
     adminEmail: {
       type: String,
-      trim: true,
-      required: true,
-      validate (adminEmail) {
-        if (validator.isEmpty(adminEmail)) {
-          throw new Error('Admin emailId is required!')
-        }
-        if (!validator.isEmail(adminEmail)) {
-          throw new Error('Invalid emailId')
-        }
-      }
+      trim: true
     },
     website: {
       type: String,

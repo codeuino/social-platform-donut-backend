@@ -37,9 +37,9 @@ exports.upload = multer({
 exports.mapToDb = (req, db) => {
   const img = fs.readFileSync(req.file.path)
   const encodedImage = img.toString('base64')
-  const logo = {
+  const image = {
     contentType: req.file.mimetype,
     image: Buffer.from(encodedImage, 'base64')
   }
-  db.logo = logo
+  db.image = image
 }
