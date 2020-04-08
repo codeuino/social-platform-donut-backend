@@ -37,6 +37,12 @@ router.post(
   userController.updatePassword
 )
 
+// activate account
+router.post(
+  '/activate/:token',
+  userController.activateAccount
+)
+
 // delete a user
 router.delete(
   '/me',

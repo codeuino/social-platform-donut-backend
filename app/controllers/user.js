@@ -7,6 +7,7 @@ module.exports = {
     try {
       await user.save()
       const token = await user.generateAuthToken()
+      // send email here, to activate the account
       res.status(201).json({ user: user, token: token })
     } catch (error) {
       console.log(error)
@@ -73,9 +74,9 @@ module.exports = {
     const { password, id } = req.body
     const { token } = req.params
     try {
-      const decodedtoken = jwt.verify(token, process.env.JWT_SECRET)
+      const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
 
-      if (Date.now() <= decodedtoken.expiry) {
+      if (Date.now() <= decodedToken.expiry) {
         const user = await User.findById({
           _id: id
         })
@@ -110,6 +111,29 @@ module.exports = {
     } catch (error) {
       console.log(error)
       res.status(500).json({ error })
+    }
+  },
+
+  activateAccount: async (req, res, next) => {
+    try {
+      const { token } = req.params
+      const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
+      const expiryTime = decodedToken.iat + 10800000 // 24 hrs
+      if (expiryTime <= Date.now()) {
+        const user = await User.findById(decodedToken._id)
+        if (!user) {
+          res.status(404).json({ msg: 'User not found!' })
+        }
+        // if user found activate the account
+        user.isActivated = true
+        await user.save()
+        return res.status(201).json({ user: user })
+      }
+    } catch (Error) {
+      if (process.env.NODE_ENV !== 'production' && Error) {
+        console.log('Error in activateAccount ', Error)
+      }
+      return res.status(400).json({ Error: Error })
     }
   }
 }
