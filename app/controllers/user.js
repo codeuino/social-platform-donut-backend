@@ -21,7 +21,15 @@ module.exports = {
 
   userProfileUpdate: async (req, res, next) => {
     const updates = Object.keys(req.body)
-    const allowedUpdates = ['name', 'email', 'password', 'company', 'website', 'location', 'about']
+    const allowedUpdates = [
+      'name',
+      'email',
+      'password',
+      'company',
+      'website',
+      'location',
+      'about'
+    ]
     const isValidOperation = updates.every((update) => {
       return allowedUpdates.includes(update)
     })
@@ -48,7 +56,10 @@ module.exports = {
       if (!user) {
         res.status(404).json({ msg: 'User not found!' })
       }
-      const token = jwt.sign({ _id: user._id, expiry: Date.now() + 10800000 }, process.env.JWT_SECRET)
+      const token = jwt.sign(
+        { _id: user._id, expiry: Date.now() + 10800000 },
+        process.env.JWT_SECRET
+      )
       await user.save()
       return res.status(200).json({ success: true, token })
     } catch (error) {
