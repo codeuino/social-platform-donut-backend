@@ -2,10 +2,12 @@ const express = require('express')
 const router = express.Router()
 const userController = require('../controllers/user')
 const auth = require('../middleware/auth')
+const email = require('../middleware/email')
 
 // create a user
 router.post(
   '/',
+  email,
   userController.createUser
 )
 
@@ -34,6 +36,13 @@ router.post(
   '/password_reset/:token',
   userController.updatePassword
 )
+
+// activate account
+router.post(
+  '/activate/:token',
+  userController.activateAccount
+)
+
 // delete a user
 router.delete(
   '/me',

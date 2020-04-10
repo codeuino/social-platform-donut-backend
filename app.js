@@ -11,6 +11,7 @@ const usersRouter = require('./app/routes/user')
 const postRouter = require('./app/routes/post')
 const eventRouter = require('./app/routes/event')
 const shortUrlRouter = require('./app/routes/urlShortner')
+const organizationRouter = require('./app/routes/organisation')
 
 const app = express()
 
@@ -29,6 +30,7 @@ app.use('/auth', authRouter)
 app.use('/user', usersRouter)
 app.use('/post', postRouter)
 app.use('/event', eventRouter)
+app.use('/org', organizationRouter)
 app.use('/shortUrl', shortUrlRouter)
 
 // catch 404 and forward to error handler

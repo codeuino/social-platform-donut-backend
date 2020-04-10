@@ -46,31 +46,35 @@ const orgSchema = new Schema({
       }
     }
   },
-  logo: {
+  image: {
     type: Buffer,
     contentType: String
   },
-  logoUrl: {
+  imgUrl: {
     type: String,
     trim: true,
-    validator (logoUrl) {
-      if (!validator.isURL(logoUrl)) {
-        throw new Error('Invalid logo URL!')
+    validator (imgUrl) {
+      if (!validator.isURL(imgUrl)) {
+        throw new Error('Invalid image URL!')
       }
     }
   },
   contactInfo: {
-    emailId: {
+    email: {
       type: String,
       required: true,
-      validate (emailId) {
-        if (validator.isEmpty(emailId)) {
+      validate (email) {
+        if (validator.isEmpty(email)) {
           throw new Error('EmailId or org is required!')
         }
-        if (!validator.isEmail(emailId)) {
+        if (!validator.isEmail(email)) {
           throw new Error('Invalid emailId')
         }
       }
+    },
+    adminEmail: {
+      type: String,
+      trim: true
     },
     website: {
       type: String,
@@ -87,6 +91,7 @@ const orgSchema = new Schema({
     },
     chattingPlatform: [
       {
+        _id: false,
         link: {
           type: String
         }
@@ -94,22 +99,16 @@ const orgSchema = new Schema({
     ]
   },
   adminInfo: {
-    type: Object,
-    required: true,
-    validate (adminInfo) {
-      if (validator.isEmpty(adminInfo)) {
-        throw new Error('Admin info is required!')
-      }
-    }
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   },
   moderatorInfo: {
-    type: Object,
-    required: true,
-    validate (adminInfo) {
-      if (validator.isEmpty(adminInfo)) {
-        throw new Error('Admin info is required!')
-      }
-    }
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  isArchived: {
+    type: Boolean,
+    default: false
   },
   createdAt: {
     type: Date,
