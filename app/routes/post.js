@@ -1,35 +1,57 @@
+require('../../config/mongoose')
 const express = require('express')
 const router = express.Router()
 const userController = require('../controllers/post')
+const uploader = require('../utils/uploader')
+const auth = require('../middleware/auth')
 
 // CREATE A POST
 router.post(
   '/',
+  auth,
+  uploader.upload.single('image'),
   userController.create
 )
 
-// GET ALL POSTS OF A USER
+// GET ALL POSTS
 router.get(
-  '/',
-  userController.authenticate
-)
-
-// GET PARTICULAR POST OF A USER
-router.get(
-  '/:id',
-  userController.test
+  '/all_posts',
+  auth,
+  userController.getAllPost
 )
 
 // UPDATE A TASK
 router.patch(
   '/:id',
-  userController.test
+  auth,
+  uploader.upload.single('image'),
+  userController.updatePost
 )
 
 // DELETE A TASK
 router.delete(
   '/:id',
-  userController.test
+  auth,
+  userController.delete
+)
+
+// GET TASK BY ID
+router.get(
+  '/:id',
+  auth,
+  userController.getPostById
+)
+
+router.put(
+  '/upvote/:id',
+  auth,
+  userController.upvote
+)
+
+router.put(
+  '/downvote/:id',
+  auth,
+  userController.downvote
 )
 
 module.exports = router
