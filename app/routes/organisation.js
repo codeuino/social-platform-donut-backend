@@ -19,13 +19,6 @@ router.get(
   OrgController.getOrgDetailsById
 )
 
-// GET ARCHIVED ALL ORG
-router.get(
-  '/archive/all',
-  auth,
-  OrgController.getAllArchived
-)
-
 // UPDATE ORG DETAILS
 router.patch(
   '/:id',
@@ -46,6 +39,13 @@ router.patch(
   '/archive/:id',
   auth,
   OrgController.archiveOrg
+)
+
+// TRIGGER MAINTENANCE MODE
+router.patch(
+  '/maintenance',
+  auth,
+  OrgController.triggerMaintenance
 )
 
 module.exports = router

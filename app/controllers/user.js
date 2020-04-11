@@ -1,5 +1,6 @@
 const User = require('../models/User')
 const jwt = require('jsonwebtoken')
+const STATUS = require('../utils/status-codes')
 
 module.exports = {
   createUser: async (req, res, next) => {
@@ -8,10 +9,10 @@ module.exports = {
       await user.save()
       const token = await user.generateAuthToken()
       // send email here, to activate the account
-      res.status(201).json({ user: user, token: token })
+      res.status(STATUS.CREATED).json({ user: user, token: token })
     } catch (error) {
       console.log(error)
-      res.status(400).json({ error: error })
+      res.status(STATUS.NOT_FOUND).json({ error: error })
     }
   },
 
@@ -35,7 +36,7 @@ module.exports = {
     })
 
     if (!isValidOperation) {
-      return res.status(400).json({ error: 'invalid update' })
+      return res.status(STATUS.BAD_REQUEST).json({ error: 'invalid update' })
     }
 
     try {
@@ -43,9 +44,9 @@ module.exports = {
         req.user[update] = req.body[update]
       })
       await req.user.save()
-      res.status(200).json({ data: req.user })
+      res.status(STATUS.UPDATED).json({ data: req.user })
     } catch (error) {
-      res.status(400).json({ error })
+      res.status(STATUS.BAD_REQUEST).json({ error })
     }
   },
 
@@ -54,19 +55,16 @@ module.exports = {
     try {
       const user = await User.findOne({ email: email })
       if (!user) {
-        res.status(404).json({ msg: 'User not found!' })
+        res.status(STATUS.NOT_FOUND).json({ msg: 'User not found!' })
       }
-      const token = jwt.sign(
-        { _id: user._id, expiry: Date.now() + 10800000 },
-        process.env.JWT_SECRET
-      )
+      const token = jwt.sign({ _id: user._id, expiry: Date.now() + 10800000 }, process.env.JWT_SECRET)
       await user.save()
-      return res.status(200).json({ success: true, token })
+      return res.status(STATUS.OK).json({ success: true, token })
     } catch (error) {
       if (process.env.NODE_ENV !== 'production' && error) {
         console.log('Error in forgotPasswordRequest ', error)
       }
-      res.status(400).json({ error })
+      res.status(STATUS.BAD_REQUEST).json({ error })
     }
   },
 
@@ -85,18 +83,18 @@ module.exports = {
         }
         user.password = password
         await user.save()
-        return res.status(200).json({ updated: true })
+        return res.status(STATUS.OK).json({ updated: true })
       } else {
         if (process.env.NODE_ENV !== 'production') {
           console.log('token expired')
         }
-        res.status(400).json({ error: 'Token expired' })
+        res.status(STATUS.BAD_REQUEST).json({ error: 'Token expired' })
       }
     } catch (error) {
       if (process.env.NODE_ENV !== 'production' && error) {
         console.log('Something went wrong ', error)
       }
-      res.status(400).json({ error })
+      res.status(STATUS.BAD_REQUEST).json({ error })
     }
   },
 
