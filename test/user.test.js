@@ -3,6 +3,8 @@ const mongoose = require('mongoose')
 const jwt = require('jsonwebtoken')
 const request = require('supertest')
 const User = require('../app/models/User')
+let token = ''
+let passwordToken = ''
 
 const demoUser = {
   name: {
@@ -124,6 +126,7 @@ test('Login existing user', async () => {
     })
     .expect(200)
 
+  token = response.body.token
   const user = await User.findById(testUserId)
   expect(response.body.token).toBe(user.tokens[1].token)
 })
@@ -172,6 +175,39 @@ test('Should not delete profile of unauthenticated user', async () => {
     .delete('/user/me')
     .send()
     .expect(401)
+})
+
+/** Forgot password request **/
+test('Should send the request to change the password ', async () => {
+  const response = await request(app)
+    .post('/user/password_reset')
+    .send({
+      email: `${testUser.email}`
+    })
+    .expect(200)
+  passwordToken = response.body.token
+  expect(passwordToken).not.toBeNull()
+})
+
+/* Password update */
+test('Should update the password ', async () => {
+  await request(app)
+    .post(`/user/password_reset/${passwordToken}`)
+    .send({
+      password: 'newPassword',
+      id: testUserId
+    })
+    .expect(200)
+})
+
+/* Activate account */
+test('Should activate the account ', async () => {
+  await request(app)
+    .post(`/user/activate/${token}`)
+    .send({
+      token: `${token}`
+    })
+    .expect(201)
 })
 
 /**
