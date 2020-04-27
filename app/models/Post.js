@@ -13,6 +13,10 @@ const PostSchema = new Schema({
       }
     }
   },
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
   image: {
     data: Buffer,
     contentType: String
@@ -32,26 +36,20 @@ const PostSchema = new Schema({
         type: Number,
         default: 0
       },
-      users: {
-        user: {
-          type: Schema.Types.ObjectId,
-          ref: 'User',
-          required: true
-        }
-      }
+      users: [{
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      }]
     },
     downVotes: {
       count: {
         type: Number,
         default: 0
       },
-      users: {
-        user: {
-          type: Schema.Types.ObjectId,
-          ref: 'User',
-          required: true
-        }
-      }
+      users: [{
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      }]
     }
   },
   comments: {
