@@ -1,6 +1,7 @@
 const app = require('../app')
 const mongoose = require('mongoose')
 const jwt = require('jsonwebtoken')
+const HttpStatus = require('http-status-codes')
 const request = require('supertest')
 const Post = require('../app/models/Post')
 const User = require('../app/models/User')
@@ -172,7 +173,7 @@ test('Should create new comment', async (done) => {
     .post('/comment')
     .set('Authorization', `Bearer ${token}`)
     .send(demoComment)
-    .expect(201)
+    .expect(HttpStatus.CREATED)
 
   // Assert that db was changed
   const comment = await Comment.findById(response.body.comment._id)
@@ -210,7 +211,7 @@ test('Should update the Comment data', async (done) => {
     .patch(`/comment/${testCommentId}`)
     .set('Authorization', `Bearer ${token}`)
     .send(updateComment)
-    .expect(204)
+    .expect(HttpStatus.OK)
   done()
 })
 
@@ -223,7 +224,7 @@ test('Should delete comment', async (done) => {
     .delete(`/comment/${testCommentId}`)
     .set('Authorization', `Bearer ${token}`)
     .send()
-    .expect(200)
+    .expect(HttpStatus.OK)
 
   // Assert that post was deleted
   const comment = await Comment.findById(testPostId)
@@ -240,7 +241,7 @@ test('Should get comment for post', async (done) => {
     .get(`/comment/${testPostId}`)
     .set('Authorization', `Bearer ${token}`)
     .send()
-    .expect(200)
+    .expect(HttpStatus.OK)
   done()
 })
 
@@ -253,7 +254,7 @@ test('Should upvote the comment', async (done) => {
     .put(`/comment/upvote/${testCommentId}`)
     .set('Authorization', `Bearer ${token}`)
     .send()
-    .expect(200)
+    .expect(HttpStatus.OK)
 
   const userId = response.body.comment.userId
   const postId = response.body.comment.postId
@@ -287,7 +288,7 @@ test('Should downvote the post', async (done) => {
     .put(`/comment/downvote/${testCommentId}`)
     .set('Authorization', `Bearer ${token}`)
     .send()
-    .expect(200)
+    .expect(HttpStatus.OK)
 
   const userId = response.body.comment.userId
   const postId = response.body.comment.postId

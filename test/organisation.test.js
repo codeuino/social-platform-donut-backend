@@ -1,6 +1,7 @@
 const app = require('../app')
 const mongoose = require('mongoose')
 const request = require('supertest')
+const HttpStatus = require('http-status-codes')
 const Organization = require('../app/models/Organisation')
 const User = require('../app/models/User')
 const jwt = require('jsonwebtoken')
@@ -106,7 +107,7 @@ describe('POST /org/', () => {
       .post('/org/')
       .set('Authorization', `Bearer ${token}`)
       .send(testOrg)
-      .expect(201)
+      .expect(HttpStatus.CREATED)
     orgId = response.body.org._id
     /** DB must be changed **/
     const org = await Organization.findById(response.body.org._id)
@@ -139,7 +140,7 @@ describe('GET /org/:id', () => {
       .get(`/org/${orgId}`)
       .set('Authorization', `Bearer ${token}`)
       .send()
-      .expect(200)
+      .expect(HttpStatus.OK)
     done()
   })
 })
@@ -151,7 +152,7 @@ describe('PATCH /org/:id', () => {
       .patch(`/org/${orgId}`)
       .set('Authorization', `Bearer ${token}`)
       .send(updatedTestOrg)
-      .expect(204)
+      .expect(HttpStatus.OK)
     done()
   })
 })
@@ -163,7 +164,7 @@ describe('DELETE /org/:id', () => {
       .delete(`/org/${orgId}`)
       .set('Authorization', `Bearer ${token}`)
       .send()
-      .expect(200)
+      .expect(HttpStatus.OK)
 
     /** Check if deleted or not **/
     const org = await Organization.findById(orgId)

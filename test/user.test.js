@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const jwt = require('jsonwebtoken')
 const request = require('supertest')
 const User = require('../app/models/User')
+const HttpStatus = require('http-status-codes')
 let token = ''
 let passwordToken = ''
 
@@ -82,7 +83,7 @@ test('Should signup new user', async () => {
   const response = await request(app)
     .post('/user')
     .send(demoUser)
-    .expect(201)
+    .expect(HttpStatus.CREATED)
 
   // Assert that db was changed
   const user = await User.findById(response.body.user._id)
@@ -124,7 +125,7 @@ test('Login existing user', async () => {
       email: testUser.email,
       password: testUser.password
     })
-    .expect(200)
+    .expect(HttpStatus.OK)
 
   token = response.body.token
   const user = await User.findById(testUserId)
@@ -136,7 +137,7 @@ test('Should not login non-existing user', async () => {
   await request(app).post('/auth/login').send({
     email: 'random@random.com',
     password: 'random@123'
-  }).expect(400)
+  }).expect(HttpStatus.BAD_REQUEST)
 })
 
 /** Fetch authenticated user profile */
@@ -145,7 +146,7 @@ test('Should get profile for user', async () => {
     .get('/user/me')
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send()
-    .expect(200)
+    .expect(HttpStatus.OK)
 })
 
 /** Fail in getting unathenticated user profile */
@@ -153,7 +154,7 @@ test('Should not get profile for unauthenticated user', async () => {
   await request(app)
     .get('/user/me')
     .send()
-    .expect(401)
+    .expect(HttpStatus.UNAUTHORIZED)
 })
 
 /** Delete authenticated user profile */
@@ -162,7 +163,7 @@ test('Should delete profile of authenticated user', async () => {
     .delete('/user/me')
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send()
-    .expect(200)
+    .expect(HttpStatus.OK)
 
   // Assert that user was deleted
   const user = await User.findById(testUserId)
@@ -174,7 +175,7 @@ test('Should not delete profile of unauthenticated user', async () => {
   await request(app)
     .delete('/user/me')
     .send()
-    .expect(401)
+    .expect(HttpStatus.UNAUTHORIZED)
 })
 
 /** Forgot password request **/
@@ -207,7 +208,7 @@ test('Should activate the account ', async () => {
     .send({
       token: `${token}`
     })
-    .expect(201)
+    .expect(HttpStatus.OK)
 })
 
 /**
