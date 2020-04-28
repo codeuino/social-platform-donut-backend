@@ -1,4 +1,5 @@
 const UrlModel = require('../models/UrlShortner')
+const HttpStatus = require('http-status-codes')
 
 const regex = '^(https?:\\/\\/)?' +
   '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|' +
@@ -18,12 +19,12 @@ module.exports = {
       const url = await UrlModel.findOne({ urlcode: req.params.shorturl })
 
       if (url) {
-        return res.redirect(url.longurl)
+        return res.status(HttpStatus.OK).redirect(url.longurl)
       } else {
-        return res.json('No url found!')
+        return res.status(HttpStatus.NOT_FOUND).json('No url found!')
       }
     } catch (error) {
-      res.json('Server error!')
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json('Server error!')
     }
   },
 
@@ -35,7 +36,7 @@ module.exports = {
       try {
         var url = await UrlModel.findOne(longurl)
         if (url) {
-          res.json(url)
+          res.status(HttpStatus.OK).json(url)
         } else {
           var shorturl = baseurl + '/' + urlcode
           url = new UrlModel({
@@ -44,14 +45,14 @@ module.exports = {
             urlcode
           })
           await url.save()
-          res.json(url)
+          res.status(HttpStatus.CREATED).json(url)
         }
       } catch (error) {
         console.log(error)
-        res.json('Server error')
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json('Server error')
       }
     } else {
-      res.json('invalid long url')
+      res.status(HttpStatus.NOT_FOUND).json('invalid long url')
     }
   }
 }

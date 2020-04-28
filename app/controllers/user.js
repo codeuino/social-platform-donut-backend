@@ -1,5 +1,6 @@
 const User = require('../models/User')
 const jwt = require('jsonwebtoken')
+const HttpStatus = require('http-status-codes')
 
 module.exports = {
   createUser: async (req, res, next) => {
@@ -8,15 +9,15 @@ module.exports = {
       await user.save()
       const token = await user.generateAuthToken()
       // send email here, to activate the account
-      res.status(201).json({ user: user, token: token })
+      res.status(HttpStatus.CREATED).json({ user: user, token: token })
     } catch (error) {
       console.log(error)
-      res.status(400).json({ error: error })
+      res.status(HttpStatus.NOT_ACCEPTABLE).json({ error: error })
     }
   },
 
   userProfile: async (req, res, next) => {
-    res.json(req.user)
+    res.status(HttpStatus.OK).json(req.user)
   },
 
   userProfileUpdate: async (req, res, next) => {
@@ -35,7 +36,7 @@ module.exports = {
     })
 
     if (!isValidOperation) {
-      return res.status(400).json({ error: 'invalid update' })
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'invalid update' })
     }
 
     try {
@@ -43,9 +44,9 @@ module.exports = {
         req.user[update] = req.body[update]
       })
       await req.user.save()
-      res.status(200).json({ data: req.user })
+      res.status(HttpStatus.OK).json({ data: req.user })
     } catch (error) {
-      res.status(400).json({ error })
+      res.status(HttpStatus.BAD_REQUEST).json({ error })
     }
   },
 
@@ -54,19 +55,16 @@ module.exports = {
     try {
       const user = await User.findOne({ email: email })
       if (!user) {
-        res.status(404).json({ msg: 'User not found!' })
+        res.status(HttpStatus.NOT_FOUND).json({ msg: 'User not found!' })
       }
-      const token = jwt.sign(
-        { _id: user._id, expiry: Date.now() + 10800000 },
-        process.env.JWT_SECRET
-      )
+      const token = jwt.sign({ _id: user._id, expiry: Date.now() + 10800000 }, process.env.JWT_SECRET)
       await user.save()
-      return res.status(200).json({ success: true, token })
+      return res.status(HttpStatus.OK).json({ success: true, token })
     } catch (error) {
       if (process.env.NODE_ENV !== 'production' && error) {
         console.log('Error in forgotPasswordRequest ', error)
       }
-      res.status(400).json({ error })
+      res.status(HttpStatus.BAD_REQUEST).json({ error })
     }
   },
 
@@ -81,27 +79,27 @@ module.exports = {
           _id: id
         })
         if (!user) {
-          return res.status(400).json({ msg: 'No such user' })
+          return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user' })
         }
         user.password = password
         await user.save()
-        return res.status(200).json({ updated: true })
+        return res.status(HttpStatus.OK).json({ updated: true })
       } else {
         if (process.env.NODE_ENV !== 'production') {
           console.log('token expired')
         }
-        res.status(400).json({ error: 'Token expired' })
+        res.status(HttpStatus.BAD_REQUEST).json({ error: 'Token expired' })
       }
     } catch (error) {
       if (process.env.NODE_ENV !== 'production' && error) {
         console.log('Something went wrong ', error)
       }
-      res.status(400).json({ error })
+      res.status(HttpStatus.BAD_REQUEST).json({ error })
     }
   },
 
   logout: (req, res, next) => {
-    res.json({ success: 'ok' })
+    res.status(HttpStatus.OK).json({ success: 'ok' })
   },
 
   userDelete: async (req, res, next) => {
@@ -110,7 +108,7 @@ module.exports = {
       res.send({ data: 'user deletion successful', user: req.user })
     } catch (error) {
       console.log(error)
-      res.status(500).json({ error })
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error })
     }
   },
 
@@ -122,18 +120,18 @@ module.exports = {
       if (expiryTime <= Date.now()) {
         const user = await User.findById(decodedToken._id)
         if (!user) {
-          res.status(404).json({ msg: 'User not found!' })
+          res.status(HttpStatus.NOT_FOUND).json({ msg: 'User not found!' })
         }
         // if user found activate the account
         user.isActivated = true
         await user.save()
-        return res.status(201).json({ user: user })
+        return res.status(HttpStatus.OK).json({ user: user })
       }
     } catch (Error) {
       if (process.env.NODE_ENV !== 'production' && Error) {
         console.log('Error in activateAccount ', Error)
       }
-      return res.status(400).json({ Error: Error })
+      return res.status(HttpStatus.BAD_REQUEST).json({ Error: Error })
     }
   }
 }

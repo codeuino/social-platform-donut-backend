@@ -1,4 +1,5 @@
 const User = require('../models/User')
+const HttpStatus = require('http-status-codes')
 
 const isActivated = async (req, res, next) => {
   const { email } = req.body
@@ -11,7 +12,7 @@ const isActivated = async (req, res, next) => {
       next(new Error('Please activate the account!'))
     }
   } catch (Error) {
-    return res.status(400).json({ Error })
+    return res.status(HttpStatus.BAD_REQUEST).json({ Error })
   }
 }
 

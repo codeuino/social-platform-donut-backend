@@ -1,5 +1,5 @@
 const User = require('../models/User')
-
+const HttpStatus = require('http-status-codes')
 module.exports = {
   authenticateUser: async (req, res, next) => {
     const email = req.body.email
@@ -12,13 +12,13 @@ module.exports = {
       if (process.env.NODE_ENV !== 'production') {
         console.log(error.name, '-', error.message)
       }
-      res.status(400).json({ error: error.message })
+      res.status(HttpStatus.BAD_REQUEST).json({ error: error.message })
     }
   },
   logout: (req, res, next) => {
-    res.json({ success: 'ok' })
+    res.status(HttpStatus.OK).json({ success: 'ok' })
   },
   logoutAll: (req, res, next) => {
-    res.json({ success: 'ok' })
+    res.status(HttpStatus.OK).json({ success: 'ok' })
   }
 }

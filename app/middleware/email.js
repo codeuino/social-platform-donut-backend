@@ -1,5 +1,6 @@
 const emailTemplate = require('../../views/emailTemplate')
 const sendgridMail = require('@sendgrid/mail')
+const HttpStatus = require('http-status-codes')
 
 sendgridMail.setApiKey(process.env.SENDGRID_API_KEY)
 
@@ -15,7 +16,7 @@ const email = (req, res, next) => {
       next()
     },
     (error) => {
-      res.status(error.code).send({
+      res.status(HttpStatus.BAD_REQUEST).send({
         error: process.env.SENDGRID_API_KEY
           ? error.response.body
           : 'Setup SENDGRID_API_KEY environment variable'
