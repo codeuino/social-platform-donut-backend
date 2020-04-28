@@ -89,19 +89,21 @@ module.exports = {
     }
   },
 
-  getAllArchived: async (req, res, next) => {
-    try {
-      const orgs = await Organization.find({ isArchived: true })
-        .populate('adminInfo', ['name.firstName', 'name.lastName', 'email', 'isAdmin'])
-        .populate('moderatorInfo', ['name.firstName', 'name.lastName', 'email', 'isAdmin'])
-        .sort({ createdAt: -1 })
-        .exec()
-      if (orgs.length === 0) {
-        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No archived post exists!' })
-      }
-      res.status(HttpStatus.OK).json({ organization: orgs })
-    } catch (error) {
-      HANDLER.handleError(res, error)
+  triggerMaintenance: async (req, res, next) => {
+    const { orgId } = req.body
+    const organization = await Organization.findById(orgId)
+    const adminIds = organization.adminInfo.map(info => info.adminId)
+    const isAdmin = adminIds.indexOf(req.user.id)
+    if (!organization) {
+      return res.status(HttpStatus.NOT_FOUND).json({ error: 'No such organization exists!' })
+    }
+    if (isAdmin) {
+      // toggle maintenance mode
+      organization.isMaintenance = !organization.isMaintenance
+      await organization.save()
+      res.status(HttpStatus.OK).json({ msg: 'Organization is under the maintenance!!' })
+    } else {
+      res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have access to triggerMaintenance!' })
     }
   }
 }

@@ -57,10 +57,7 @@ module.exports = {
       if (!user) {
         res.status(HttpStatus.NOT_FOUND).json({ msg: 'User not found!' })
       }
-      const token = jwt.sign(
-        { _id: user._id, expiry: Date.now() + 10800000 },
-        process.env.JWT_SECRET
-      )
+      const token = jwt.sign({ _id: user._id, expiry: Date.now() + 10800000 }, process.env.JWT_SECRET)
       await user.save()
       return res.status(HttpStatus.OK).json({ success: true, token })
     } catch (error) {

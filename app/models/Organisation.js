@@ -98,15 +98,25 @@ const orgSchema = new Schema({
       }
     ]
   },
-  adminInfo: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
-  moderatorInfo: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
+  adminInfo: [{
+    _id: false,
+    adminId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  }],
+  moderatorInfo: [{
+    _id: false,
+    adminId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  }],
   isArchived: {
+    type: Boolean,
+    default: false
+  },
+  isMaintenance: {
     type: Boolean,
     default: false
   },
