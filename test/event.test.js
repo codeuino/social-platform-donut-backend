@@ -1,6 +1,7 @@
 const app = require('../app')
 const mongoose = require('mongoose')
 const jwt = require('jsonwebtoken')
+const HttpStatus = require('http-status-codes')
 const request = require('supertest')
 const Event = require('../app/models/Event')
 const User = require('../app/models/User')
@@ -201,10 +202,10 @@ test('Should update event', async () => {
     .patch(`/event/${testEventId}`)
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send(demoUpdatedEvent)
-    .expect(201)
+    .expect(HttpStatus.OK)
 
   // Assert that db was changed
-  const updatedEvent = await Event.findById(response.body.updatedEvent._id)
+  const updatedEvent = await Event.findById(response.body.event._id)
   expect(updatedEvent).not.toBeNull()
 })
 
@@ -223,7 +224,7 @@ test('Should delete event', async () => {
     .delete(`/event/${testEventId}`)
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send()
-    .expect(201)
+    .expect(HttpStatus.OK)
 
   // Assert that event was deleted
   const event = await Event.findById(testEventId)

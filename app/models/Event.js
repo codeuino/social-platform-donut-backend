@@ -80,16 +80,9 @@ const eventSchema = new Schema({
     }
   },
   eventDate: {
-    type: String,
+    type: Date,
     required: true,
-    validate (eventDate) {
-      if (!validator.isISO8601(eventDate)) {
-        throw new Error('Event date is not formated!')
-      }
-      if (validator.isEmpty(eventDate)) {
-        throw new Error('Event date is required!')
-      }
-    }
+    default: Date.now()
   },
   isOnline: {
     type: Boolean,
