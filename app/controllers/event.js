@@ -6,9 +6,9 @@ module.exports = {
     const event = new Event(req.body)
     try {
       await event.save()
-      res.status(201).json({ event: event })
+      res.status(HttpStatus.CREATED).json({ event: event })
     } catch (error) {
-      res.status(400).json({ error: error })
+      res.status(HttpStatus.BAD_REQUEST).json({ error: error })
     }
   },
   updateEvent: async (req, res) => {
@@ -34,13 +34,13 @@ module.exports = {
     try {
       const data = await Event.findById(id)
       if (!data) {
-        res.status(400).json({ error: 'No Event is available' })
+        res.status(HttpStatus.BAD_REQUEST).json({ error: 'No Event is available' })
         return
       }
       if (data.rsvpMaybe.includes(req.user.id) ||
       data.rsvpNo.includes(req.user.id) ||
       data.rsvpYes.includes(req.user.id)) {
-        res.status(201).json({ msg: 'You have already done the rsvp' })
+        res.status(HttpStatus.OK).json({ msg: 'You have already done the rsvp' })
         return
       }
       const event = await Event.findByIdAndUpdate(id)
@@ -48,27 +48,27 @@ module.exports = {
         try {
           event.rsvpYes.push(req.user.id)
           await event.save()
-          res.status(201).json({ rsvpData: data })
+          res.status(HttpStatus.OK).json({ rsvpData: data })
         } catch (error) {
-          res.status(400).json({ error: error })
+          res.status(HttpStatus.BAD_REQUEST).json({ error: error })
         }
       }
       if (no) {
         try {
           event.rsvpNo.push(req.user.id)
           await event.save()
-          res.status(201).json({ rsvpData: data })
+          res.status(HttpStatus.OK).json({ rsvpData: data })
         } catch (error) {
-          res.status(400).json({ error: error })
+          res.status(HttpStatus.BAD_REQUEST).json({ error: error })
         }
       }
       if (maybe) {
         try {
           event.rsvpMaybe.push(req.user.id)
           await event.save()
-          res.status(201).json({ rsvpData: data })
+          res.status(HttpStatus.OK).json({ rsvpData: data })
         } catch (error) {
-          res.status(400).json({ error: error })
+          res.status(HttpStatus.BAD_REQUEST).json({ error: error })
         }
       }
     } catch (error) {
@@ -81,9 +81,9 @@ module.exports = {
       const EventData = await Event
         .findById(id)
       if (!EventData) {
-        return res.status(400).json({ error: 'No such Event is available!' })
+        return res.status(HttpStatus.NOT_FOUND).json({ error: 'No such Event is available!' })
       }
-      res.status(201).json({ Event: EventData })
+      res.status(HttpStatus.OK).json({ Event: EventData })
     } catch (error) {
       next(error)
     }
@@ -93,9 +93,9 @@ module.exports = {
       const EventData = await Event
         .find()
       if (!EventData) {
-        return res.status(400).json({ error: 'No such Event is available!' })
+        return res.status(HttpStatus.NOT_FOUND).json({ error: 'No such Event is available!' })
       }
-      res.status(201).json({ Event: EventData })
+      res.status(HttpStatus.OK).json({ Event: EventData })
     } catch (error) {
       next(error)
     }

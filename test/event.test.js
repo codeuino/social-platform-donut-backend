@@ -117,7 +117,7 @@ test('Should signup new user', async () => {
   const response = await request(app)
     .post('/user')
     .send(demoUser)
-    .expect(201)
+    .expect(HttpStatus.CREATED)
 
   // Assert that db was changed
   const user = await User.findById(response.body.user._id)
@@ -159,7 +159,7 @@ test('Login existing user', async () => {
       email: testUser.email,
       password: testUser.password
     })
-    .expect(200)
+    .expect(HttpStatus.OK)
 
   const user = await User.findById(testUserId)
   expect(response.body.token).toBe(user.tokens[1].token)
@@ -172,7 +172,7 @@ test('Should create new event', async () => {
     .post('/event')
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send(demoEvent)
-    .expect(201)
+    .expect(HttpStatus.CREATED)
 
   // Assert that db was changed
   const event = await Event.findById(response.body.event._id)
@@ -215,7 +215,7 @@ test('Should submit the RSVP', async () => {
     .post(`/event/rsvp/${testEventId}`)
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send(demoRsvp)
-    .expect(201)
+    .expect(HttpStatus.OK)
   const rsvpData = await Event.findById(response.body.rsvpData._id)
   expect(rsvpData).not.toBeNull()
 })
@@ -236,7 +236,7 @@ test('Should get event by id', async () => {
     .get(`/event/${testEventId}`)
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send()
-    .expect(201)
+    .expect(HttpStatus.OK)
 })
 
 test('Should get all the event', async () => {
@@ -244,7 +244,7 @@ test('Should get all the event', async () => {
     .get('/event/all')
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send()
-    .expect(201)
+    .expect(HttpStatus.OK)
 })
 /**
  * TODO: FIX ERROR
