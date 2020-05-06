@@ -5,6 +5,7 @@ const HttpStatus = require('http-status-codes')
 const request = require('supertest')
 const Post = require('../app/models/Post')
 const User = require('../app/models/User')
+const randomDigit = Math.floor(Math.random() * 90 + 10)
 
 const testUserId = new mongoose.Types.ObjectId()
 let token = ''
@@ -13,12 +14,10 @@ const demoPost = {
   userId: testUserId,
   votes: {
     upVotes: {
-      count: 0,
-      users: []
+      user: []
     },
     downVotes: {
-      count: 0,
-      users: []
+      user: []
     }
   }
 }
@@ -32,31 +31,12 @@ const upvotePost = {
   userId: testUserId,
   votes: {
     upVotes: {
-      count: 1,
-      users: [
+      user: [
         testUserId
       ]
     },
     downVotes: {
-      count: 0,
-      users: []
-    }
-  }
-}
-
-const downvotePost = {
-  content: 'test post content',
-  userId: testUserId,
-  votes: {
-    upVotes: {
-      count: 0,
-      users: []
-    },
-    downVotes: {
-      count: 1,
-      users: [
-        testUserId
-      ]
+      user: []
     }
   }
 }
@@ -72,8 +52,8 @@ const demoUser = {
     firstName: 'test',
     lastName: 'test'
   },
-  email: 'test3@mailinator.com',
-  phone: '1234567890',
+  email: `test${randomDigit}@mailinator.com`,
+  phone: `12345678${randomDigit}`,
   password: 'abc12345',
   info: {
     about: {
@@ -106,8 +86,8 @@ const demoUser = {
 const testUser = {
   _id: testUserId,
   ...demoUser,
-  email: 'test@mailinator.com',
-  phone: '1234567891',
+  email: `test${randomDigit}@mailinator.com`,
+  phone: `12345678${randomDigit}`,
   tokens: [{
     token: jwt.sign({
       _id: testUserId
@@ -123,7 +103,6 @@ beforeAll(async (done) => {
   await new User(testUser).save()
   server = app.listen(4000, () => {
     global.agent = request.agent(server)
-    done()
   })
   const response = await request(app)
     .post('/auth/login')
@@ -156,6 +135,7 @@ test('Should create new post', async (done) => {
 
   // Assert that db was changed
   const post = await Post.findById(response.body.post._id)
+
   expect(post).not.toBeNull()
 
   const userId = response.body.post.userId
@@ -167,12 +147,7 @@ test('Should create new post', async (done) => {
       userId: `${userId}`,
       votes: {
         upVotes: {
-          count: demoPost.votes.upVotes.count,
-          users: demoPost.votes.upVotes.users
-        },
-        downVotes: {
-          count: demoPost.votes.downVotes.count,
-          users: demoPost.votes.downVotes.users
+          user: response.body.post.votes.upVotes.user
         }
       }
     }
@@ -216,7 +191,7 @@ test('Should get post for user', async (done) => {
 
 test('Should upvote the post', async (done) => {
   const response = await request(app)
-    .put(`/post/upvote/${testPostId}`)
+    .patch(`/post/upvote/${testPostId}`)
     .set('Authorization', `Bearer ${token}`)
     .send()
     .expect(HttpStatus.OK)
@@ -229,44 +204,7 @@ test('Should upvote the post', async (done) => {
       userId: `${userId}`,
       votes: {
         upVotes: {
-          count: upvotePost.votes.upVotes.count,
-          users: response.body.post.votes.upVotes.users
-        },
-        downVotes: {
-          count: upvotePost.votes.downVotes.count,
-          users: upvotePost.votes.downVotes.users
-        }
-      }
-    }
-  })
-  done()
-})
-
-/**
- * Testing downvote post
- */
-
-test('Should downvote the post', async (done) => {
-  const response = await request(app)
-    .put(`/post/downvote/${testPostId}`)
-    .set('Authorization', `Bearer ${token}`)
-    .send()
-    .expect(HttpStatus.OK)
-
-  const userId = response.body.post.userId
-
-  expect(response.body).toMatchObject({
-    post: {
-      content: downvotePost.content,
-      userId: `${userId}`,
-      votes: {
-        upVotes: {
-          count: downvotePost.votes.upVotes.count,
-          users: downvotePost.votes.upVotes.users
-        },
-        downVotes: {
-          count: downvotePost.votes.downVotes.count,
-          users: response.body.post.votes.downVotes.users
+          user: response.body.post.votes.upVotes.user
         }
       }
     }
@@ -285,6 +223,7 @@ test('Should update the Post data', async (done) => {
     .expect(HttpStatus.OK)
   done()
 })
+
 /**
  * TODO: FIX ERROR
  * This is a temporary fix to issue:

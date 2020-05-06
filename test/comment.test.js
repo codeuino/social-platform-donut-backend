@@ -6,6 +6,7 @@ const request = require('supertest')
 const Post = require('../app/models/Post')
 const User = require('../app/models/User')
 const Comment = require('../app/models/Comment')
+const randomDigit = Math.floor(Math.random() * 90 + 10)
 
 const testUserId = new mongoose.Types.ObjectId()
 const testPostId = new mongoose.Types.ObjectId()
@@ -18,12 +19,10 @@ const demoComment = {
   postId: testPostId,
   votes: {
     upVotes: {
-      count: 0,
-      users: []
+      user: []
     },
     downVotes: {
-      count: 0,
-      users: []
+      user: []
     }
   }
 }
@@ -34,12 +33,10 @@ const demoPost = {
   userId: testUserId,
   votes: {
     upVotes: {
-      count: 0,
-      users: []
+      user: []
     },
     downVotes: {
-      count: 0,
-      users: []
+      user: []
     }
   }
 }
@@ -53,14 +50,12 @@ const upvoteComment = {
   userId: testUserId,
   votes: {
     upVotes: {
-      count: 1,
-      users: [
+      user: [
         testUserId
       ]
     },
     downVotes: {
-      count: 0,
-      users: []
+      user: []
     }
   }
 }
@@ -70,12 +65,10 @@ const downvoteComment = {
   userId: testUserId,
   votes: {
     upVotes: {
-      count: 0,
-      users: []
+      user: []
     },
     downVotes: {
-      count: 1,
-      users: [
+      user: [
         testUserId
       ]
     }
@@ -92,8 +85,8 @@ const demoUser = {
     firstName: 'test',
     lastName: 'test'
   },
-  email: 'test3@mailinator.com',
-  phone: '1234567890',
+  email: `test${randomDigit}@mailinator.com`,
+  phone: `12345678${randomDigit}`,
   password: 'abc12345',
   info: {
     about: {
@@ -126,8 +119,6 @@ const demoUser = {
 const testUser = {
   _id: testUserId,
   ...demoUser,
-  email: 'test@mailinator.com',
-  phone: '1234567891',
   tokens: [{
     token: jwt.sign({
       _id: testUserId
@@ -144,7 +135,6 @@ beforeAll(async (done) => {
   await new Post(demoPost).save()
   server = app.listen(4000, () => {
     global.agent = request.agent(server)
-    done()
   })
   const response = await request(app)
     .post('/auth/login')
@@ -170,7 +160,7 @@ beforeEach(async () => {
  */
 test('Should create new comment', async (done) => {
   const response = await request(app)
-    .post('/comment')
+    .post(`/comment/${testPostId}`)
     .set('Authorization', `Bearer ${token}`)
     .send(demoComment)
     .expect(HttpStatus.CREATED)
@@ -190,12 +180,10 @@ test('Should create new comment', async (done) => {
       postId: `${postId}`,
       votes: {
         upVotes: {
-          count: demoComment.votes.upVotes.count,
-          users: demoComment.votes.upVotes.users
+          user: demoComment.votes.upVotes.user
         },
         downVotes: {
-          count: demoComment.votes.downVotes.count,
-          users: demoComment.votes.downVotes.users
+          user: demoComment.votes.downVotes.user
         }
       }
     }
@@ -251,14 +239,13 @@ test('Should get comment for post', async (done) => {
 
 test('Should upvote the comment', async (done) => {
   const response = await request(app)
-    .put(`/comment/upvote/${testCommentId}`)
+    .patch(`/comment/upVote/${testCommentId}`)
     .set('Authorization', `Bearer ${token}`)
     .send()
     .expect(HttpStatus.OK)
 
   const userId = response.body.comment.userId
   const postId = response.body.comment.postId
-
   expect(response.body).toMatchObject({
     comment: {
       content: upvoteComment.content,
@@ -266,12 +253,10 @@ test('Should upvote the comment', async (done) => {
       postId: `${postId}`,
       votes: {
         upVotes: {
-          count: upvoteComment.votes.upVotes.count,
-          users: response.body.comment.votes.upVotes.users
+          user: response.body.comment.votes.upVotes.user
         },
         downVotes: {
-          count: upvoteComment.votes.downVotes.count,
-          users: upvoteComment.votes.downVotes.users
+          user: response.body.comment.votes.downVotes.user
         }
       }
     }
@@ -285,7 +270,7 @@ test('Should upvote the comment', async (done) => {
 
 test('Should downvote the post', async (done) => {
   const response = await request(app)
-    .put(`/comment/downvote/${testCommentId}`)
+    .patch(`/comment/downVote/${testCommentId}`)
     .set('Authorization', `Bearer ${token}`)
     .send()
     .expect(HttpStatus.OK)
@@ -300,12 +285,10 @@ test('Should downvote the post', async (done) => {
       postId: `${postId}`,
       votes: {
         upVotes: {
-          count: downvoteComment.votes.upVotes.count,
-          users: downvoteComment.votes.upVotes.users
+          user: response.body.comment.votes.upVotes.user
         },
         downVotes: {
-          count: downvoteComment.votes.downVotes.count,
-          users: response.body.comment.votes.downVotes.users
+          user: response.body.comment.votes.downVotes.user
         }
       }
     }

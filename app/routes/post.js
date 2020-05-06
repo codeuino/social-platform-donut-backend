@@ -20,7 +20,7 @@ router.get(
   userController.getAllPost
 )
 
-// UPDATE A TASK
+// UPDATE POST
 router.patch(
   '/:id',
   auth,
@@ -28,30 +28,25 @@ router.patch(
   userController.updatePost
 )
 
-// DELETE A TASK
+// DELETE A POST BY ID
 router.delete(
   '/:id',
   auth,
   userController.delete
 )
 
-// GET TASK BY ID
+// GET POST BY ID
 router.get(
   '/:id',
   auth,
   userController.getPostById
 )
 
-router.put(
+// UPVOTE POST BY POST ID
+router.patch(
   '/upvote/:id',
   auth,
   userController.upvote
-)
-
-router.put(
-  '/downvote/:id',
-  auth,
-  userController.downvote
 )
 
 module.exports = router
