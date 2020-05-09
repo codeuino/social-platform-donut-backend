@@ -1,56 +1,61 @@
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
 const CommentModel = require('../models/Comment')
-const consoleHelper = require('../utils/console-helper')
 
 module.exports = {
+  // CREATE COMMENT (ISSUE IN CREATE COMMENT )
   comment: async (req, res, next) => {
-    const comment = new CommentModel(req.body)
+    const { id } = req.params
     const userId = req.user.id.toString()
-    comment.userId = userId
     try {
+      const comment = new CommentModel(req.body)
+      comment.userId = userId
+      comment.postId = id // added postId
       await comment.save()
       res.status(HttpStatus.CREATED).json({ comment: comment })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
   },
+
+  // DELETE COMMENT
   delete: async (req, res, next) => {
     const { id } = req.params
     const userId = req.user.id.toString()
-    consoleHelper(id)
     try {
       const comment = await CommentModel.findById(id)
       if (!comment) {
-        return res.status(HttpStatus.NOT_FOUND).json({ error: 'No comment exixts' })
+        return res.status(HttpStatus.NOT_FOUND).json({ error: 'No comment exist' })
       }
+      // Add rights for admins and moderators as well (TODO)
       if (JSON.stringify(comment.userId) !== JSON.stringify(userId)) {
         return res.status(HttpStatus.FORBIDDEN).json({ message: 'Bad delete request' })
       }
       await CommentModel.findByIdAndRemove(id)
       res.status(HttpStatus.OK).json({ comment: comment })
     } catch (error) {
-      consoleHelper(error)
       HANDLER.handleError(res, error)
     }
   },
+
+  // UPDATE COMMENT
   update: async (req, res, next) => {
     const { id } = req.params
     const userId = req.user.id.toString()
     const updates = Object.keys(req.body)
     const valid = ['content']
-    let isValidUpdate = true
-    if (JSON.stringify(updates) !== JSON.stringify(valid)) {
-      isValidUpdate = false
-    }
-    if (!isValidUpdate) {
+    const isValidOperation = updates.every((update) => {
+      return valid.includes(update)
+    })
+    if (!isValidOperation) {
       return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Wrong Update Request' })
     }
     try {
       const comment = await CommentModel.findById(id)
       if (!comment) {
-        return res.status(HttpStatus.NOT_FOUND).json({ error: 'No comment exixts' })
+        return res.status(HttpStatus.NOT_FOUND).json({ error: 'No comment exist' })
       }
+      // also add admin or moderator control (TODO)
       if (JSON.stringify(comment.userId) !== JSON.stringify(userId)) {
         return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Wrong update' })
       }
@@ -58,24 +63,31 @@ module.exports = {
         comment[update] = req.body[update]
       })
       await comment.save()
-      consoleHelper(comment)
       res.status(HttpStatus.OK).json({ comment: comment })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
   },
+
+  // GET ALL COMMENTS OF A POST BY postId
   getCommentByPost: async (req, res, next) => {
     const { id } = req.params
     try {
-      const comments = await CommentModel.find({ postId: id }).populate('userId').exec()
+      const comments = await CommentModel.find({ postId: id })
+        .populate('userId', ['name.firstName', 'name.lastName'])
+        .sort({ updatedAt: -1 })
+        .lean()
+        .exec()
       if (!comments) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No such post' })
       }
-      res.status(HttpStatus.OK).json({ comments: comments, success: true })
+      res.status(HttpStatus.OK).json({ comments: comments })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
   },
+
+  // UPVOTE COMMENT
   upvote: async (req, res, next) => {
     const { id } = req.params
     const userId = req.user.id.toString()
@@ -87,24 +99,26 @@ module.exports = {
       // CHECKS IF THE USER HAS ALREADY UPVOTED THE COMMENT
       comment.votes.upVotes.user.filter(user => {
         if (JSON.stringify(user) === JSON.stringify(userId)) {
-          return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Bad request' })
+          return res.status(HttpStatus.BAD_REQUEST).json({
+            error: 'Bad request'
+          })
         }
       })
       // CHECKS IF THE USER HAS ALREADY DOWNVOTED THE COMMENT
       comment.votes.downVotes.user.filter(user => {
         if (JSON.stringify(user) === JSON.stringify(userId)) {
-          comment.votes.downVotes.count = comment.votes.downVotes.count - 1
           comment.votes.downVotes.user.remove(user)
         }
       })
-      comment.votes.upVotes.count = comment.votes.upVotes.count + 1
-      comment.votes.upVotes.user.push(userId)
+      comment.votes.upVotes.user.unshift(userId)
       await comment.save()
-      res.status(HttpStatus.OK).json({ comment: comment, message: 'Success' })
+      res.status(HttpStatus.OK).json({ comment: comment })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
   },
+
+  // DOWNVOTE COMMENT
   downvote: async (req, res, next) => {
     const { id } = req.params
     const userId = req.user.id.toString()
@@ -116,20 +130,20 @@ module.exports = {
       // CHECKS IF THE USER HAS ALREADY DOWNVOTED THE COMMENT
       comment.votes.downVotes.user.filter(user => {
         if (JSON.stringify(user) === JSON.stringify(userId)) {
-          return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Bad request' })
+          return res.status(HttpStatus.BAD_REQUEST).json({
+            error: 'Bad request'
+          })
         }
       })
       // CHECKS IF THE USER HAS ALREADY UPVOTED THE COMMENT
       comment.votes.upVotes.user.filter(user => {
         if (JSON.stringify(user) === JSON.stringify(userId)) {
-          comment.votes.upVotes.count = comment.votes.upVotes.count - 1
           comment.votes.upVotes.user.remove(user)
         }
       })
-      comment.votes.downVotes.count = comment.votes.downVotes.count + 1
-      comment.votes.downVotes.user.push(userId)
+      comment.votes.downVotes.user.unshift(userId)
       await comment.save()
-      res.status(HttpStatus.OK).json({ comment: comment, message: 'Success' })
+      res.status(HttpStatus.OK).json({ comment: comment })
     } catch (error) {
       HANDLER.handleError(res, error)
     }

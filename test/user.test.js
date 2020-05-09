@@ -52,7 +52,7 @@ const testUser = {
   tokens: [{
     token: jwt.sign({
       _id: testUserId
-    }, process.env.JWT_SECRET)
+    }, 'process.env.JWT_SECRET')
   }]
 }
 let server
