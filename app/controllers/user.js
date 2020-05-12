@@ -1,6 +1,7 @@
 const User = require('../models/User')
 const jwt = require('jsonwebtoken')
 const HttpStatus = require('http-status-codes')
+const emailController = require('./email')
 
 module.exports = {
   createUser: async (req, res, next) => {
@@ -8,11 +9,12 @@ module.exports = {
     try {
       await user.save()
       const token = await user.generateAuthToken()
-      // send email here, to activate the account
-      res.status(HttpStatus.CREATED).json({ user: user, token: token })
+      // Added fn to send email to activate account with warm message
+      await emailController.sendEmail(req, res, next, token)
+      return res.status(HttpStatus.CREATED).json({ user: user, token: token })
     } catch (error) {
       console.log(error)
-      res.status(HttpStatus.NOT_ACCEPTABLE).json({ error: error })
+      return res.status(HttpStatus.NOT_ACCEPTABLE).json({ error: error })
     }
   },
 
@@ -120,12 +122,12 @@ module.exports = {
       if (expiryTime <= Date.now()) {
         const user = await User.findById(decodedToken._id)
         if (!user) {
-          res.status(HttpStatus.NOT_FOUND).json({ msg: 'User not found!' })
+          return res.status(HttpStatus.NOT_FOUND).json({ msg: 'User not found!' })
         }
         // if user found activate the account
         user.isActivated = true
         await user.save()
-        return res.status(HttpStatus.OK).json({ user: user })
+        return res.status(HttpStatus.OK).json({ msg: 'Succesfully activated!' })
       }
     } catch (Error) {
       return res.status(HttpStatus.BAD_REQUEST).json({ Error })

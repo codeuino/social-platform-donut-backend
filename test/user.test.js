@@ -204,7 +204,7 @@ test('Should update the password ', async () => {
 /* Activate account */
 test('Should activate the account ', async () => {
   await request(app)
-    .post(`/user/activate/${token}`)
+    .get(`/user/activate/${token}`)
     .send({
       token: `${token}`
     })
