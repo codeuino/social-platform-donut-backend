@@ -23,20 +23,12 @@ const commentSchema = new Schema({
   },
   votes: {
     upVotes: {
-      count: {
-        type: Number,
-        default: 0
-      },
       user: [{
         type: Schema.Types.ObjectId,
         ref: 'User'
       }]
     },
     downVotes: {
-      count: {
-        type: Number,
-        default: 0
-      },
       user: [{
         type: Schema.Types.ObjectId,
         ref: 'User'

@@ -32,21 +32,7 @@ const PostSchema = new Schema({
   },
   votes: {
     upVotes: {
-      count: {
-        type: Number,
-        default: 0
-      },
-      users: [{
-        type: Schema.Types.ObjectId,
-        ref: 'User'
-      }]
-    },
-    downVotes: {
-      count: {
-        type: Number,
-        default: 0
-      },
-      users: [{
+      user: [{
         type: Schema.Types.ObjectId,
         ref: 'User'
       }]
