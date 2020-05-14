@@ -6,6 +6,7 @@ const User = require('../app/models/User')
 const HttpStatus = require('http-status-codes')
 let token = ''
 let passwordToken = ''
+let inviteLink = ''
 
 const demoUser = {
   name: {
@@ -208,6 +209,27 @@ test('Should activate the account ', async () => {
     .send({
       token: `${token}`
     })
+    .expect(HttpStatus.OK)
+})
+
+/* Get invite link */
+test('Should generate an invite link and send', async () => {
+  const response = await request(app)
+    .get('/user/invite')
+    .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+    .send()
+    .expect(HttpStatus.OK)
+  inviteLink = response.body.inviteLink
+  // check the response
+  expect(response.body.inviteLink).not.toBeNull()
+})
+
+/* Process invite link */
+test('Should validate the invite link token ', async () => {
+  const inviteToken = inviteLink.split('/').slice(-1)[0].trim()
+  await request(app)
+    .get(`/user/invite/${inviteToken}`)
+    .send()
     .expect(HttpStatus.OK)
 })
 

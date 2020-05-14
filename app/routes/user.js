@@ -37,6 +37,19 @@ router.post(
   userController.updatePassword
 )
 
+// get invite link (for sender)
+router.get(
+  '/invite',
+  auth,
+  userController.getInviteLink
+)
+
+// process invite link (for receiver)
+router.get(
+  '/invite/:token',
+  userController.processInvite
+)
+
 // activate account
 router.post(
   '/activate/:token',
