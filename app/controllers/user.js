@@ -57,7 +57,7 @@ module.exports = {
       if (!user) {
         res.status(HttpStatus.NOT_FOUND).json({ msg: 'User not found!' })
       }
-      const token = jwt.sign({ _id: user._id, expiry: Date.now() + 10800000 }, 'process.env.JWT_SECRET')
+      const token = jwt.sign({ _id: user._id, expiry: Date.now() + 10800000 }, process.env.JWT_SECRET)
       await user.save()
       return res.status(HttpStatus.OK).json({ success: true, token })
     } catch (error) {
@@ -72,7 +72,7 @@ module.exports = {
     const { password, id } = req.body
     const { token } = req.params
     try {
-      const decodedToken = jwt.verify(token, 'process.env.JWT_SECRET')
+      const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
 
       if (Date.now() <= decodedToken.expiry) {
         const user = await User.findById({
@@ -116,7 +116,7 @@ module.exports = {
     try {
       const { token } = req.params
       const decodedToken = jwt.verify(token, 'process.env.JWT_SECRET')
-      const expiryTime = decodedToken.iat + 10800000 // 24 hrs
+      const expiryTime = decodedToken.iat + 24 * 3600 * 1000 // 24 hrs
       if (expiryTime <= Date.now()) {
         const user = await User.findById(decodedToken._id)
         if (!user) {
@@ -130,5 +130,23 @@ module.exports = {
     } catch (Error) {
       return res.status(HttpStatus.BAD_REQUEST).json({ Error })
     }
+  },
+
+  getInviteLink: async (req, res, next) => {
+    const token = jwt.sign({ _id: req.user._id, expiry: Date.now() + 24 * 3600 * 1000 }, process.env.JWT_SECRET)
+    const inviteLink = `${req.protocol}://${req.get('host')}/user/invite/${token}`
+    return res.status(HttpStatus.OK).json({ inviteLink: inviteLink })
+  },
+
+  processInvite: async (req, res, next) => {
+    const { token } = req.params
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
+    // check if token not expired and sender exist in db then valid request
+    const user = await User.findById(decodedToken._id)
+    if (user && Date.now() <= decodedToken.expiry) {
+      console.log('Valid invite!')
+      return res.status(HttpStatus.OK).json({ success: true, msg: 'Redirect user to register in client side!' })
+    }
+    return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Invalid token!' })
   }
 }
