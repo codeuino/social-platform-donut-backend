@@ -51,7 +51,7 @@ router.get(
 )
 
 // activate account
-router.post(
+router.get(
   '/activate/:token',
   userController.activateAccount
 )

@@ -5,6 +5,7 @@ const HttpStatus = require('http-status-codes')
 const request = require('supertest')
 const Event = require('../app/models/Event')
 const User = require('../app/models/User')
+const randomDigit = Math.floor(Math.random() * 90 + 10)
 
 const testUserId = new mongoose.Types.ObjectId()
 const demoEvent = {
@@ -47,8 +48,8 @@ const demoUser = {
     firstName: 'test',
     lastName: 'test'
   },
-  email: 'test3@mailinator.com',
-  phone: '1234567890',
+  email: `test${randomDigit}@mailinator.com`,
+  phone: `12345678${randomDigit}`,
   password: 'abc12345',
   info: {
     about: {
@@ -81,14 +82,15 @@ const demoUser = {
 const testUser = {
   _id: testUserId,
   ...demoUser,
-  email: 'test@mailinator.com',
-  phone: '1234567891',
+  email: `test${randomDigit + Math.random() * 10}@mailinator.com`,
+  phone: `12335678${randomDigit}`,
   tokens: [{
     token: jwt.sign({
       _id: testUserId
     }, 'process.env.JWT_SECRET')
   }]
 }
+
 let server
 /**
  * This will pe performed once at the beginning of the test
@@ -145,8 +147,7 @@ test('Should signup new user', async () => {
           location: demoUser.info.about.location
         }
       }
-    },
-    token: user.tokens[0].token
+    }
   })
   expect(user.password).not.toBe('abc12345') // to check hashing
 })

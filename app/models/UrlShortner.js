@@ -1,14 +1,14 @@
 const mongoose = require('mongoose')
 
 const urlShortnerSchema = new mongoose.Schema({
-  longurl: {
+  longUrl: {
     type: String,
     required: true
   },
-  urlcode: {
+  urlCode: {
     type: String
   },
-  shorturl: {
+  shortUrl: {
     type: String
   }
 })

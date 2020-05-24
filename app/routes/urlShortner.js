@@ -4,7 +4,7 @@ const shortnerController = require('../controllers/urlShortner')
 
 // Redirects the ShortURL back to LongURL
 router.get(
-  '/:shorturl',
+  '/:urlcode',
   shortnerController.redirect
 )
 
