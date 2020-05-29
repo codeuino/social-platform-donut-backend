@@ -94,15 +94,19 @@ module.exports = {
 
   // GET ALL THE POSTS
   getAllPost: async (req, res, next) => {
+    const pagination = req.query.pagination ? parseInt(req.query.pagination) : 10
+    const currentPage = req.query.page ? parseInt(req.query.page) : 1
     try {
       const posts = await PostModel.find({})
+        .skip((currentPage - 1) * pagination)
+        .limit(pagination)
         .populate('userId', ['name.firstName', 'name.lastName', 'email', 'isAdmin'])
         .sort({ updatedAt: -1 })
         .exec()
       if (!posts.length) {
         return res.status(HttpStatus.NOT_FOUND).json({ message: 'No posts found' })
       }
-      res.status(HttpStatus.OK).json({ posts: posts })
+      return res.status(HttpStatus.OK).json({ posts: posts })
     } catch (error) {
       HANDLER.handleError(res, error)
     }

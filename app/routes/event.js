@@ -9,6 +9,14 @@ router.get(
   auth,
   eventController.GetAllEvent
 )
+
+// get all the events
+router.get(
+  '/upcoming',
+  auth,
+  eventController.UpComingEvents
+)
+
 // create an event
 router.post(
   '/',
@@ -28,7 +36,7 @@ router.patch(
   eventController.updateEvent
 )
 // rsvp by user
-router.post(
+router.patch(
   '/rsvp/:id',
   auth,
   eventController.rsvp
