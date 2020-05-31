@@ -63,4 +63,34 @@ router.delete(
   userController.userDelete
 )
 
+// follow the user
+router.patch(
+  '/follow',
+  auth,
+  userController.addFollowing,
+  userController.addFollower
+)
+
+// unFollow the user
+router.patch(
+  '/unfollow',
+  auth,
+  userController.removeFollowing,
+  userController.removeFollower
+)
+
+// BLOCK THE USER
+router.patch(
+  '/block/:id',
+  auth,
+  userController.blockUser
+)
+
+// UNBLOCK THE USER
+router.patch(
+  '/unblock/:id',
+  auth,
+  userController.unBlockUser
+)
+
 module.exports = router

@@ -48,4 +48,11 @@ router.delete(
   eventController.deleteEvent
 )
 
+// GET ALL EVENT POSTED BY A USER
+router.get(
+  '/me/all',
+  auth,
+  eventController.getAllEventByUser
+)
+
 module.exports = router

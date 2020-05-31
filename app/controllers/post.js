@@ -133,5 +133,23 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
+  },
+  getPostByUser: async (req, res, next) => {
+    const pagination = req.query.pagination ? parseInt(req.query.pagination) : 10
+    const currentPage = req.query.page ? parseInt(req.query.page) : 1
+    try {
+      const posts = await PostModel.find({ userId: req.user._id })
+        .skip((currentPage - 1) * pagination)
+        .limit(pagination)
+        .populate('comments', ['content', 'votes'])
+        .sort({ updatedAt: -1 })
+        .exec()
+      if (posts.length === 0) {
+        return res.status(HttpStatus.OK).json({ msg: 'No posts found!' })
+      }
+      return res.status(HttpStatus.OK).json({ posts })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
   }
 }

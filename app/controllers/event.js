@@ -5,6 +5,7 @@ module.exports = {
   createEvent: async (req, res, next) => {
     const event = new Event(req.body)
     try {
+      event.createdBy = req.user._id
       await event.save()
       res.status(HttpStatus.CREATED).json({ event: event })
     } catch (error) {
@@ -130,6 +131,23 @@ module.exports = {
       return res.status(HttpStatus.OK).json({ events })
     } catch (error) {
       HANDLER.handleError(res, next)
+    }
+  },
+  getAllEventByUser: async (req, res, next) => {
+    const pagination = req.query.pagination ? req.query.pagination : 10
+    const currentPage = req.query.page ? req.query.page : 1
+    try {
+      const events = await Event.find({ createdBy: req.user._id })
+        .skip((currentPage - 1) * pagination)
+        .limit(pagination)
+        .populate('createdBy', '_id name.firstName name.lastName')
+        .exec()
+      if (events.length === 0) {
+        return res.status(HttpStatus.OK).json({ msg: 'No events posted by user!' })
+      }
+      return res.status(HttpStatus.OK).json({ events })
+    } catch (error) {
+      HANDLER.handleError(res, error)
     }
   }
 }

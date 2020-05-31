@@ -213,7 +213,7 @@ test('Should update event', async () => {
 // Testing for the RSVP
 test('Should submit the RSVP', async () => {
   const response = await request(app)
-    .post(`/event/rsvp/${testEventId}`)
+    .patch(`/event/rsvp/${testEventId}`)
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send(demoRsvp)
     .expect(HttpStatus.OK)
