@@ -1,6 +1,7 @@
 const Project = require('../models/Project')
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
+const helper = require('../utils/paginate')
 
 module.exports = {
   createProject: async (req, res, next) => {
@@ -14,12 +15,8 @@ module.exports = {
     }
   },
   getAllProjects: async (req, res, next) => {
-    const pagination = req.query.pagination ? parseInt(req.query.pagination) : 10
-    const page = req.query.page ? parseInt(req.query.page) : 1
     try {
-      const projects = await Project.find({})
-        .skip((page - 1) * pagination)
-        .limit(pagination)
+      const projects = await Project.find({}, {}, helper.paginate(req))
         .populate('createdBy', '_id name.firstName name.lastName email')
         .sort({ updatedAt: -1 })
         .exec()
@@ -95,13 +92,9 @@ module.exports = {
     }
   },
   projectCreatedByUser: async (req, res, next) => {
-    const pagination = req.query.pagination ? parseInt(req.query.pagination) : 10
-    const currentPage = req.query.page ? parseInt(req.query.page) : 1
     try {
       const { id } = req.user
-      const projects = await Project.find({ createdBy: id })
-        .skip((currentPage - 1) * pagination)
-        .limit(pagination)
+      const projects = await Project.find({ createdBy: id }, {}, helper.paginate(req))
         .populate('createdBy', '_id name.firstName name.lastName email')
         .sort({ updatedAt: -1 })
         .exec()

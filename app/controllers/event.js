@@ -1,6 +1,8 @@
 const Event = require('../models/Event')
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
+const helper = require('../utils/paginate')
+
 module.exports = {
   createEvent: async (req, res, next) => {
     const event = new Event(req.body)
@@ -12,6 +14,7 @@ module.exports = {
       res.status(HttpStatus.BAD_REQUEST).json({ error: error })
     }
   },
+
   updateEvent: async (req, res) => {
     const { id } = req.params
     const updates = Object.keys(req.body)
@@ -29,6 +32,7 @@ module.exports = {
       HANDLER.handleError(res, error)
     }
   },
+
   rsvp: async (req, res) => {
     const { yes, no, maybe } = req.body
     const { id } = req.params
@@ -75,6 +79,7 @@ module.exports = {
       HANDLER.handleError(res, error)
     }
   },
+
   GetEventById: async (req, res, next) => {
     const { id } = req.params
     try {
@@ -87,14 +92,12 @@ module.exports = {
       next(error)
     }
   },
+
   GetAllEvent: async (req, res, next) => {
-    const pagination = req.query.pagination ? parseInt(req.query.pagination) : 10
-    const currentPage = req.query.page ? parseInt(req.query.page) : 1
     try {
-      const EventData = await Event.find({})
+      const EventData = await Event.find({}, {}, helper.paginate(req))
+        .sort({ eventDate: -1 })
         .lean()
-        .skip((currentPage - 1) * pagination)
-        .limit(pagination)
       if (!EventData) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No such Event is available!' })
       }
@@ -103,6 +106,7 @@ module.exports = {
       HANDLER.handleError(res, error)
     }
   },
+
   deleteEvent: async (req, res, next) => {
     const { id } = req.params
     try {
@@ -116,13 +120,11 @@ module.exports = {
       HANDLER.handleError(res, error)
     }
   },
+
   UpComingEvents: async (req, res, next) => {
-    const pageSize = req.query.pagination ? parseInt(req.query.pagination) : 10
-    const currentPage = req.query.page ? parseInt(req.query.page) : 1
     try {
-      const events = await Event.find({ eventDate: { $gt: Date.now() } })
-        .skip((currentPage - 1) * pageSize)
-        .limit(pageSize)
+      const events = await Event.find({ eventDate: { $gt: Date.now() } }, {}, helper.paginate(req))
+        .sort({ eventDate: -1 })
         .exec()
       console.log('Upcoming events ', events)
       if (events.length === 0) {
@@ -133,13 +135,11 @@ module.exports = {
       HANDLER.handleError(res, next)
     }
   },
+
   getAllEventByUser: async (req, res, next) => {
-    const pagination = req.query.pagination ? req.query.pagination : 10
-    const currentPage = req.query.page ? req.query.page : 1
     try {
-      const events = await Event.find({ createdBy: req.user._id })
-        .skip((currentPage - 1) * pagination)
-        .limit(pagination)
+      const events = await Event.find({ createdBy: req.user._id }, {}, helper.paginate(req))
+        .sort({ eventDate: -1 })
         .populate('createdBy', '_id name.firstName name.lastName')
         .exec()
       if (events.length === 0) {

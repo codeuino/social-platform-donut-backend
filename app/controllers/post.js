@@ -2,6 +2,7 @@ const PostModel = require('../models/Post')
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
 const imgUploadHelper = require('../utils/uploader')
+const helper = require('../utils/paginate')
 
 module.exports = {
   // CREATE POST
@@ -94,12 +95,8 @@ module.exports = {
 
   // GET ALL THE POSTS
   getAllPost: async (req, res, next) => {
-    const pagination = req.query.pagination ? parseInt(req.query.pagination) : 10
-    const currentPage = req.query.page ? parseInt(req.query.page) : 1
     try {
-      const posts = await PostModel.find({})
-        .skip((currentPage - 1) * pagination)
-        .limit(pagination)
+      const posts = await PostModel.find({}, {}, helper.paginate(req))
         .populate('userId', ['name.firstName', 'name.lastName', 'email', 'isAdmin'])
         .sort({ updatedAt: -1 })
         .exec()
@@ -135,12 +132,8 @@ module.exports = {
     }
   },
   getPostByUser: async (req, res, next) => {
-    const pagination = req.query.pagination ? parseInt(req.query.pagination) : 10
-    const currentPage = req.query.page ? parseInt(req.query.page) : 1
     try {
-      const posts = await PostModel.find({ userId: req.user._id })
-        .skip((currentPage - 1) * pagination)
-        .limit(pagination)
+      const posts = await PostModel.find({ userId: req.user._id }, {}, helper.paginate(req))
         .populate('comments', ['content', 'votes'])
         .sort({ updatedAt: -1 })
         .exec()

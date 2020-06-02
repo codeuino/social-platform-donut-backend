@@ -279,7 +279,7 @@ module.exports = {
           await user.save()
           return res.status(HttpStatus.OK).json({ user })
         }
-        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exist!' })
+        return res.status(HttpStatus.NOT_FOUND).json({ user })
       }
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have permission!' })
     } catch (error) {

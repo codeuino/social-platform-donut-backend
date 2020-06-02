@@ -1,6 +1,7 @@
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
 const CommentModel = require('../models/Comment')
+const helper = require('../utils/paginate')
 
 module.exports = {
   // CREATE COMMENT (ISSUE IN CREATE COMMENT )
@@ -71,12 +72,9 @@ module.exports = {
 
   // GET ALL COMMENTS OF A POST BY postId
   getCommentByPost: async (req, res, next) => {
-    const currentPage = req.query.page ? parseInt(req.query.page) : 1
     const { id } = req.params
     try {
-      const comments = await CommentModel.find({ postId: id })
-        .skip((currentPage - 1) * 5)
-        .limit(5)
+      const comments = await CommentModel.find({ postId: id }, {}, helper.paginate(req))
         .populate('userId', ['name.firstName', 'name.lastName'])
         .sort({ updatedAt: -1 })
         .lean()
