@@ -1,6 +1,8 @@
 const Event = require('../models/Event')
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
+// const permission = require('../utils/permission')
+
 module.exports = {
   createEvent: async (req, res, next) => {
     const event = new Event(req.body)
@@ -19,6 +21,7 @@ module.exports = {
       if (!event) {
         return res.status(HttpStatus.BAD_REQUEST).json({ message: 'No post exists' })
       }
+      // check for permission (TODO AFTER PREVIOUS PR MERGED)
       updates.forEach(update => {
         event[update] = req.body[update]
       })

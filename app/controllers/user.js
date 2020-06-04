@@ -2,6 +2,8 @@ const User = require('../models/User')
 const jwt = require('jsonwebtoken')
 const HttpStatus = require('http-status-codes')
 const emailController = require('./email')
+const permission = require('../utils/permission')
+const HANDLER = require('../utils/response-helper')
 
 module.exports = {
   createUser: async (req, res, next) => {
@@ -27,11 +29,8 @@ module.exports = {
     const allowedUpdates = [
       'name',
       'email',
-      'password',
-      'company',
-      'website',
-      'location',
-      'about'
+      'phone',
+      'info'
     ]
     const isValidOperation = updates.every((update) => {
       return allowedUpdates.includes(update)
@@ -46,9 +45,9 @@ module.exports = {
         req.user[update] = req.body[update]
       })
       await req.user.save()
-      res.status(HttpStatus.OK).json({ data: req.user })
+      return res.status(HttpStatus.OK).json({ data: req.user })
     } catch (error) {
-      res.status(HttpStatus.BAD_REQUEST).json({ error })
+      return res.status(HttpStatus.BAD_REQUEST).json({ error })
     }
   },
 
@@ -100,17 +99,25 @@ module.exports = {
     }
   },
 
-  logout: (req, res, next) => {
-    res.status(HttpStatus.OK).json({ success: 'ok' })
+  logout: async (req, res, next) => {
+    try {
+      req.user.tokens = []
+      await req.user.save()
+      return res.status(HttpStatus.OK).json({ msg: 'User logged out Successfully!' })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
   },
 
   userDelete: async (req, res, next) => {
     try {
-      await req.user.remove()
-      res.send({ data: 'user deletion successful', user: req.user })
+      if (permission.check(req, res)) {
+        await req.user.remove()
+        return res.send({ data: 'user deletion successful', user: req.user })
+      }
+      return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have permission!' })
     } catch (error) {
-      console.log(error)
-      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error })
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error })
     }
   },
 

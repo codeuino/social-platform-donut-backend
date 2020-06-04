@@ -48,4 +48,18 @@ router.patch(
   OrgController.triggerMaintenance
 )
 
+// GET ORG OVERVIEW FOR INSIGHT PAGE
+router.get(
+  '/overview/all',
+  auth,
+  OrgController.getOrgOverView
+)
+
+// GET MEMBERS FOR INSIGHT PAGE
+router.get(
+  '/members/all',
+  auth,
+  OrgController.getMembers
+)
+
 module.exports = router

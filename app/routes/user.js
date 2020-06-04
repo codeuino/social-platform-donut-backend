@@ -63,4 +63,11 @@ router.delete(
   userController.userDelete
 )
 
+// LOGOUT USER
+router.post(
+  '/logout',
+  auth,
+  userController.logout
+)
+
 module.exports = router

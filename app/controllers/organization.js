@@ -2,6 +2,10 @@ const Organization = require('../models/Organisation')
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
 const helper = require('../utils/uploader')
+const User = require('../models/User')
+const Project = require('../models/Project')
+const Event = require('../models/Event')
+const permission = require('../utils/permission')
 
 module.exports = {
   createOrganization: async (req, res, next) => {
@@ -20,7 +24,7 @@ module.exports = {
   updateOrgDetails: async (req, res, next) => {
     const { id } = req.params
     const updates = Object.keys(req.body)
-    const allowedUpdates = ['name', 'description', 'contactInfo', 'image', 'adminInfo', 'moderatorInfo']
+    const allowedUpdates = ['name', 'description', 'contactInfo', 'image', 'imgUrl', 'adminInfo', 'moderatorInfo']
     const isValidOperation = updates.every((update) => {
       return allowedUpdates.includes(update)
     })
@@ -30,6 +34,10 @@ module.exports = {
     }
     try {
       const org = await Organization.findById(id)
+      // check for permission (ONLY ADMINS CAN UPDATE)
+      if (!permission.check(req, res)) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have the permission' })
+      }
       updates.forEach(update => {
         org[update] = req.body[update]
       })
@@ -46,11 +54,11 @@ module.exports = {
   getOrgDetailsById: async (req, res, next) => {
     const { id } = req.params
     try {
-      const orgData = await Organization
-        .findById(id)
+      const orgData = await Organization.findById(id)
         .populate('adminInfo', ['name.firstName', 'name.lastName', 'email', 'isAdmin'])
         .populate('moderatorInfo', ['name.firstName', 'name.lastName', 'email', 'isAdmin'])
         .sort({ createdAt: -1 })
+        .lean()
         .exec()
       if (!orgData) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No such organization exists!' })
@@ -68,7 +76,11 @@ module.exports = {
       if (!org) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No such organization exists!' })
       }
-      res.status(HttpStatus.OK).json({ organization: org })
+      // check for permission
+      if (!permission.check(req, res)) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have the permission!' })
+      }
+      return res.status(HttpStatus.OK).json({ organization: org })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -83,7 +95,7 @@ module.exports = {
       }
       org.isArchived = true
       await org.save()
-      res.status(HttpStatus.OK).json({ organization: org })
+      return res.status(HttpStatus.OK).json({ organization: org })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -104,6 +116,51 @@ module.exports = {
       res.status(HttpStatus.OK).json({ msg: 'Organization is under the maintenance!!' })
     } else {
       res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have access to triggerMaintenance!' })
+    }
+  },
+  getOrgOverView: async (req, res, next) => {
+    const orgOverView = {}
+    try {
+      const org = await Organization.find({})
+      if (!org) {
+        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No org exists!' })
+      }
+      orgOverView.admins = org[0].adminInfo.length
+      orgOverView.members = await User.find({}).lean().count()
+      orgOverView.projects = await Project.find({}).lean().count()
+      orgOverView.events = await Event.find({}).lean().count()
+      return res.status(HttpStatus.OK).json({ orgOverView })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+  getMembers: async (req, res, next) => {
+    try {
+      const { search } = req.query
+      if (search) {
+        const regex = search.split(' ')
+        const member = await User.find({ $or: [{ 'name.firstName': regex }, { 'name.lastName': regex }] })
+          .select('name email isAdmin info.about.designation')
+          .lean()
+          .sort({ createdAt: -1 })
+          .exec()
+        if (!member) {
+          return res.status(HttpStatus.OK).json({ msg: 'Member not found!' })
+        }
+        return res.status(HttpStatus.OK).json({ member })
+      } else {
+        const members = await User.find({})
+          .select('name email isAdmin info.about.designation')
+          .lean()
+          .sort({ createdAt: -1 })
+          .exec()
+        if (members.length === 0) {
+          return res.status(HttpStatus.OK).json({ msg: 'No members joined yet!' })
+        }
+        return res.status(HttpStatus.OK).json({ members })
+      }
+    } catch (error) {
+      HANDLER.handleError(res, error)
     }
   }
 }
