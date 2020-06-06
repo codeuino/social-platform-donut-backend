@@ -2,10 +2,12 @@ const express = require('express')
 const router = express.Router()
 const auth = require('../middleware/auth')
 const commentController = require('../controllers/comment')
+const isUnderMaintenance = require('../middleware/maintenance')
 
 // CREATE COMMENT
 router.post(
   '/:id',
+  isUnderMaintenance,
   auth,
   commentController.comment
 )
@@ -13,6 +15,7 @@ router.post(
 // DELETE COMMENT BY ID
 router.delete(
   '/:id',
+  isUnderMaintenance,
   auth,
   commentController.delete
 )
@@ -20,6 +23,7 @@ router.delete(
 // UPDATE COMMENT BY ID
 router.patch(
   '/:id',
+  isUnderMaintenance,
   auth,
   commentController.update
 )
@@ -27,6 +31,7 @@ router.patch(
 // GET COMMENT BY POST ID
 router.get(
   '/:id',
+  isUnderMaintenance,
   auth,
   commentController.getCommentByPost
 )
@@ -34,6 +39,7 @@ router.get(
 // UPVOTE COMMENT BY COMMENT ID
 router.patch(
   '/upvote/:id',
+  isUnderMaintenance,
   auth,
   commentController.upvote
 )
@@ -41,6 +47,7 @@ router.patch(
 // DOWNVOTE COMMENT BY COMMENT ID
 router.patch(
   '/downvote/:id',
+  isUnderMaintenance,
   auth,
   commentController.downvote
 )

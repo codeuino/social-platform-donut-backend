@@ -1,52 +1,75 @@
 require('../../config/mongoose')
 const express = require('express')
 const router = express.Router()
-const userController = require('../controllers/post')
+const postController = require('../controllers/post')
 const uploader = require('../utils/uploader')
 const auth = require('../middleware/auth')
+const isUnderMaintenance = require('../middleware/maintenance')
 
 // CREATE A POST
 router.post(
   '/',
+  isUnderMaintenance,
   auth,
   uploader.upload.single('image'),
-  userController.create
+  postController.create
 )
 
 // GET ALL POSTS
 router.get(
   '/all_posts',
+  isUnderMaintenance,
   auth,
-  userController.getAllPost
+  postController.getAllPost
 )
 
 // UPDATE POST
 router.patch(
   '/:id',
+  isUnderMaintenance,
   auth,
   uploader.upload.single('image'),
-  userController.updatePost
+  postController.updatePost
 )
 
 // DELETE A POST BY ID
 router.delete(
   '/:id',
+  isUnderMaintenance,
   auth,
-  userController.delete
+  postController.delete
 )
 
 // GET POST BY ID
 router.get(
   '/:id',
+  isUnderMaintenance,
   auth,
-  userController.getPostById
+  postController.getPostById
 )
 
 // UPVOTE POST BY POST ID
 router.patch(
   '/upvote/:id',
+  isUnderMaintenance,
   auth,
-  userController.upvote
+  postController.upvote
+)
+
+// PIN THE POST
+router.patch(
+  '/pin/:id/',
+  isUnderMaintenance,
+  auth,
+  postController.pinPost
+)
+
+// GET ALL PINNED POSTS
+router.get(
+  '/all/pinned/',
+  isUnderMaintenance,
+  auth,
+  postController.getPinned
 )
 
 module.exports = router

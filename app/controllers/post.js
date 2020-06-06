@@ -1,4 +1,5 @@
 const PostModel = require('../models/Post')
+const UserModel = require('../models/User')
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
 const imgUploadHelper = require('../utils/uploader')
@@ -126,6 +127,56 @@ module.exports = {
       post.votes.upVotes.user.unshift(userId)
       await post.save()
       res.status(HttpStatus.OK).json({ post: post })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+
+  // PIN THE POST
+  pinPost: async (req, res, next) => {
+    const { id } = req.params
+    try {
+      const post = await PostModel.findById(id)
+      const user = await UserModel.findById(req.user._id)
+      if (!post) {
+        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such post exists!' })
+      }
+      // toggle pinned post
+      post.isPinned = !post.isPinned
+      // if already pinned then remove from their pinned items
+      const PinnedItems = user.pinned.postId
+      if (PinnedItems.length > 0) {
+        const pinnedPostIndex = PinnedItems.indexOf(id)
+        user.pinned.postId.splice(pinnedPostIndex, 1)
+        await user.save()
+      } else {
+        // save to the user pinned items
+        user.pinned.postId.unshift(id)
+        await user.save()
+      }
+      await post.save()
+      return res.status(HttpStatus.OK).json({ post })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+
+  // GET ALL PINNED POST
+  getPinned: async (req, res, next) => {
+    try {
+      const posts = await PostModel.find({})
+      if (posts.length === 0) {
+        return res.status(HttpStatus.OK).json({ msg: 'No post to show!' })
+      }
+      // check for pinned post
+      const pinnedPost = posts.filter((post) => {
+        return post.isPinned === true
+      })
+      if (pinnedPost.length === 0) {
+        return res.status(HttpStatus.OK).json({ msg: 'No post pinned yet!' })
+      }
+      // else return pinned posts
+      return res.status(HttpStatus.OK).json({ pinnedPost })
     } catch (error) {
       HANDLER.handleError(res, error)
     }

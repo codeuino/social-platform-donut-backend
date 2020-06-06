@@ -136,6 +136,13 @@ const UserSchema = new mongoose.Schema({
       }
     }
   },
+  pinned: {
+    _id: false,
+    postId: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Post'
+    }]
+  },
   isAdmin: {
     type: Boolean,
     default: false
