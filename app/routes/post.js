@@ -4,10 +4,12 @@ const router = express.Router()
 const postController = require('../controllers/post')
 const uploader = require('../utils/uploader')
 const auth = require('../middleware/auth')
+const isUnderMaintenance = require('../middleware/maintenance')
 
 // CREATE A POST
 router.post(
   '/',
+  isUnderMaintenance,
   auth,
   uploader.upload.single('image'),
   postController.create
@@ -16,6 +18,7 @@ router.post(
 // GET ALL POSTS
 router.get(
   '/all_posts',
+  isUnderMaintenance,
   auth,
   postController.getAllPost
 )
@@ -23,6 +26,7 @@ router.get(
 // UPDATE POST
 router.patch(
   '/:id',
+  isUnderMaintenance,
   auth,
   uploader.upload.single('image'),
   postController.updatePost
@@ -31,6 +35,7 @@ router.patch(
 // DELETE A POST BY ID
 router.delete(
   '/:id',
+  isUnderMaintenance,
   auth,
   postController.delete
 )
@@ -38,6 +43,7 @@ router.delete(
 // GET POST BY ID
 router.get(
   '/:id',
+  isUnderMaintenance,
   auth,
   postController.getPostById
 )
@@ -45,6 +51,7 @@ router.get(
 // UPVOTE POST BY POST ID
 router.patch(
   '/upvote/:id',
+  isUnderMaintenance,
   auth,
   postController.upvote
 )
@@ -54,6 +61,22 @@ router.get(
   '/me/all',
   auth,
   postController.getPostByUser
+)
+
+// PIN THE POST
+router.patch(
+  '/pin/:id/',
+  isUnderMaintenance,
+  auth,
+  postController.pinPost
+)
+
+// GET ALL PINNED POSTS
+router.get(
+  '/all/pinned/',
+  isUnderMaintenance,
+  auth,
+  postController.getPinned
 )
 
 module.exports = router

@@ -42,6 +42,10 @@ const PostSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Comment'
   },
+  isPinned: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     required: true,
