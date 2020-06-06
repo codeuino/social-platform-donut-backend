@@ -11,7 +11,8 @@ module.exports = {
     }
     try {
       await org.save()
-      res.status(HttpStatus.CREATED).json({ org })
+      req.io.emit('new org created', { data: org.name })
+      return res.status(HttpStatus.CREATED).json({ org })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -68,7 +69,8 @@ module.exports = {
       if (!org) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No such organization exists!' })
       }
-      res.status(HttpStatus.OK).json({ organization: org })
+      req.io.emit('org deleted', { data: org.name })
+      return res.status(HttpStatus.OK).json({ organization: org })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -101,9 +103,10 @@ module.exports = {
       // toggle maintenance mode
       organization.isMaintenance = !organization.isMaintenance
       await organization.save()
-      res.status(HttpStatus.OK).json({ msg: 'Organization is under the maintenance!!' })
+      req.io.emit('org under maintenance', { data: organization.name })
+      return res.status(HttpStatus.OK).json({ msg: 'Organization is under the maintenance!!' })
     } else {
-      res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have access to triggerMaintenance!' })
+      return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have access to triggerMaintenance!' })
     }
   }
 }

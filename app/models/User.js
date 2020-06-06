@@ -136,6 +136,14 @@ const UserSchema = new mongoose.Schema({
       }
     }
   },
+  notifications: [{
+    content: {
+      type: String
+    },
+    imgUrl: {
+      type: String
+    }
+  }],
   isAdmin: {
     type: Boolean,
     default: false

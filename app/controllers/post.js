@@ -14,7 +14,8 @@ module.exports = {
     }
     try {
       await post.save()
-      res.status(HttpStatus.CREATED).json({ post })
+      req.io.emit('new post created', { data: post.content })
+      return res.status(HttpStatus.CREATED).json({ post })
     } catch (error) {
       HANDLER.handleError(res, error)
     }

@@ -1,11 +1,14 @@
 const Event = require('../models/Event')
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
+// const notificationHelper = require('../utils/notif-helper')
+
 module.exports = {
   createEvent: async (req, res, next) => {
     const event = new Event(req.body)
     try {
       await event.save()
+      req.io.emit('new event created', { data: event.eventName })
       res.status(HttpStatus.CREATED).json({ event: event })
     } catch (error) {
       res.status(HttpStatus.BAD_REQUEST).json({ error: error })
@@ -23,6 +26,7 @@ module.exports = {
         event[update] = req.body[update]
       })
       await event.save()
+      req.io.emit('event update', { data: `Event: ${event.eventName} is updated!` })
       res.status(HttpStatus.OK).json({ event: event })
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -40,6 +44,7 @@ module.exports = {
       if (data.rsvpMaybe.includes(req.user.id) ||
       data.rsvpNo.includes(req.user.id) ||
       data.rsvpYes.includes(req.user.id)) {
+        req.io.emit('already rsvp', { data: 'You have already done the rsvp' })
         res.status(HttpStatus.OK).json({ msg: 'You have already done the rsvp' })
         return
       }
@@ -48,6 +53,7 @@ module.exports = {
         try {
           event.rsvpYes.push(req.user.id)
           await event.save()
+          req.io.emit('rsvp done', { data: 'RSVP successfully done!' })
           res.status(HttpStatus.OK).json({ rsvpData: data })
         } catch (error) {
           res.status(HttpStatus.BAD_REQUEST).json({ error: error })
@@ -57,6 +63,7 @@ module.exports = {
         try {
           event.rsvpNo.push(req.user.id)
           await event.save()
+          req.io.emit('rsvp done', { data: 'RSVP successfully done!' })
           res.status(HttpStatus.OK).json({ rsvpData: data })
         } catch (error) {
           res.status(HttpStatus.BAD_REQUEST).json({ error: error })
@@ -66,6 +73,7 @@ module.exports = {
         try {
           event.rsvpMaybe.push(req.user.id)
           await event.save()
+          req.io.emit('rsvp done', { data: 'RSVP successfully done!' })
           res.status(HttpStatus.OK).json({ rsvpData: data })
         } catch (error) {
           res.status(HttpStatus.BAD_REQUEST).json({ error: error })
@@ -108,6 +116,7 @@ module.exports = {
         return res.status(HttpStatus.NOT_FOUND).json({ message: 'No Event exists' })
       }
       await Event.findByIdAndRemove(id)
+      req.io.emit('event deleted', { data: deleteEvent.eventName })
       res.status(HttpStatus.OK).json({ deleteEvent: deleteEvent, message: 'Deleted the event' })
     } catch (error) {
       HANDLER.handleError(res, error)

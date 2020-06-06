@@ -5,7 +5,7 @@
  */
 // for .env file to work
 require('dotenv').config()
-var app = require('../app')
+var app = require('../app').app
 var debug = require('debug')('donut-backend:server')
 var http = require('http')
 
