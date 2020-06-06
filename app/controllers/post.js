@@ -3,6 +3,7 @@ const UserModel = require('../models/User')
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
 const imgUploadHelper = require('../utils/uploader')
+const helper = require('../utils/paginate')
 
 module.exports = {
   // CREATE POST
@@ -96,14 +97,14 @@ module.exports = {
   // GET ALL THE POSTS
   getAllPost: async (req, res, next) => {
     try {
-      const posts = await PostModel.find({})
+      const posts = await PostModel.find({}, {}, helper.paginate(req))
         .populate('userId', ['name.firstName', 'name.lastName', 'email', 'isAdmin'])
         .sort({ updatedAt: -1 })
         .exec()
       if (!posts.length) {
         return res.status(HttpStatus.NOT_FOUND).json({ message: 'No posts found' })
       }
-      res.status(HttpStatus.OK).json({ posts: posts })
+      return res.status(HttpStatus.OK).json({ posts: posts })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -127,6 +128,21 @@ module.exports = {
       post.votes.upVotes.user.unshift(userId)
       await post.save()
       res.status(HttpStatus.OK).json({ post: post })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+
+  getPostByUser: async (req, res, next) => {
+    try {
+      const posts = await PostModel.find({ userId: req.user._id }, {}, helper.paginate(req))
+        .populate('comments', ['content', 'votes'])
+        .sort({ updatedAt: -1 })
+        .exec()
+      if (posts.length === 0) {
+        return res.status(HttpStatus.OK).json({ msg: 'No posts found!' })
+      }
+      return res.status(HttpStatus.OK).json({ posts })
     } catch (error) {
       HANDLER.handleError(res, error)
     }

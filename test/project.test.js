@@ -3,48 +3,43 @@ const mongoose = require('mongoose')
 const jwt = require('jsonwebtoken')
 const HttpStatus = require('http-status-codes')
 const request = require('supertest')
-const Post = require('../app/models/Post')
+const Project = require('../app/models/Project')
 const User = require('../app/models/User')
 const randomDigit = Math.floor(Math.random() * 90 + 10)
+const pagination = 10
+const page = 1
 
 const testUserId = new mongoose.Types.ObjectId()
+const testProjectId = new mongoose.Types.ObjectId()
 let token = ''
-const demoPost = {
-  content: 'test post content',
-  userId: testUserId,
-  votes: {
-    upVotes: {
-      user: []
-    },
-    downVotes: {
-      user: []
-    }
-  }
+
+const demoProject = {
+  projectName: 'testing project',
+  description: {
+    short: 'Short description should be min 10 characters long!',
+    long: 'this is long description'
+  },
+  version: '1.0.1',
+  links: [{
+    githubLink: 'https://github.com/codeuino'
+  }]
 }
 
-const updatePost = {
-  content: 'updated post content'
+const testProject = {
+  _id: testProjectId,
+  ...demoProject
 }
 
-const upvotePost = {
-  content: 'test post content',
-  userId: testUserId,
-  votes: {
-    upVotes: {
-      user: [
-        testUserId
-      ]
-    },
-    downVotes: {
-      user: []
-    }
-  }
-}
-
-const testPostId = new mongoose.Types.ObjectId()
-const testPost = {
-  _id: testPostId,
-  ...demoPost
+const updateProject = {
+  projectName: 'testing project update',
+  description: {
+    short: 'Short description should be min 10 characters long!',
+    long: 'this is long description'
+  },
+  version: '1.0.3',
+  links: [{
+    githubLink: 'https://github.com/codeuino'
+  }]
 }
 
 const demoUser = {
@@ -94,12 +89,13 @@ const testUser = {
     }, process.env.JWT_SECRET)
   }]
 }
+
 let server
 /**
  * This will pe performed once at the beginning of the test
  */
 beforeAll(async (done) => {
-  await Post.deleteMany()
+  await Project.deleteMany()
   await new User(testUser).save()
   server = app.listen(4000, () => {
     global.agent = request.agent(server)
@@ -115,70 +111,54 @@ beforeAll(async (done) => {
 })
 
 /**
- * This deletes all the existing user in database,
- * and creates a new user in database with the provided details.
+ * This deletes all the existing project in database,
+ * and creates a new project in database with the provided details.
  */
 beforeEach(async () => {
-  await Post.deleteMany()
-  await new Post(testPost).save()
+  await Project.deleteMany()
+  await new Project(testProject).save()
 })
 
 /**
- * Testing post creation
+ * Testing project creation
  */
-test('Should create new post', async (done) => {
+test('Should create new project', async (done) => {
   const response = await request(app)
-    .post('/post')
+    .post('/project')
     .set('Authorization', `Bearer ${token}`)
-    .send(demoPost)
+    .send(demoProject)
     .expect(HttpStatus.CREATED)
 
   // Assert that db was changed
-  const post = await Post.findById(response.body.post._id)
+  const project = await Project.findById(response.body.project._id)
+  expect(project).not.toBeNull()
 
-  expect(post).not.toBeNull()
-
-  const userId = response.body.post.userId
+  const userId = response.body.project.createdBy
 
   // Assertions about the response
   expect(response.body).toMatchObject({
-    post: {
-      content: demoPost.content,
-      userId: `${userId}`,
-      votes: {
-        upVotes: {
-          user: response.body.post.votes.upVotes.user
-        }
-      }
+    project: {
+      projectName: demoProject.projectName,
+      description: {
+        short: demoProject.description.short,
+        long: demoProject.description.long
+      },
+      version: demoProject.version,
+      links: [{
+        githubLink: demoProject.links[0].githubLink
+      }],
+      createdBy: userId
     }
   })
   done()
 })
 
 /**
- * Testing post deletion
+ * Testing get all the projects
  */
-
-test('Should delete post', async (done) => {
+test('Should get all projects', async (done) => {
   await request(app)
-    .delete(`/post/${testPostId}`)
-    .set('Authorization', `Bearer ${token}`)
-    .send()
-    .expect(HttpStatus.OK)
-
-  // Assert that post was deleted
-  const post = await Post.findById(testPostId)
-  expect(post).toBeNull()
-  done()
-})
-
-/**
- * Testing GET post by id
- */
-
-test('Should get single post by id', async (done) => {
-  await request(app)
-    .get(`/post/${testPostId}`)
+    .get(`/project?pagination=${pagination}&page=${page}`)
     .set('Authorization', `Bearer ${token}`)
     .send()
     .expect(HttpStatus.OK)
@@ -186,53 +166,39 @@ test('Should get single post by id', async (done) => {
 })
 
 /**
- * Testing upvote post
+ * Testing GET project by id
  */
 
-test('Should upvote the post', async (done) => {
-  const response = await request(app)
-    .patch(`/post/upvote/${testPostId}`)
+test('Should get project by id', async (done) => {
+  await request(app)
+    .get(`/project/${testProjectId}`)
     .set('Authorization', `Bearer ${token}`)
     .send()
-    .expect(HttpStatus.OK)
-
-  const userId = response.body.post.userId
-
-  expect(response.body).toMatchObject({
-    post: {
-      content: upvotePost.content,
-      userId: `${userId}`,
-      votes: {
-        upVotes: {
-          user: response.body.post.votes.upVotes.user
-        }
-      }
-    }
-  })
-  done()
-})
-
-/**
- * Testing post update
- */
-test('Should update the Post data', async (done) => {
-  await request(app)
-    .patch(`/post/${testPostId}`)
-    .set('Authorization', `Bearer ${token}`)
-    .send(updatePost)
     .expect(HttpStatus.OK)
   done()
 })
 
 /**
- * Testing get post of a particular user
+ * Get project of a user
  */
 
-test('Should retrieve all posts created by a user', async (done) => {
+test('Should get all the project created by a user', async (done) => {
   await request(app)
-    .get('/post/me/all')
+    .get('/project/me/all')
     .set('Authorization', `Bearer ${token}`)
     .send()
+    .expect(HttpStatus.OK)
+  done()
+})
+
+/**
+ * Testing project update
+ */
+test('Should update the project info', async (done) => {
+  await request(app)
+    .patch(`/project/${testProjectId}`)
+    .set('Authorization', `Bearer ${token}`)
+    .send(updateProject)
     .expect(HttpStatus.OK)
   done()
 })
@@ -245,8 +211,8 @@ test('Should retrieve all posts created by a user', async (done) => {
 afterAll(async () => {
   // close server
   await server.close()
-  // delete all the posts post testing
-  await Post.deleteMany()
+  // delete all the projects project testing
+  await Project.deleteMany()
   // Closing the DB connection allows Jest to exit successfully.
   await mongoose.connection.close()
 })

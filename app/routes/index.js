@@ -7,8 +7,8 @@ router.get('/', function (req, res, next) {
   res.redirect(documentationUrl)
 })
 
-router.get('/:shorturl', (req, res, next) => {
-  res.redirect('/shortUrl/' + req.params.shorturl)
-})
+// router.get('/:shorturl', (req, res, next) => {
+//   res.redirect('/shortUrl/' + req.params.shorturl)
+// })
 
 module.exports = router

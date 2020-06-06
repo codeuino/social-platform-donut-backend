@@ -11,6 +11,14 @@ router.get(
   auth,
   eventController.GetAllEvent
 )
+
+// get all the events
+router.get(
+  '/upcoming',
+  auth,
+  eventController.UpComingEvents
+)
+
 // create an event
 router.post(
   '/',
@@ -33,7 +41,7 @@ router.patch(
   eventController.updateEvent
 )
 // rsvp by user
-router.post(
+router.patch(
   '/rsvp/:id',
   isUnderMaintenance,
   auth,
@@ -45,6 +53,13 @@ router.delete(
   isUnderMaintenance,
   auth,
   eventController.deleteEvent
+)
+
+// GET ALL EVENT POSTED BY A USER
+router.get(
+  '/me/all',
+  auth,
+  eventController.getAllEventByUser
 )
 
 module.exports = router

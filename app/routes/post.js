@@ -56,6 +56,13 @@ router.patch(
   postController.upvote
 )
 
+// GET POST PER USER
+router.get(
+  '/me/all',
+  auth,
+  postController.getPostByUser
+)
+
 // PIN THE POST
 router.patch(
   '/pin/:id/',
