@@ -4,6 +4,8 @@ const logger = require('morgan')
 const cookieParser = require('cookie-parser')
 const createError = require('http-errors')
 const path = require('path')
+const multer = require('multer')
+const bodyParser = require('body-parser')
 
 const indexRouter = require('./app/routes/index')
 const authRouter = require('./app/routes/auth')
@@ -14,8 +16,21 @@ const shortUrlRouter = require('./app/routes/urlShortner')
 const organizationRouter = require('./app/routes/organisation')
 const commentRouter = require('./app/routes/comment')
 const projectRouter = require('./app/routes/project')
+const proposalRouter = require('./app/routes/proposal')
 
 const app = express()
+
+app.use(bodyParser.json({ limit: '200mb' }))
+app.use(
+  bodyParser.urlencoded({
+    limit: '200mb',
+    extended: true,
+    parameterLimit: 1000000
+  })
+)
+
+const memoryStorage = multer.memoryStorage()
+app.use(multer({ storage: memoryStorage }).single('file'))
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'))
@@ -36,10 +51,11 @@ app.use('/event', eventRouter)
 app.use('/shortUrl', shortUrlRouter)
 app.use('/comment', commentRouter)
 app.use('/project', projectRouter)
+app.use('/proposal', proposalRouter)
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-  next(createError(404, 'route doesn\'t exist'))
+  next(createError(404, "route doesn't exist"))
 })
 
 // error handler
