@@ -4,8 +4,11 @@ const HttpStatus = require('http-status-codes')
 const emailController = require('./email')
 const permission = require('../utils/permission')
 const HANDLER = require('../utils/response-helper')
+const Projects = require('../models/Project')
+const Events = require('../models/Event')
 
 module.exports = {
+  // CREATE USER
   createUser: async (req, res, next) => {
     const user = new User(req.body)
     try {
@@ -19,11 +22,12 @@ module.exports = {
       return res.status(HttpStatus.NOT_ACCEPTABLE).json({ error: error })
     }
   },
-
+  // GET USER PROFILE
   userProfile: async (req, res, next) => {
     res.status(HttpStatus.OK).json(req.user)
   },
 
+  // USER PROFILE UPDATE
   userProfileUpdate: async (req, res, next) => {
     const updates = Object.keys(req.body)
     const allowedUpdates = [
@@ -51,6 +55,7 @@ module.exports = {
     }
   },
 
+  // FORGOT PASSWORD REQUEST
   forgotPasswordRequest: async (req, res) => {
     const { email } = req.body
     try {
@@ -69,6 +74,7 @@ module.exports = {
     }
   },
 
+  // UPDATE PASSWORD
   updatePassword: async (req, res) => {
     const { password, id } = req.body
     const { token } = req.params
@@ -99,6 +105,7 @@ module.exports = {
     }
   },
 
+  // LOGOUT USER
   logout: async (req, res, next) => {
     try {
       req.user.tokens = []
@@ -109,6 +116,7 @@ module.exports = {
     }
   },
 
+  // REMOVE USER
   userDelete: async (req, res, next) => {
     try {
       if (permission.check(req, res)) {
@@ -121,6 +129,7 @@ module.exports = {
     }
   },
 
+  // USER ACCOUNT ACTIVATION
   activateAccount: async (req, res, next) => {
     try {
       const { token } = req.params
@@ -141,12 +150,14 @@ module.exports = {
     }
   },
 
+  // GET INVITE LINK
   getInviteLink: async (req, res, next) => {
     const token = jwt.sign({ _id: req.user._id, expiry: Date.now() + 24 * 3600 * 1000 }, process.env.JWT_SECRET)
     const inviteLink = `${req.protocol}://${req.get('host')}/user/invite/${token}`
     return res.status(HttpStatus.OK).json({ inviteLink: inviteLink })
   },
 
+  // PROCESS THE INVITE LINK
   processInvite: async (req, res, next) => {
     const { token } = req.params
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
@@ -157,5 +168,156 @@ module.exports = {
       return res.status(HttpStatus.OK).json({ success: true, msg: 'Redirect user to register in client side!' })
     }
     return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Invalid token!' })
+  },
+
+  // ADD TO THE FOLLOWINGS LIST
+  addFollowing: async (req, res, next) => {
+    const { followId } = req.body
+    try {
+      if (followId === req.user._id) {
+        return res.status(HttpStatus.OK).json({ msg: 'You can not follow yourself!' })
+      }
+      const user = await User.findById(req.user.id)
+      if (!user) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user exists!' })
+      }
+      user.followings.unshift(followId)
+      await user.save()
+      next()
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+
+  // ADD TO FOLLOWERS LIST
+  addFollower: async (req, res, next) => {
+    const { followId } = req.body
+    try {
+      const user = await User.findById(followId)
+        .populate('followings', ['name.firstName', 'name.lastName', 'email'])
+        .populate('followers', ['name.firstName', 'name.lastName', 'email'])
+        .exec()
+      if (!user) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user exists!' })
+      }
+      // add to the followers list
+      user.followers.unshift(req.user.id)
+      await user.save()
+      return res.status(HttpStatus.OK).json({ user })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+
+  // REMOVE FROM FOLLOWINGS LIST
+  removeFollowing: async (req, res, next) => {
+    const { followId } = req.body
+    try {
+      const user = await User.findById(req.user._id)
+      if (!user) {
+        return res.status(HttpStatus.OK).json({ msg: 'No such user exists!' })
+      }
+      // check if followId is in following list or not
+      const followingIdArray = user.followings.map(followingId => followingId._id)
+      const isFollowingIdIndex = followingIdArray.indexOf(followId)
+      if (isFollowingIdIndex === -1) {
+        return res.status(HttpStatus.OK).json({ msg: 'You haven\'t followed the user!' })
+      } else {
+        // remove from followings list
+        user.followings.splice(isFollowingIdIndex, 1)
+        await user.save()
+      }
+      next()
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+
+  // REMOVE FROM FOLLOWERS LIST
+  removeFollower: async (req, res, next) => {
+    const { followId } = req.body
+    try {
+      const user = await User.findById(followId)
+        .populate('followings', ['name.firstName', 'name.lastName', 'email'])
+        .populate('followers', ['name.firstName', 'name.lastName', 'email'])
+        .exec()
+      if (!user) {
+        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exists!' })
+      }
+      const followersIdArray = user.followers.map((follower) => follower._id)
+      const isFollowingIndex = followersIdArray.indexOf(req.user._id)
+      if (isFollowingIndex === -1) {
+        return res.status(HttpStatus.OK).json({ msg: 'User is not following!' })
+      }
+      user.followers.splice(isFollowingIndex, 1)
+      await user.save()
+      return res.status(HttpStatus.OK).json({ user })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+
+  // BLOCK THE USER
+  blockUser: async (req, res, next) => {
+    const { id } = req.params
+    try {
+      const user = await User.findById(req.user._id)
+        .populate('blocked', ['name.firstName', 'name.lastName', 'email'])
+        .exec()
+      if (!user) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Invalid request!' })
+      }
+      // check if admin
+      if (user.isAdmin === true) {
+        user.blocked.unshift(id)
+        await user.save()
+        return res.status(HttpStatus.OK).json({ user })
+      }
+      // else not permitted
+      return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have permission!' })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+
+  // UNBLOCK USER
+  unBlockUser: async (req, res, next) => {
+    const { id } = req.params
+    try {
+      const user = await User.findById(req.user._id)
+        .populate('blocked', ['name.firstName', 'name.lastName', 'email'])
+        .exec()
+      if (!user) {
+        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exists!' })
+      }
+      // if admin
+      if (user.isAdmin === true) {
+        const blockedIds = user.blocked.map(item => item._id)
+        const unblockIndex = blockedIds.indexOf(id)
+        console.log('UnblockIndex ', unblockIndex)
+        if (unblockIndex !== -1) {
+          user.blocked.splice(unblockIndex, 1)
+          await user.save()
+          return res.status(HttpStatus.OK).json({ user })
+        }
+        return res.status(HttpStatus.NOT_FOUND).json({ user })
+      }
+      return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have permission!' })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+
+  // GET OVERALL PERSONAL OVERVIEW
+  getPersonalOverview: async (req, res, next) => {
+    const userId = req.user._id
+    const personalOverview = {}
+    try {
+      personalOverview.projects = await Projects.find({ createdBy: userId }).estimatedDocumentCount()
+      personalOverview.events = await Events.find({ createdBy: userId }).estimatedDocumentCount()
+      return res.status(HttpStatus.OK).json({ personalOverview })
+    } catch (error) {
+      HANDLER.handleError(req, error)
+    }
   }
 }

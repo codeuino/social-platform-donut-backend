@@ -98,20 +98,77 @@ const orgSchema = new Schema({
       }
     ]
   },
-  adminInfo: [{
+  options: {
     _id: false,
-    adminId: {
+    settings: {
+      enableEmail: {
+        type: Boolean,
+        default: true
+      },
+      language: {
+        type: String,
+        enum: ['English', 'French', 'German'],
+        default: 'English'
+      },
+      timeFormat: {
+        type: String,
+        enum: ['24', '12'],
+        default: '12'
+      }
+    },
+    permissions: {
+      sendInvite: {
+        type: String,
+        enum: ['BOTH', 'ADMINS', 'NONE'],
+        default: 'BOTH'
+      },
+      canCreateManage: {
+        type: String,
+        enum: ['BOTH', 'ADMINS', 'MEMBERS'],
+        default: 'BOTH'
+      },
+      canChangeEmail: {
+        type: Boolean,
+        default: true
+      },
+      canChangeName: {
+        type: Boolean,
+        default: true
+      }
+    },
+    authentication: {
+      email: {
+        type: Boolean,
+        default: true
+      },
+      google: {
+        type: Boolean,
+        default: false
+      },
+      github: {
+        type: Boolean,
+        default: false
+      },
+      gitlab: {
+        type: Boolean,
+        default: false
+      }
+    }
+  },
+  adminInfo: {
+    _id: false,
+    adminId: [{
       type: Schema.Types.ObjectId,
       ref: 'User'
-    }
-  }],
-  moderatorInfo: [{
+    }]
+  },
+  moderatorInfo: {
     _id: false,
-    adminId: {
+    adminId: [{
       type: Schema.Types.ObjectId,
       ref: 'User'
-    }
-  }],
+    }]
+  },
   isArchived: {
     type: Boolean,
     default: false

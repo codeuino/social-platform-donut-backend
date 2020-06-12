@@ -45,21 +45,47 @@ const demoUser = {
 }
 
 const testUserId = new mongoose.Types.ObjectId()
+const testFollowUserId = new mongoose.Types.ObjectId()
 const testUser = {
   _id: testUserId,
   ...demoUser,
   email: 'test@mailinator.com',
   phone: '1234567891',
+  isAdmin: true,
+  followers: [],
+  followings: [],
+  blocked: [],
   tokens: [{
     token: jwt.sign({
       _id: testUserId
     }, 'process.env.JWT_SECRET')
   }]
 }
+
+const testFollowUser = {
+  _id: testFollowUserId,
+  ...demoUser,
+  ...demoUser.name.firstName = 'follow_user',
+  ...demoUser.name.lastName = 'test',
+  email: 'test43@mailinator.com',
+  phone: '1274567391',
+  isAdmin: false,
+  followers: [],
+  followings: [],
+  blocked: [],
+  tokens: [{
+    token: jwt.sign({
+      _id: testFollowUserId
+    }, 'process.env.JWT_SECRET')
+  }]
+}
+
 let server
+
 /**
  * This will pe performed once at the beginning of the test
  */
+
 beforeAll(async (done) => {
   await User.deleteMany()
   server = app.listen(4000, () => {
@@ -75,6 +101,7 @@ beforeAll(async (done) => {
 beforeEach(async () => {
   await User.deleteMany()
   await new User(testUser).save()
+  await new User(testFollowUser).save()
 })
 
 /**
@@ -240,6 +267,59 @@ test('Should logout the user ', async (done) => {
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send()
     .expect(HttpStatus.OK)
+  done()
+})
+
+/* Follow the user */
+test('Should follow the user', async (done) => {
+  await request(app)
+    .patch('/user/follow')
+    .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+    .send({
+      followId: testFollowUserId
+    })
+    .expect(HttpStatus.OK)
+    // Assert the db change
+  const user = await User.findById(testFollowUserId)
+  expect(user.followers[0] === testUserId)
+  done()
+})
+
+/* unFollow the user */
+test('Should unFollow the user', async (done) => {
+  await request(app)
+    .patch('/user/unfollow')
+    .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+    .send({
+      followId: testFollowUserId
+    })
+    .expect(HttpStatus.OK)
+  // Assert that db change
+  const user = await User.findById(testFollowUserId)
+  expect(user.followers === [])
+  done()
+})
+
+/* Block the user */
+test('Should block the user', async (done) => {
+  const response = await request(app)
+    .patch(`/user/block/${testFollowUserId}`)
+    .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+    .send()
+    .expect(HttpStatus.OK)
+    // Assert the db changed
+  expect(response.body.user.blocked[0]._id === testFollowUserId)
+  done()
+})
+
+/* UnBlock the user */
+test('Should UnBlock the user', async (done) => {
+  const response = await request(app)
+    .patch(`/user/unblock/${testFollowUserId}`)
+    .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+    .send()
+  // Assert the db changed
+  expect(response.body.user.blocked === [])
   done()
 })
 

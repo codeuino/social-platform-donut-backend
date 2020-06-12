@@ -136,6 +136,25 @@ const UserSchema = new mongoose.Schema({
       }
     }
   },
+  followers: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  followings: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  blocked: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  pinned: {
+    _id: false,
+    postId: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Post'
+    }]
+  },
   isAdmin: {
     type: Boolean,
     default: false

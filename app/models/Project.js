@@ -22,13 +22,9 @@ const projectSchema = new Schema({
       type: String,
       required: true,
       trim: true,
-      minlength: 10,
       validate (short) {
         if (validator.isEmpty(short)) {
           throw new Error('Short description for the project is required!')
-        }
-        if (!validator.isLength(short)) {
-          throw new Error('Short description should be min 10 characters long!')
         }
       }
     },
@@ -89,6 +85,10 @@ const projectSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'User'
   }],
+  createdBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
   createdAt: {
     type: Date,
     default: Date.now()

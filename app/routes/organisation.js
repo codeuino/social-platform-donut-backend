@@ -3,10 +3,12 @@ const router = express.Router()
 const auth = require('../middleware/auth')
 const OrgController = require('../controllers/organization')
 const uploader = require('../utils/uploader')
+const isUnderMaintenance = require('../middleware/maintenance')
 
 // CREATE ORG
 router.post(
   '/',
+  isUnderMaintenance,
   uploader.upload.single('image'),
   auth,
   OrgController.createOrganization
@@ -15,6 +17,7 @@ router.post(
 // GET ORG DETAILS BY ID
 router.get(
   '/:id',
+  isUnderMaintenance,
   auth,
   OrgController.getOrgDetailsById
 )
@@ -22,6 +25,7 @@ router.get(
 // UPDATE ORG DETAILS
 router.patch(
   '/:id',
+  isUnderMaintenance,
   uploader.upload.single('image'),
   auth,
   OrgController.updateOrgDetails
@@ -30,6 +34,7 @@ router.patch(
 // DELETE ORG
 router.delete(
   '/:id',
+  isUnderMaintenance,
   auth,
   OrgController.deleteOrg
 )
@@ -37,13 +42,14 @@ router.delete(
 // ARCHIVE ORG
 router.patch(
   '/archive/:id',
+  isUnderMaintenance,
   auth,
   OrgController.archiveOrg
 )
 
 // TRIGGER MAINTENANCE MODE
 router.patch(
-  '/maintenance',
+  '/:id/maintenance',
   auth,
   OrgController.triggerMaintenance
 )
@@ -60,6 +66,14 @@ router.get(
   '/members/all',
   auth,
   OrgController.getMembers
+)
+
+// UPDATE THE ORG SETTINGS
+router.patch(
+  '/:id/settings/update',
+  isUnderMaintenance,
+  auth,
+  OrgController.updateSettings
 )
 
 module.exports = router
