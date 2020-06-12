@@ -137,13 +137,35 @@ const UserSchema = new mongoose.Schema({
     }
   },
   notifications: [{
+    heading: {
+      type: String
+    },
     content: {
       type: String
     },
-    imgUrl: {
+    tag: {
       type: String
     }
   }],
+  followers: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  followings: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  blocked: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  pinned: {
+    _id: false,
+    postId: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Post'
+    }]
+  },
   isAdmin: {
     type: Boolean,
     default: false

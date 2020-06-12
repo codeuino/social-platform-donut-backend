@@ -2,11 +2,13 @@ const express = require('express')
 const router = express.Router()
 const userController = require('../controllers/user')
 const auth = require('../middleware/auth')
+const isUnderMaintenance = require('../middleware/maintenance')
 // const email = require('../middleware/email')
 
 // create a user
 router.post(
   '/',
+  isUnderMaintenance,
   // email,
   userController.createUser
 )
@@ -14,6 +16,7 @@ router.post(
 // get user profile
 router.get(
   '/me',
+  isUnderMaintenance,
   auth,
   userController.userProfile
 )
@@ -21,6 +24,7 @@ router.get(
 // update user info
 router.patch(
   '/me',
+  isUnderMaintenance,
   auth,
   userController.userProfileUpdate
 )
@@ -28,18 +32,21 @@ router.patch(
 // user forgot password request
 router.post(
   '/password_reset',
+  isUnderMaintenance,
   userController.forgotPasswordRequest
 )
 
 // update password
 router.post(
   '/password_reset/:token',
+  isUnderMaintenance,
   userController.updatePassword
 )
 
 // get invite link (for sender)
 router.get(
   '/invite',
+  isUnderMaintenance,
   auth,
   userController.getInviteLink
 )
@@ -47,20 +54,53 @@ router.get(
 // process invite link (for receiver)
 router.get(
   '/invite/:token',
+  isUnderMaintenance,
   userController.processInvite
 )
 
 // activate account
 router.get(
   '/activate/:token',
+  isUnderMaintenance,
   userController.activateAccount
 )
 
 // delete a user
 router.delete(
   '/me',
+  isUnderMaintenance,
   auth,
   userController.userDelete
+)
+
+// follow the user
+router.patch(
+  '/follow',
+  auth,
+  userController.addFollowing,
+  userController.addFollower
+)
+
+// unFollow the user
+router.patch(
+  '/unfollow',
+  auth,
+  userController.removeFollowing,
+  userController.removeFollower
+)
+
+// BLOCK THE USER
+router.patch(
+  '/block/:id',
+  auth,
+  userController.blockUser
+)
+
+// UNBLOCK THE USER
+router.patch(
+  '/unblock/:id',
+  auth,
+  userController.unBlockUser
 )
 
 module.exports = router

@@ -14,7 +14,8 @@ const eventRouter = require('./app/routes/event')
 const shortUrlRouter = require('./app/routes/urlShortner')
 const organizationRouter = require('./app/routes/organisation')
 const commentRouter = require('./app/routes/comment')
-// const socketController = require('./socket')
+const projectRouter = require('./app/routes/project')
+const notificationRouter = require('./app/routes/notification')
 
 const app = express()
 const server = require('http').Server(app)
@@ -23,7 +24,6 @@ server.listen(8810)
 // WARNING: app.listen(80) will NOT work here!
 
 const io = socket.listen(server)
-// socketController.socketEvents(io)
 let count = 0
 io.on('connection', (socket) => {
   console.log('socket connected count ', count++)
@@ -33,7 +33,6 @@ io.on('connection', (socket) => {
 // view engine setup
 app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'ejs')
-// app.set('io', io)
 
 app.use(logger('tiny'))
 app.use(express.json())
@@ -45,6 +44,7 @@ app.use((req, res, next) => {
   next()
 })
 
+app.use('/notification', notificationRouter)
 app.use('/', indexRouter)
 app.use('/auth', authRouter)
 app.use('/user', usersRouter)
@@ -53,6 +53,7 @@ app.use('/org', organizationRouter)
 app.use('/event', eventRouter)
 app.use('/shortUrl', shortUrlRouter)
 app.use('/comment', commentRouter)
+app.use('/project', projectRouter)
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

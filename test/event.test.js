@@ -108,14 +108,15 @@ beforeAll(async (done) => {
  * This deletes all the existing user in database,
  * and creates a new user in database with the provided details.
  */
-beforeEach(async () => {
+beforeEach(async (done) => {
   await Event.deleteMany()
   await new Event(testEvent).save()
   await User.deleteMany()
   await new User(testUser).save()
+  done()
 })
 
-test('Should signup new user', async () => {
+test('Should signup new user', async (done) => {
   const response = await request(app)
     .post('/user')
     .send(demoUser)
@@ -150,10 +151,11 @@ test('Should signup new user', async () => {
     }
   })
   expect(user.password).not.toBe('abc12345') // to check hashing
+  done()
 })
 
 /** Testing user login */
-test('Login existing user', async () => {
+test('Login existing user', async (done) => {
   const response = await request(app)
     .post('/auth/login')
     .send({
@@ -164,11 +166,12 @@ test('Login existing user', async () => {
 
   const user = await User.findById(testUserId)
   expect(response.body.token).toBe(user.tokens[1].token)
+  done()
 })
 /**
  * Testing event creation
  */
-test('Should create new event', async () => {
+test('Should create new event', async (done) => {
   const response = await request(app)
     .post('/event')
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
@@ -194,11 +197,14 @@ test('Should create new event', async () => {
       eventDate: demoEvent.eventDate
     }
   })
+  done()
 })
+
 /**
  * Testing event updation
  */
-test('Should update event', async () => {
+
+test('Should update event', async (done) => {
   const response = await request(app)
     .patch(`/event/${testEventId}`)
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
@@ -208,19 +214,29 @@ test('Should update event', async () => {
   // Assert that db was changed
   const updatedEvent = await Event.findById(response.body.event._id)
   expect(updatedEvent).not.toBeNull()
+  done()
 })
 
-// Testing for the RSVP
-test('Should submit the RSVP', async () => {
+/**
+ * Testing for the RSVP
+ */
+
+test('Should submit the RSVP', async (done) => {
   const response = await request(app)
-    .post(`/event/rsvp/${testEventId}`)
+    .patch(`/event/rsvp/${testEventId}`)
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send(demoRsvp)
     .expect(HttpStatus.OK)
   const rsvpData = await Event.findById(response.body.rsvpData._id)
   expect(rsvpData).not.toBeNull()
+  done()
 })
-test('Should delete event', async () => {
+
+/**
+ * Testing for event deletion
+ */
+
+test('Should delete event', async (done) => {
   await request(app)
     .delete(`/event/${testEventId}`)
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
@@ -230,23 +246,60 @@ test('Should delete event', async () => {
   // Assert that event was deleted
   const event = await Event.findById(testEventId)
   expect(event).toBeNull()
+  done()
 })
 
-test('Should get event by id', async () => {
+/**
+ * Testing for get event by id
+ */
+
+test('Should get event by id', async (done) => {
   await request(app)
     .get(`/event/${testEventId}`)
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send()
     .expect(HttpStatus.OK)
+  done()
 })
 
-test('Should get all the event', async () => {
+/**
+ * Testing for get all events
+ */
+
+test('Should get all the event', async (done) => {
   await request(app)
     .get('/event/all')
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send()
     .expect(HttpStatus.OK)
+  done()
 })
+
+/**
+ * Testing for the upcoming event
+ */
+test('Should get all the upcoming event', async (done) => {
+  await request(app)
+    .get('/event/upcoming')
+    .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+    .send()
+    .expect(HttpStatus.OK)
+  done()
+})
+
+/**
+ * Testing for the events created by a particular user
+ */
+
+test('Should get all the events created by user', async (done) => {
+  await request(app)
+    .get('/event/me/all')
+    .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+    .send()
+    .expect(HttpStatus.OK)
+  done()
+})
+
 /**
  * TODO: FIX ERROR
  * This is a temporary fix to issue:

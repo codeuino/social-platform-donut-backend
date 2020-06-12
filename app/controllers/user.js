@@ -2,6 +2,13 @@ const User = require('../models/User')
 const jwt = require('jsonwebtoken')
 const HttpStatus = require('http-status-codes')
 const emailController = require('./email')
+const HANDLER = require('../utils/response-helper')
+const notificationHelper = require('../utils/notif-helper')
+const notification = {
+  heading: '',
+  content: '',
+  tag: ''
+}
 
 module.exports = {
   createUser: async (req, res, next) => {
@@ -70,7 +77,7 @@ module.exports = {
     }
   },
 
-  updatePassword: async (req, res) => {
+  updatePassword: async (req, res, next) => {
     const { password, id } = req.body
     const { token } = req.params
     try {
@@ -85,6 +92,11 @@ module.exports = {
         }
         user.password = password
         await user.save()
+        req.io.emit('Password update', { data: 'Password successfully updated!' })
+        notification.heading = 'Forgot password!'
+        notification.content = 'Password successfully updated!'
+        notification.tag = 'Update'
+        notificationHelper.addToNotificationForUser(req.user._id, res, notification, next)
         return res.status(HttpStatus.OK).json({ updated: true })
       } else {
         if (process.env.NODE_ENV !== 'production') {
@@ -127,6 +139,11 @@ module.exports = {
         // if user found activate the account
         user.isActivated = true
         await user.save()
+        req.io.emit('Account activate', { data: 'Account activated!' })
+        notification.heading = 'Account activate!'
+        notification.content = 'Account successfully activated!'
+        notification.tag = 'Activate'
+        notificationHelper.addToNotificationForUser(req.user._id, res, notification, next)
         return res.status(HttpStatus.OK).json({ msg: 'Succesfully activated!' })
       }
     } catch (Error) {
@@ -150,5 +167,148 @@ module.exports = {
       return res.status(HttpStatus.OK).json({ success: true, msg: 'Redirect user to register in client side!' })
     }
     return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Invalid token!' })
+  },
+
+  // ADD TO THE FOLLOWINGS LIST
+  addFollowing: async (req, res, next) => {
+    const { followId } = req.body
+    try {
+      if (followId === req.user._id) {
+        return res.status(HttpStatus.OK).json({ msg: 'You can not follow yourself!' })
+      }
+      const user = await User.findById(req.user.id)
+      if (!user) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user exists!' })
+      }
+      user.followings.unshift(followId)
+      await user.save()
+      next()
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+
+  // ADD TO FOLLOWERS LIST
+  addFollower: async (req, res, next) => {
+    const { followId } = req.body
+    try {
+      const user = await User.findById(followId)
+        .populate('followings', ['name.firstName', 'name.lastName', 'email'])
+        .populate('followers', ['name.firstName', 'name.lastName', 'email'])
+        .exec()
+      if (!user) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user exists!' })
+      }
+      // add to the followers list
+      user.followers.unshift(req.user.id)
+      await user.save()
+      const obj = {
+        name: req.user.name.firstName,
+        followId: user._id
+      }
+      req.io.emit('New follower', { data: `${obj}` })
+      notification.heading = 'New follower!'
+      notification.content = `${req.user.name.firstName} started following you!`
+      notification.tag = 'Follower'
+      notificationHelper.addToNotificationForUser(user._id, res, notification, next)
+      return res.status(HttpStatus.OK).json({ user })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+
+  // REMOVE FROM FOLLOWINGS LIST
+  removeFollowing: async (req, res, next) => {
+    const { followId } = req.body
+    try {
+      const user = await User.findById(req.user._id)
+      if (!user) {
+        return res.status(HttpStatus.OK).json({ msg: 'No such user exists!' })
+      }
+      // check if followId is in following list or not
+      const followingIdArray = user.followings.map(followingId => followingId._id)
+      const isFollowingIdIndex = followingIdArray.indexOf(followId)
+      if (isFollowingIdIndex === -1) {
+        return res.status(HttpStatus.OK).json({ msg: 'You haven\'t followed the user!' })
+      } else {
+        // remove from followings list
+        user.followings.splice(isFollowingIdIndex, 1)
+        await user.save()
+      }
+      next()
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+
+  // REMOVE FROM FOLLOWERS LIST
+  removeFollower: async (req, res, next) => {
+    const { followId } = req.body
+    try {
+      const user = await User.findById(followId)
+        .populate('followings', ['name.firstName', 'name.lastName', 'email'])
+        .populate('followers', ['name.firstName', 'name.lastName', 'email'])
+        .exec()
+      if (!user) {
+        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exists!' })
+      }
+      const followersIdArray = user.followers.map((follower) => follower._id)
+      const isFollowingIndex = followersIdArray.indexOf(req.user._id)
+      if (isFollowingIndex === -1) {
+        return res.status(HttpStatus.OK).json({ msg: 'User is not following!' })
+      }
+      user.followers.splice(isFollowingIndex, 1)
+      await user.save()
+      return res.status(HttpStatus.OK).json({ user })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+  blockUser: async (req, res, next) => {
+    const { id } = req.params
+    try {
+      const user = await User.findById(req.user._id)
+        .populate('blocked', ['name.firstName', 'name.lastName', 'email'])
+        .exec()
+      if (!user) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Invalid request!' })
+      }
+      // check if admin
+      if (user.isAdmin === true) {
+        user.blocked.unshift(id)
+        await user.save()
+        return res.status(HttpStatus.OK).json({ user })
+      }
+      // else not permitted
+      return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have permission!' })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+  unBlockUser: async (req, res, next) => {
+    const { id } = req.params
+    try {
+      const user = await User.findById(req.user._id)
+        .populate('blocked', ['name.firstName', 'name.lastName', 'email'])
+        .exec()
+      if (!user) {
+        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exists!' })
+      }
+      // if admin
+      if (user.isAdmin === true) {
+        const blockedIds = user.blocked.map(item => item._id)
+        const unblockIndex = blockedIds.indexOf(id)
+        console.log('UnblockIndex ', unblockIndex)
+        if (unblockIndex !== -1) {
+          user.blocked.splice(unblockIndex, 1)
+          await user.save()
+          return res.status(HttpStatus.OK).json({ user })
+        }
+        return res.status(HttpStatus.NOT_FOUND).json({ user })
+      }
+      return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have permission!' })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
   }
 }
