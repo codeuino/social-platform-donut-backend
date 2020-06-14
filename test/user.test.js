@@ -260,6 +260,16 @@ test('Should validate the invite link token ', async () => {
     .expect(HttpStatus.OK)
 })
 
+/* Logout the user */
+test('Should logout the user ', async (done) => {
+  await request(app)
+    .post('/user/logout')
+    .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+    .send()
+    .expect(HttpStatus.OK)
+  done()
+})
+
 /* Follow the user */
 test('Should follow the user', async (done) => {
   await request(app)

@@ -2,6 +2,7 @@ const Project = require('../models/Project')
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
 const helper = require('../utils/paginate')
+const permission = require('../utils/permission')
 
 module.exports = {
   createProject: async (req, res, next) => {
@@ -83,10 +84,11 @@ module.exports = {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such project exits!' })
       }
       // check if admin or user who created this project
-      if (project.createdBy === req.user._id.toString() || req.user.isAdmin === true) {
+      if (permission.check(req, res, project.createdBy)) {
         await Project.findByIdAndRemove(id)
         return res.status(HttpStatus.OK).json({ msg: 'Project deleted!' })
       }
+      return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Not permitted!' })
     } catch (error) {
       HANDLER.handleError(res, error)
     }

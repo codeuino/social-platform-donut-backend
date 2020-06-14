@@ -47,7 +47,7 @@ const orgSchema = new Schema({
     }
   },
   image: {
-    type: Buffer,
+    data: Buffer,
     contentType: String
   },
   imgUrl: {

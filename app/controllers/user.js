@@ -2,9 +2,13 @@ const User = require('../models/User')
 const jwt = require('jsonwebtoken')
 const HttpStatus = require('http-status-codes')
 const emailController = require('./email')
+const permission = require('../utils/permission')
 const HANDLER = require('../utils/response-helper')
+const Projects = require('../models/Project')
+const Events = require('../models/Event')
 
 module.exports = {
+  // CREATE USER
   createUser: async (req, res, next) => {
     const user = new User(req.body)
     try {
@@ -18,21 +22,19 @@ module.exports = {
       return res.status(HttpStatus.NOT_ACCEPTABLE).json({ error: error })
     }
   },
-
+  // GET USER PROFILE
   userProfile: async (req, res, next) => {
     res.status(HttpStatus.OK).json(req.user)
   },
 
+  // USER PROFILE UPDATE
   userProfileUpdate: async (req, res, next) => {
     const updates = Object.keys(req.body)
     const allowedUpdates = [
       'name',
       'email',
-      'password',
-      'company',
-      'website',
-      'location',
-      'about'
+      'phone',
+      'info'
     ]
     const isValidOperation = updates.every((update) => {
       return allowedUpdates.includes(update)
@@ -47,12 +49,13 @@ module.exports = {
         req.user[update] = req.body[update]
       })
       await req.user.save()
-      res.status(HttpStatus.OK).json({ data: req.user })
+      return res.status(HttpStatus.OK).json({ data: req.user })
     } catch (error) {
-      res.status(HttpStatus.BAD_REQUEST).json({ error })
+      return res.status(HttpStatus.BAD_REQUEST).json({ error })
     }
   },
 
+  // FORGOT PASSWORD REQUEST
   forgotPasswordRequest: async (req, res) => {
     const { email } = req.body
     try {
@@ -71,6 +74,7 @@ module.exports = {
     }
   },
 
+  // UPDATE PASSWORD
   updatePassword: async (req, res) => {
     const { password, id } = req.body
     const { token } = req.params
@@ -101,20 +105,31 @@ module.exports = {
     }
   },
 
-  logout: (req, res, next) => {
-    res.status(HttpStatus.OK).json({ success: 'ok' })
-  },
-
-  userDelete: async (req, res, next) => {
+  // LOGOUT USER
+  logout: async (req, res, next) => {
     try {
-      await req.user.remove()
-      res.send({ data: 'user deletion successful', user: req.user })
+      req.user.tokens = []
+      await req.user.save()
+      return res.status(HttpStatus.OK).json({ msg: 'User logged out Successfully!' })
     } catch (error) {
-      console.log(error)
-      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error })
+      HANDLER.handleError(res, error)
     }
   },
 
+  // REMOVE USER
+  userDelete: async (req, res, next) => {
+    try {
+      if (permission.check(req, res)) {
+        await req.user.remove()
+        return res.send({ data: 'user deletion successful', user: req.user })
+      }
+      return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have permission!' })
+    } catch (error) {
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error })
+    }
+  },
+
+  // USER ACCOUNT ACTIVATION
   activateAccount: async (req, res, next) => {
     try {
       const { token } = req.params
@@ -135,12 +150,14 @@ module.exports = {
     }
   },
 
+  // GET INVITE LINK
   getInviteLink: async (req, res, next) => {
     const token = jwt.sign({ _id: req.user._id, expiry: Date.now() + 24 * 3600 * 1000 }, process.env.JWT_SECRET)
     const inviteLink = `${req.protocol}://${req.get('host')}/user/invite/${token}`
     return res.status(HttpStatus.OK).json({ inviteLink: inviteLink })
   },
 
+  // PROCESS THE INVITE LINK
   processInvite: async (req, res, next) => {
     const { token } = req.params
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
@@ -239,6 +256,8 @@ module.exports = {
       HANDLER.handleError(res, error)
     }
   },
+
+  // BLOCK THE USER
   blockUser: async (req, res, next) => {
     const { id } = req.params
     try {
@@ -260,6 +279,8 @@ module.exports = {
       HANDLER.handleError(res, error)
     }
   },
+
+  // UNBLOCK USER
   unBlockUser: async (req, res, next) => {
     const { id } = req.params
     try {
@@ -284,6 +305,19 @@ module.exports = {
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have permission!' })
     } catch (error) {
       HANDLER.handleError(res, error)
+    }
+  },
+
+  // GET OVERALL PERSONAL OVERVIEW
+  getPersonalOverview: async (req, res, next) => {
+    const userId = req.user._id
+    const personalOverview = {}
+    try {
+      personalOverview.projects = await Projects.find({ createdBy: userId }).estimatedDocumentCount()
+      personalOverview.events = await Events.find({ createdBy: userId }).estimatedDocumentCount()
+      return res.status(HttpStatus.OK).json({ personalOverview })
+    } catch (error) {
+      HANDLER.handleError(req, error)
     }
   }
 }

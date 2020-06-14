@@ -2,10 +2,12 @@ const express = require('express')
 const projectController = require('../controllers/project')
 const router = express.Router()
 const auth = require('../middleware/auth')
+const isUnderMaintenance = require('../middleware/maintenance')
 
 // ADD PROJECT
 router.post(
   '/',
+  isUnderMaintenance,
   auth,
   projectController.createProject
 )
@@ -13,6 +15,7 @@ router.post(
 // GET ALL PROJECTS
 router.get(
   '/',
+  isUnderMaintenance,
   auth,
   projectController.getAllProjects
 )
@@ -20,6 +23,7 @@ router.get(
 // GET PROJECT BY ID
 router.get(
   '/:id',
+  isUnderMaintenance,
   auth,
   projectController.getProjectById
 )
@@ -27,6 +31,7 @@ router.get(
 // UPDATE PROJECT INFO
 router.patch(
   '/:id',
+  isUnderMaintenance,
   auth,
   projectController.updateProject
 )
@@ -34,6 +39,7 @@ router.patch(
 // DELETE PROJECT
 router.delete(
   '/:id',
+  isUnderMaintenance,
   auth,
   projectController.deleteProject
 )
@@ -41,6 +47,7 @@ router.delete(
 // GET PROJECTS CREATED BY A USER
 router.get(
   '/me/all',
+  isUnderMaintenance,
   auth,
   projectController.projectCreatedByUser
 )
