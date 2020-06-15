@@ -20,7 +20,7 @@ const notificationRouter = require('./app/routes/notification')
 const app = express()
 const server = require('http').Server(app)
 
-server.listen(8810)
+server.listen(process.env.SOCKET_PORT || 8810)
 // WARNING: app.listen(80) will NOT work here!
 
 const io = socket.listen(server)

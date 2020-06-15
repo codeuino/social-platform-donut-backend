@@ -1,6 +1,7 @@
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
 const CommentModel = require('../models/Comment')
+const permission = require('../utils/permission')
 const helper = require('../utils/paginate')
 
 module.exports = {
@@ -22,14 +23,13 @@ module.exports = {
   // DELETE COMMENT
   delete: async (req, res, next) => {
     const { id } = req.params
-    const userId = req.user.id.toString()
     try {
       const comment = await CommentModel.findById(id)
       if (!comment) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No comment exist' })
       }
       // Add rights for admins and moderators as well (TODO)
-      if (JSON.stringify(comment.userId) !== JSON.stringify(userId)) {
+      if (!permission.check(req, res, comment.userId)) {
         return res.status(HttpStatus.FORBIDDEN).json({ message: 'Bad delete request' })
       }
       await CommentModel.findByIdAndRemove(id)
@@ -42,7 +42,6 @@ module.exports = {
   // UPDATE COMMENT
   update: async (req, res, next) => {
     const { id } = req.params
-    const userId = req.user.id.toString()
     const updates = Object.keys(req.body)
     const valid = ['content']
     const isValidOperation = updates.every((update) => {
@@ -57,7 +56,7 @@ module.exports = {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No comment exist' })
       }
       // also add admin or moderator control (TODO)
-      if (JSON.stringify(comment.userId) !== JSON.stringify(userId)) {
+      if (!permission.check(req, res, comment.userId)) {
         return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Wrong update' })
       }
       updates.forEach(update => {

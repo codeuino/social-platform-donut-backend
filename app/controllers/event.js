@@ -1,6 +1,7 @@
 const Event = require('../models/Event')
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
+const permission = require('../utils/permission')
 const helper = require('../utils/paginate')
 const notificationHelper = require('../utils/notif-helper')
 const notification = {
@@ -34,6 +35,7 @@ module.exports = {
       if (!event) {
         return res.status(HttpStatus.BAD_REQUEST).json({ message: 'No post exists' })
       }
+      // check for permission (TODO AFTER PREVIOUS PR MERGED)
       updates.forEach(update => {
         event[update] = req.body[update]
       })
@@ -148,13 +150,16 @@ module.exports = {
       if (!deleteEvent) {
         return res.status(HttpStatus.NOT_FOUND).json({ message: 'No Event exists' })
       }
-      await Event.findByIdAndRemove(id)
-      req.io.emit('event deleted', { data: deleteEvent.eventName })
-      notification.heading = 'Event deleted!'
-      notification.content = `Event ${deleteEvent.eventName} is deleted!`
-      notification.tag = 'Deleted'
-      notificationHelper.addToNotificationForAll(req, res, notification, next)
-      res.status(HttpStatus.OK).json({ deleteEvent: deleteEvent, message: 'Deleted the event' })
+      if (permission.check(req, res, deleteEvent.createdBy)) {
+        await Event.findByIdAndRemove(id)
+        req.io.emit('event deleted', { data: deleteEvent.eventName })
+        notification.heading = 'Event deleted!'
+        notification.content = `Event ${deleteEvent.eventName} is deleted!`
+        notification.tag = 'Deleted'
+        notificationHelper.addToNotificationForAll(req, res, notification, next)
+        return res.status(HttpStatus.OK).json({ deleteEvent: deleteEvent, message: 'Deleted the event' })
+      }
+      return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Not permitted!' })
     } catch (error) {
       HANDLER.handleError(res, error)
     }

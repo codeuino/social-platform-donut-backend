@@ -3,6 +3,7 @@ const UserModel = require('../models/User')
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
 const imgUploadHelper = require('../utils/uploader')
+const permission = require('../utils/permission')
 const helper = require('../utils/paginate')
 
 module.exports = {
@@ -26,15 +27,13 @@ module.exports = {
   // DELETE POST
   delete: async (req, res, next) => {
     const { id } = req.params
-    const userId = req.user.id.toString()
     try {
       const post = await PostModel.findById(id)
       if (!post) {
         return res.status(HttpStatus.NOT_FOUND).json({ message: 'No post exists' })
       }
-      // TODO ADD ADMIN RIGHTS AS WELL
-      if (JSON.stringify(userId) !== JSON.stringify(post.userId)) {
-        return res.status(HttpStatus.FORBIDDEN).json({ message: 'Bad delete request' })
+      if (!permission.check(req, res, post.userId)) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Bad delete request' })
       }
       await PostModel.findByIdAndRemove(id)
       res.status(HttpStatus.OK).json({ post: post, msg: 'Deleted!' })
@@ -48,7 +47,6 @@ module.exports = {
     const { id } = req.params
     const updates = Object.keys(req.body)
     const allowedUpdates = ['content', 'imgUrl']
-    const userId = req.user.id.toString()
     const isValidOperation = updates.every((update) => {
       return allowedUpdates.includes(update)
     })
@@ -61,7 +59,7 @@ module.exports = {
       if (!post) {
         return res.status(HttpStatus.BAD_REQUEST).json({ message: 'No post exists' })
       }
-      if (JSON.stringify(userId) !== JSON.stringify(post.userId)) {
+      if (!permission.check(req, res, post.userId)) {
         return res.status(HttpStatus.FORBIDDEN).json({ message: 'Bad update request' })
       }
       updates.forEach(update => {

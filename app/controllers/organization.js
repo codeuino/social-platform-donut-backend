@@ -3,6 +3,11 @@ const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
 const helper = require('../utils/uploader')
 const notificationHelper = require('../utils/notif-helper')
+const User = require('../models/User')
+const Project = require('../models/Project')
+const Event = require('../models/Event')
+const permission = require('../utils/permission')
+const TAGS = require('../utils/notificationTags')
 const notification = {
   heading: '',
   content: '',
@@ -20,7 +25,7 @@ module.exports = {
       req.io.emit('new org created', { data: org.name })
       notification.heading = 'New org!'
       notification.content = `${org.name} is created!`
-      notification.tag = 'New'
+      notification.tag = TAGS.NEW
       notificationHelper.addToNotificationForAll(req, res, notification, next)
       return res.status(HttpStatus.CREATED).json({ org })
     } catch (error) {
@@ -31,7 +36,7 @@ module.exports = {
   updateOrgDetails: async (req, res, next) => {
     const { id } = req.params
     const updates = Object.keys(req.body)
-    const allowedUpdates = ['name', 'description', 'contactInfo', 'image', 'adminInfo', 'moderatorInfo']
+    const allowedUpdates = ['name', 'description', 'contactInfo', 'image', 'imgUrl', 'adminInfo', 'moderatorInfo']
     const isValidOperation = updates.every((update) => {
       return allowedUpdates.includes(update)
     })
@@ -41,6 +46,10 @@ module.exports = {
     }
     try {
       const org = await Organization.findById(id)
+      // check for permission (ONLY ADMINS CAN UPDATE)
+      if (!permission.check(req, res)) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have the permission' })
+      }
       updates.forEach(update => {
         org[update] = req.body[update]
       })
@@ -57,11 +66,11 @@ module.exports = {
   getOrgDetailsById: async (req, res, next) => {
     const { id } = req.params
     try {
-      const orgData = await Organization
-        .findById(id)
+      const orgData = await Organization.findById(id)
         .populate('adminInfo', ['name.firstName', 'name.lastName', 'email', 'isAdmin'])
         .populate('moderatorInfo', ['name.firstName', 'name.lastName', 'email', 'isAdmin'])
         .sort({ createdAt: -1 })
+        .lean()
         .exec()
       if (!orgData) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No such organization exists!' })
@@ -79,10 +88,14 @@ module.exports = {
       if (!org) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No such organization exists!' })
       }
+      // check for permission
+      if (!permission.check(req, res)) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have the permission!' })
+      }
       req.io.emit('org deleted', { data: org.name })
       notification.heading = 'Org deleted!'
       notification.content = `${org.name} is deleted!`
-      notification.tag = 'Delete'
+      notification.tag = TAGS.DELETE
       notificationHelper.addToNotificationForAll(req, res, notification, next)
       return res.status(HttpStatus.OK).json({ organization: org })
     } catch (error) {
@@ -99,7 +112,7 @@ module.exports = {
       }
       org.isArchived = true
       await org.save()
-      res.status(HttpStatus.OK).json({ organization: org })
+      return res.status(HttpStatus.OK).json({ organization: org })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -121,7 +134,7 @@ module.exports = {
         // toggle maintenance mode
         organization.isMaintenance = !organization.isMaintenance
         await organization.save()
-        notification.tag = 'Maintenance'
+        notification.tag = TAGS.MAINTENANCE
 
         if (organization.isMaintenance) {
           req.io.emit('org under maintenance', { data: organization.name })
@@ -180,6 +193,86 @@ module.exports = {
       }
       // else not admin
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have access to perform this operation!' })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+  getOrgOverView: async (req, res, next) => {
+    const orgOverView = {}
+    try {
+      const org = await Organization.find({})
+      if (!org) {
+        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No org exists!' })
+      }
+      orgOverView.admins = org[0].adminInfo.length
+      orgOverView.members = await User.find({}).lean().count()
+      orgOverView.projects = await Project.find({}).lean().count()
+      orgOverView.events = await Event.find({}).lean().count()
+      return res.status(HttpStatus.OK).json({ orgOverView })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+  // SEARCH FUNCTIONALITY
+  getMembers: async (req, res, next) => {
+    try {
+      const { search } = req.query
+      if (search) {
+        const queryTerm = search.split(' ')
+        const regex = new RegExp('^' + queryTerm + '$', 'i')
+        const member = await User.find({
+          $or: [
+            { 'name.firstName': { $regex: regex } },
+            { 'name.lastName': { $regex: regex } }
+          ]
+        })
+          .select('name email isAdmin info.about.designation')
+          .lean()
+          .sort({ createdAt: -1 })
+          .exec()
+        if (!member) {
+          return res.status(HttpStatus.OK).json({ msg: 'Member not found!' })
+        }
+        return res.status(HttpStatus.OK).json({ member })
+      } else {
+        const members = await User.find({})
+          .select('name email isAdmin info.about.designation')
+          .lean()
+          .sort({ createdAt: -1 })
+          .exec()
+        if (members.length === 0) {
+          return res.status(HttpStatus.OK).json({ msg: 'No members joined yet!' })
+        }
+        return res.status(HttpStatus.OK).json({ members })
+      }
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+  // REMOVE ADMIN
+  removeAdmin: async (req, res, next) => {
+    try {
+      const { userId, orgId } = req.params
+      const org = await Organization.findById(orgId)
+      if (!org) {
+        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No org exists!' })
+      }
+      // only permitted for admins
+      if (!req.user.isAdmin) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You are not permitted!' })
+      }
+      // console.log('Permitted to removeAdmin')
+      // REMOVE ADMINS FROM ADMINS LIST
+      const admins = org.adminInfo.adminId
+      console.log('adminIds ', admins)
+      const removableIndex = admins.indexOf(userId)
+      if (removableIndex === -1) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'User is not an admin!' })
+      }
+      // user is admin so remove
+      org.adminInfo.adminId.splice(removableIndex, 1)
+      await org.save()
+      return res.status(HttpStatus.OK).json({ org })
     } catch (error) {
       HANDLER.handleError(res, error)
     }

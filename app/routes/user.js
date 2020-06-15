@@ -73,9 +73,17 @@ router.delete(
   userController.userDelete
 )
 
+// LOGOUT USER
+router.post(
+  '/logout',
+  auth,
+  userController.logout
+)
+
 // follow the user
 router.patch(
   '/follow',
+  isUnderMaintenance,
   auth,
   userController.addFollowing,
   userController.addFollower
@@ -84,6 +92,7 @@ router.patch(
 // unFollow the user
 router.patch(
   '/unfollow',
+  isUnderMaintenance,
   auth,
   userController.removeFollowing,
   userController.removeFollower
@@ -92,6 +101,7 @@ router.patch(
 // BLOCK THE USER
 router.patch(
   '/block/:id',
+  isUnderMaintenance,
   auth,
   userController.blockUser
 )
@@ -99,8 +109,25 @@ router.patch(
 // UNBLOCK THE USER
 router.patch(
   '/unblock/:id',
+  isUnderMaintenance,
   auth,
   userController.unBlockUser
+)
+
+// GET PERSONAL OVERVIEW
+router.get(
+  '/overview',
+  isUnderMaintenance,
+  auth,
+  userController.getPersonalOverview
+)
+
+// REMOVE USER
+router.patch(
+  '/remove/:id',
+  isUnderMaintenance,
+  auth,
+  userController.removeUser
 )
 
 module.exports = router
