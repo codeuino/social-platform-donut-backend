@@ -226,7 +226,7 @@ module.exports = {
             { 'name.lastName': { $regex: regex } }
           ]
         })
-          .select('name email isAdmin info.about.designation')
+          .select('name email isAdmin info.about.designation isRemoved')
           .lean()
           .sort({ createdAt: -1 })
           .exec()
@@ -236,7 +236,7 @@ module.exports = {
         return res.status(HttpStatus.OK).json({ member })
       } else {
         const members = await User.find({})
-          .select('name email isAdmin info.about.designation')
+          .select('name email isAdmin info.about.designation isRemoved')
           .lean()
           .sort({ createdAt: -1 })
           .exec()
@@ -272,6 +272,10 @@ module.exports = {
       // user is admin so remove
       org.adminInfo.adminId.splice(removableIndex, 1)
       await org.save()
+      // also make isAdmin false
+      const user = await User.findById(userId)
+      user.isAdmin = false
+      await user.save()
       return res.status(HttpStatus.OK).json({ org })
     } catch (error) {
       HANDLER.handleError(res, error)

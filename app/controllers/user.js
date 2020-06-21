@@ -32,11 +32,7 @@ module.exports = {
   // GET USER PROFILE
   userProfile: async (req, res, next) => {
     try {
-      const user = await User.findById(req.user._id)
-        .populate('followings', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
-        .populate('followers', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
-        .populate('blocked', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
-        .exec()
+      const user = req.user
       if (!user) {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exist!' })
       }
@@ -53,7 +49,8 @@ module.exports = {
       'name',
       'email',
       'phone',
-      'info'
+      'info',
+      'about'
     ]
     const isValidOperation = updates.every((update) => {
       return allowedUpdates.includes(update)
@@ -228,9 +225,6 @@ module.exports = {
     const { followId } = req.body
     try {
       const user = await User.findById(followId)
-        .populate('followings', ['name.firstName', 'name.lastName', 'email'])
-        .populate('followers', ['name.firstName', 'name.lastName', 'email'])
-        .exec()
       if (!user) {
         return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user exists!' })
       }
@@ -246,7 +240,12 @@ module.exports = {
       notification.content = `${req.user.name.firstName} started following you!`
       notification.tag = TAGS.FOLLOWER
       notificationHelper.addToNotificationForUser(user._id, res, notification, next)
-      return res.status(HttpStatus.OK).json({ user })
+      const userData = await User.findById(req.user._id)
+        .populate('followings', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+        .populate('followers', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+        .populate('blocked', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+        .exec()
+      return res.status(HttpStatus.OK).json({ user: userData })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -281,9 +280,6 @@ module.exports = {
     const { followId } = req.body
     try {
       const user = await User.findById(followId)
-        .populate('followings', ['name.firstName', 'name.lastName', 'email'])
-        .populate('followers', ['name.firstName', 'name.lastName', 'email'])
-        .exec()
       if (!user) {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exists!' })
       }
@@ -294,7 +290,12 @@ module.exports = {
       }
       user.followers.splice(isFollowingIndex, 1)
       await user.save()
-      return res.status(HttpStatus.OK).json({ user })
+      const userData = await User.findById(req.user._id)
+        .populate('followings', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+        .populate('followers', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+        .populate('blocked', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+        .exec()
+      return res.status(HttpStatus.OK).json({ user: userData })
     } catch (error) {
       HANDLER.handleError(res, error)
     }

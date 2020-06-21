@@ -132,12 +132,10 @@ module.exports = {
   GetAllEvent: async (req, res, next) => {
     try {
       const EventData = await Event.find({}, {}, helper.paginate(req))
+        .populate('createdBy', ['name.firstName', 'name.lastName', '_id', 'isAdmin'])
         .sort({ eventDate: -1 })
         .lean()
-      if (!EventData) {
-        return res.status(HttpStatus.NOT_FOUND).json({ error: 'No such Event is available!' })
-      }
-      return res.status(HttpStatus.OK).json({ Event: EventData })
+      return res.status(HttpStatus.OK).json({ events: EventData })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -171,9 +169,6 @@ module.exports = {
         .sort({ eventDate: -1 })
         .exec()
       console.log('Upcoming events ', events)
-      if (events.length === 0) {
-        return res.status(HttpStatus.OK).json({ msg: 'No Upcoming events exists!' })
-      }
       return res.status(HttpStatus.OK).json({ events })
     } catch (error) {
       HANDLER.handleError(res, next)
@@ -186,9 +181,6 @@ module.exports = {
         .sort({ eventDate: -1 })
         .populate('createdBy', '_id name.firstName name.lastName')
         .exec()
-      if (events.length === 0) {
-        return res.status(HttpStatus.OK).json({ msg: 'No events posted by user!' })
-      }
       return res.status(HttpStatus.OK).json({ events })
     } catch (error) {
       HANDLER.handleError(res, error)

@@ -136,11 +136,9 @@ module.exports = {
     try {
       const posts = await PostModel.find({ userId: req.user._id }, {}, helper.paginate(req))
         .populate('comments', ['content', 'votes'])
+        .populate('userId', ['name.firstName', 'name.lastName', '_id', 'isAdmin'])
         .sort({ updatedAt: -1 })
         .exec()
-      if (posts.length === 0) {
-        return res.status(HttpStatus.OK).json({ msg: 'No posts found!' })
-      }
       return res.status(HttpStatus.OK).json({ posts })
     } catch (error) {
       HANDLER.handleError(res, error)

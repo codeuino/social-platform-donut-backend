@@ -10,6 +10,10 @@ const auth = async (req, res, next) => {
       _id: decoded._id,
       'tokens.token': token
     })
+      .populate('followings', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+      .populate('followers', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+      .populate('blocked', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+      .exec()
 
     if (!user) {
       throw new Error()
