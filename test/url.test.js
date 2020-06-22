@@ -1,4 +1,4 @@
-const app = require('../app')
+const app = require('../app').app
 const mongoose = require('mongoose')
 const request = require('supertest')
 const UrlModel = require('../app/models/UrlShortner')
@@ -58,6 +58,8 @@ test('Should short the URL', async (done) => {
 // })
 
 afterAll(async () => {
+  // avoid jest open handle error
+  await new Promise((resolve) => setTimeout(() => resolve(), 500))
   // close server
   await server.close()
   // Closing the DB connection allows Jest to exit successfully.

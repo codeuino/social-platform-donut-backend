@@ -122,4 +122,12 @@ router.get(
   userController.getPersonalOverview
 )
 
+// REMOVE USER
+router.patch(
+  '/remove/:id',
+  isUnderMaintenance,
+  auth,
+  userController.removeUser
+)
+
 module.exports = router

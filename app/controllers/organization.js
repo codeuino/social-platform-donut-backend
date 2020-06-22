@@ -2,10 +2,17 @@ const Organization = require('../models/Organisation')
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
 const helper = require('../utils/uploader')
+const notificationHelper = require('../utils/notif-helper')
 const User = require('../models/User')
 const Project = require('../models/Project')
 const Event = require('../models/Event')
 const permission = require('../utils/permission')
+const TAGS = require('../utils/notificationTags')
+const notification = {
+  heading: '',
+  content: '',
+  tag: ''
+}
 
 module.exports = {
   createOrganization: async (req, res, next) => {
@@ -15,7 +22,12 @@ module.exports = {
     }
     try {
       await org.save()
-      res.status(HttpStatus.CREATED).json({ org })
+      req.io.emit('new org created', { data: org.name })
+      notification.heading = 'New org!'
+      notification.content = `${org.name} is created!`
+      notification.tag = TAGS.NEW
+      notificationHelper.addToNotificationForAll(req, res, notification, next)
+      return res.status(HttpStatus.CREATED).json({ org })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -80,6 +92,11 @@ module.exports = {
       if (!permission.check(req, res)) {
         return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have the permission!' })
       }
+      req.io.emit('org deleted', { data: org.name })
+      notification.heading = 'Org deleted!'
+      notification.content = `${org.name} is deleted!`
+      notification.tag = TAGS.DELETE
+      notificationHelper.addToNotificationForAll(req, res, notification, next)
       return res.status(HttpStatus.OK).json({ organization: org })
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -111,15 +128,25 @@ module.exports = {
       }
       // if user is admin or not
       const adminIds = organization.adminInfo.adminId
-      const isAdmin = adminIds.indexOf(req.user.id)
+      const isAdmin = adminIds.indexOf(req.user.id) || req.user.isAdmin
       // user is admin then perform operation
-      if (isAdmin !== -1) {
+      if (isAdmin !== -1 || req.user.isAdmin) {
         // toggle maintenance mode
         organization.isMaintenance = !organization.isMaintenance
         await organization.save()
+        notification.tag = TAGS.MAINTENANCE
+
         if (organization.isMaintenance) {
+          req.io.emit('org under maintenance', { data: organization.name })
+          notification.heading = 'Maintenance mode on!'
+          notification.content = `${organization.name} is kept under maintenance!`
+          notificationHelper.addToNotificationForAll(req, res, notification, next)
           return res.status(HttpStatus.OK).json({ msg: 'Organization is kept under the maintenance!!' })
         }
+
+        req.io.emit('org revoked maintenance', { data: organization.name })
+        notification.heading = 'Maintenance mode off!'
+        notification.content = `${organization.name} is revoked from maintenance!`
         return res.status(HttpStatus.OK).json({ msg: 'Organization is recovered from maintenance!!' })
       } else {
         return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have access to triggerMaintenance!' })
@@ -191,9 +218,15 @@ module.exports = {
     try {
       const { search } = req.query
       if (search) {
-        const regex = search.split(' ')
-        const member = await User.find({ $or: [{ 'name.firstName': regex }, { 'name.lastName': regex }] })
-          .select('name email isAdmin info.about.designation')
+        const queryTerm = search.split(' ')
+        const regex = new RegExp('^' + queryTerm + '$', 'i')
+        const member = await User.find({
+          $or: [
+            { 'name.firstName': { $regex: regex } },
+            { 'name.lastName': { $regex: regex } }
+          ]
+        })
+          .select('name email isAdmin info.about.designation isRemoved')
           .lean()
           .sort({ createdAt: -1 })
           .exec()
@@ -203,7 +236,7 @@ module.exports = {
         return res.status(HttpStatus.OK).json({ member })
       } else {
         const members = await User.find({})
-          .select('name email isAdmin info.about.designation')
+          .select('name email isAdmin info.about.designation isRemoved')
           .lean()
           .sort({ createdAt: -1 })
           .exec()
@@ -212,6 +245,38 @@ module.exports = {
         }
         return res.status(HttpStatus.OK).json({ members })
       }
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+  // REMOVE ADMIN
+  removeAdmin: async (req, res, next) => {
+    try {
+      const { userId, orgId } = req.params
+      const org = await Organization.findById(orgId)
+      if (!org) {
+        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No org exists!' })
+      }
+      // only permitted for admins
+      if (!req.user.isAdmin) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You are not permitted!' })
+      }
+      // console.log('Permitted to removeAdmin')
+      // REMOVE ADMINS FROM ADMINS LIST
+      const admins = org.adminInfo.adminId
+      console.log('adminIds ', admins)
+      const removableIndex = admins.indexOf(userId)
+      if (removableIndex === -1) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'User is not an admin!' })
+      }
+      // user is admin so remove
+      org.adminInfo.adminId.splice(removableIndex, 1)
+      await org.save()
+      // also make isAdmin false
+      const user = await User.findById(userId)
+      user.isAdmin = false
+      await user.save()
+      return res.status(HttpStatus.OK).json({ org })
     } catch (error) {
       HANDLER.handleError(res, error)
     }

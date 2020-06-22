@@ -1,4 +1,4 @@
-const app = require('../app')
+const app = require('../app').app
 const mongoose = require('mongoose')
 const jwt = require('jsonwebtoken')
 const HttpStatus = require('http-status-codes')
@@ -209,6 +209,8 @@ test('Should update the project info', async (done) => {
  * Jest has detected the following 1 open handle potentially keeping Jest from exiting
  */
 afterAll(async () => {
+  // avoid jest open handle error
+  await new Promise((resolve) => setTimeout(() => resolve(), 500))
   // close server
   await server.close()
   // delete all the projects project testing

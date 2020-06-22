@@ -1,4 +1,4 @@
-const app = require('../app')
+const app = require('../app').app
 const mongoose = require('mongoose')
 const jwt = require('jsonwebtoken')
 const request = require('supertest')
@@ -230,13 +230,14 @@ test('Should update the password ', async () => {
 })
 
 /* Activate account */
-test('Should activate the account ', async () => {
+test('Should activate the account ', async (done) => {
   await request(app)
     .get(`/user/activate/${token}`)
     .send({
       token: `${token}`
     })
     .expect(HttpStatus.OK)
+  done()
 })
 
 /* Get invite link */
@@ -329,6 +330,8 @@ test('Should UnBlock the user', async (done) => {
  * Jest has detected the following 1 open handle potentially keeping Jest from exiting
  */
 afterAll(async () => {
+  // avoid jest open handle error
+  await new Promise((resolve) => setTimeout(() => resolve(), 500))
   // close server
   await server.close()
   // delete all the users post testing

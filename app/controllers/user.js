@@ -4,8 +4,15 @@ const HttpStatus = require('http-status-codes')
 const emailController = require('./email')
 const permission = require('../utils/permission')
 const HANDLER = require('../utils/response-helper')
+const notificationHelper = require('../utils/notif-helper')
 const Projects = require('../models/Project')
 const Events = require('../models/Event')
+const TAGS = require('../utils/notificationTags')
+const notification = {
+  heading: '',
+  content: '',
+  tag: ''
+}
 
 module.exports = {
   // CREATE USER
@@ -24,7 +31,15 @@ module.exports = {
   },
   // GET USER PROFILE
   userProfile: async (req, res, next) => {
-    res.status(HttpStatus.OK).json(req.user)
+    try {
+      const user = req.user
+      if (!user) {
+        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exist!' })
+      }
+      return res.status(HttpStatus.OK).json({ user })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
   },
 
   // USER PROFILE UPDATE
@@ -34,7 +49,8 @@ module.exports = {
       'name',
       'email',
       'phone',
-      'info'
+      'info',
+      'about'
     ]
     const isValidOperation = updates.every((update) => {
       return allowedUpdates.includes(update)
@@ -74,8 +90,7 @@ module.exports = {
     }
   },
 
-  // UPDATE PASSWORD
-  updatePassword: async (req, res) => {
+  updatePassword: async (req, res, next) => {
     const { password, id } = req.body
     const { token } = req.params
     try {
@@ -90,6 +105,14 @@ module.exports = {
         }
         user.password = password
         await user.save()
+        const obj = {
+          userId: user._id
+        }
+        req.io.emit('Password update', obj)
+        notification.heading = 'Forgot password!'
+        notification.content = 'Password successfully updated!'
+        notification.tag = TAGS.UPDATE
+        notificationHelper.addToNotificationForUser(id, res, notification, next)
         return res.status(HttpStatus.OK).json({ updated: true })
       } else {
         if (process.env.NODE_ENV !== 'production') {
@@ -143,6 +166,14 @@ module.exports = {
         // if user found activate the account
         user.isActivated = true
         await user.save()
+        const obj = {
+          userId: user._id
+        }
+        req.io.emit('Account activate', obj)
+        notification.heading = 'Account activate!'
+        notification.content = 'Account successfully activated!'
+        notification.tag = TAGS.ACTIVATE
+        notificationHelper.addToNotificationForUser(user._id, res, notification, next)
         return res.status(HttpStatus.OK).json({ msg: 'Succesfully activated!' })
       }
     } catch (Error) {
@@ -194,16 +225,27 @@ module.exports = {
     const { followId } = req.body
     try {
       const user = await User.findById(followId)
-        .populate('followings', ['name.firstName', 'name.lastName', 'email'])
-        .populate('followers', ['name.firstName', 'name.lastName', 'email'])
-        .exec()
       if (!user) {
         return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user exists!' })
       }
       // add to the followers list
       user.followers.unshift(req.user.id)
       await user.save()
-      return res.status(HttpStatus.OK).json({ user })
+      const obj = {
+        name: req.user.name.firstName,
+        followId: user._id
+      }
+      req.io.emit('New follower', obj)
+      notification.heading = 'New follower!'
+      notification.content = `${req.user.name.firstName} started following you!`
+      notification.tag = TAGS.FOLLOWER
+      notificationHelper.addToNotificationForUser(user._id, res, notification, next)
+      const userData = await User.findById(req.user._id)
+        .populate('followings', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+        .populate('followers', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+        .populate('blocked', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+        .exec()
+      return res.status(HttpStatus.OK).json({ user: userData })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -238,9 +280,6 @@ module.exports = {
     const { followId } = req.body
     try {
       const user = await User.findById(followId)
-        .populate('followings', ['name.firstName', 'name.lastName', 'email'])
-        .populate('followers', ['name.firstName', 'name.lastName', 'email'])
-        .exec()
       if (!user) {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exists!' })
       }
@@ -251,7 +290,12 @@ module.exports = {
       }
       user.followers.splice(isFollowingIndex, 1)
       await user.save()
-      return res.status(HttpStatus.OK).json({ user })
+      const userData = await User.findById(req.user._id)
+        .populate('followings', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+        .populate('followers', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+        .populate('blocked', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+        .exec()
+      return res.status(HttpStatus.OK).json({ user: userData })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -318,6 +362,26 @@ module.exports = {
       return res.status(HttpStatus.OK).json({ personalOverview })
     } catch (error) {
       HANDLER.handleError(req, error)
+    }
+  },
+
+  // REMOVE USER
+  removeUser: async (req, res, next) => {
+    const { id } = req.params
+    try {
+      const user = await User.findById(id)
+      if (!user) {
+        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exits!' })
+      }
+      // only admins can remove
+      if (!req.user.isAdmin) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You are not permitted!' })
+      }
+      user.isRemoved = true
+      await user.save()
+      return res.status(HttpStatus.OK).json({ user })
+    } catch (error) {
+      HANDLER.handleError(res, error)
     }
   }
 }

@@ -100,9 +100,6 @@ module.exports = {
         .populate('createdBy', '_id name.firstName name.lastName email')
         .sort({ updatedAt: -1 })
         .exec()
-      if (projects.length === 0) {
-        return res.status(HttpStatus.OK).json({ msg: 'No projects created by user yet!' })
-      }
       return res.status(HttpStatus.OK).json({ projects })
     } catch (error) {
       HANDLER.handleError(res, error)

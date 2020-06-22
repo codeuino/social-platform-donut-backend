@@ -76,4 +76,12 @@ router.patch(
   OrgController.updateSettings
 )
 
+// REMOVE ADMIN
+router.patch(
+  '/remove/:orgId/:userId',
+  isUnderMaintenance,
+  auth,
+  OrgController.removeAdmin
+)
+
 module.exports = router

@@ -136,6 +136,17 @@ const UserSchema = new mongoose.Schema({
       }
     }
   },
+  notifications: [{
+    heading: {
+      type: String
+    },
+    content: {
+      type: String
+    },
+    tag: {
+      type: String
+    }
+  }],
   followers: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
@@ -160,6 +171,10 @@ const UserSchema = new mongoose.Schema({
     default: false
   },
   isActivated: {
+    type: Boolean,
+    default: false
+  },
+  isRemoved: {
     type: Boolean,
     default: false
   },
