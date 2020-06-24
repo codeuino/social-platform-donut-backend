@@ -1,48 +1,42 @@
-const mongoose = require('mongoose')
-const Schema = mongoose.Schema
-const validator = require('validator')
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
+const validator = require("validator");
 
 const proposalSchema = new Schema(
   {
     title: {
       type: String,
-      required: true,
-      validate (title) {
-        if (validator.isEmpty(title)) {
-          throw new Error('Proposal Title cannot be kept empty')
-        }
-      }
-    },
-    organization: {
-      type: Schema.Types.ObjectId,
-      ref: 'Organization'
     },
     content: {
-      type: String
+      type: String,
     },
     proposalStatus: {
       type: String,
-      required: true,
-      default: 'draft'
+      default: "draft",
     },
     creator: {
       type: Schema.Types.ObjectId,
-      ref: 'User'
+      ref: "User",
+      required: true,
     },
-    attachments: [{ description: String, fileLink: String, s3_key: String }],
+    proposalDescription: {
+      type: String,
+    },
+    attachments: [{ fileLink: String, s3_key: String }],
 
     createdAt: {
       type: Date,
       required: true,
-      default: Date.now()
+      default: Date.now(),
     },
     updatedAt: {
       type: Date,
       required: true,
-      default: Date.now()
-    }
+      default: Date.now(),
+    },
+    comments: [{ userName: String, comment: String }],
   },
   { timestamps: true }
-)
+);
 
-module.exports = mongoose.model('Proposal', proposalSchema)
+module.exports = mongoose.model("Proposal", proposalSchema);
