@@ -1,4 +1,4 @@
-const app = require('../app')
+const app = require('../app').app
 const mongoose = require('mongoose')
 const request = require('supertest')
 const HttpStatus = require('http-status-codes')
@@ -174,6 +174,8 @@ describe('DELETE /org/:id', () => {
 })
 
 afterAll(async () => {
+  // avoid jest open handle error
+  await new Promise((resolve) => setTimeout(() => resolve(), 500))
   // close server
   await server.close()
   // delete all the organization post testing

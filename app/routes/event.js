@@ -15,6 +15,7 @@ router.get(
 // get all the events
 router.get(
   '/upcoming',
+  isUnderMaintenance,
   auth,
   eventController.UpComingEvents
 )
@@ -58,6 +59,7 @@ router.delete(
 // GET ALL EVENT POSTED BY A USER
 router.get(
   '/me/all',
+  isUnderMaintenance,
   auth,
   eventController.getAllEventByUser
 )

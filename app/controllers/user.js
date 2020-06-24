@@ -2,9 +2,20 @@ const User = require('../models/User')
 const jwt = require('jsonwebtoken')
 const HttpStatus = require('http-status-codes')
 const emailController = require('./email')
+const permission = require('../utils/permission')
 const HANDLER = require('../utils/response-helper')
+const notificationHelper = require('../utils/notif-helper')
+const Projects = require('../models/Project')
+const Events = require('../models/Event')
+const TAGS = require('../utils/notificationTags')
+const notification = {
+  heading: '',
+  content: '',
+  tag: ''
+}
 
 module.exports = {
+  // CREATE USER
   createUser: async (req, res, next) => {
     const user = new User(req.body)
     try {
@@ -18,20 +29,27 @@ module.exports = {
       return res.status(HttpStatus.NOT_ACCEPTABLE).json({ error: error })
     }
   },
-
+  // GET USER PROFILE
   userProfile: async (req, res, next) => {
-    res.status(HttpStatus.OK).json(req.user)
+    try {
+      const user = req.user
+      if (!user) {
+        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exist!' })
+      }
+      return res.status(HttpStatus.OK).json({ user })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
   },
 
+  // USER PROFILE UPDATE
   userProfileUpdate: async (req, res, next) => {
     const updates = Object.keys(req.body)
     const allowedUpdates = [
       'name',
       'email',
-      'password',
-      'company',
-      'website',
-      'location',
+      'phone',
+      'info',
       'about'
     ]
     const isValidOperation = updates.every((update) => {
@@ -47,12 +65,13 @@ module.exports = {
         req.user[update] = req.body[update]
       })
       await req.user.save()
-      res.status(HttpStatus.OK).json({ data: req.user })
+      return res.status(HttpStatus.OK).json({ data: req.user })
     } catch (error) {
-      res.status(HttpStatus.BAD_REQUEST).json({ error })
+      return res.status(HttpStatus.BAD_REQUEST).json({ error })
     }
   },
 
+  // FORGOT PASSWORD REQUEST
   forgotPasswordRequest: async (req, res) => {
     const { email } = req.body
     try {
@@ -71,7 +90,7 @@ module.exports = {
     }
   },
 
-  updatePassword: async (req, res) => {
+  updatePassword: async (req, res, next) => {
     const { password, id } = req.body
     const { token } = req.params
     try {
@@ -86,6 +105,14 @@ module.exports = {
         }
         user.password = password
         await user.save()
+        const obj = {
+          userId: user._id
+        }
+        req.io.emit('Password update', obj)
+        notification.heading = 'Forgot password!'
+        notification.content = 'Password successfully updated!'
+        notification.tag = TAGS.UPDATE
+        notificationHelper.addToNotificationForUser(id, res, notification, next)
         return res.status(HttpStatus.OK).json({ updated: true })
       } else {
         if (process.env.NODE_ENV !== 'production') {
@@ -101,20 +128,31 @@ module.exports = {
     }
   },
 
-  logout: (req, res, next) => {
-    res.status(HttpStatus.OK).json({ success: 'ok' })
-  },
-
-  userDelete: async (req, res, next) => {
+  // LOGOUT USER
+  logout: async (req, res, next) => {
     try {
-      await req.user.remove()
-      res.send({ data: 'user deletion successful', user: req.user })
+      req.user.tokens = []
+      await req.user.save()
+      return res.status(HttpStatus.OK).json({ msg: 'User logged out Successfully!' })
     } catch (error) {
-      console.log(error)
-      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error })
+      HANDLER.handleError(res, error)
     }
   },
 
+  // REMOVE USER
+  userDelete: async (req, res, next) => {
+    try {
+      if (permission.check(req, res)) {
+        await req.user.remove()
+        return res.send({ data: 'user deletion successful', user: req.user })
+      }
+      return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have permission!' })
+    } catch (error) {
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error })
+    }
+  },
+
+  // USER ACCOUNT ACTIVATION
   activateAccount: async (req, res, next) => {
     try {
       const { token } = req.params
@@ -128,6 +166,14 @@ module.exports = {
         // if user found activate the account
         user.isActivated = true
         await user.save()
+        const obj = {
+          userId: user._id
+        }
+        req.io.emit('Account activate', obj)
+        notification.heading = 'Account activate!'
+        notification.content = 'Account successfully activated!'
+        notification.tag = TAGS.ACTIVATE
+        notificationHelper.addToNotificationForUser(user._id, res, notification, next)
         return res.status(HttpStatus.OK).json({ msg: 'Succesfully activated!' })
       }
     } catch (Error) {
@@ -135,12 +181,14 @@ module.exports = {
     }
   },
 
+  // GET INVITE LINK
   getInviteLink: async (req, res, next) => {
     const token = jwt.sign({ _id: req.user._id, expiry: Date.now() + 24 * 3600 * 1000 }, process.env.JWT_SECRET)
     const inviteLink = `${req.protocol}://${req.get('host')}/user/invite/${token}`
     return res.status(HttpStatus.OK).json({ inviteLink: inviteLink })
   },
 
+  // PROCESS THE INVITE LINK
   processInvite: async (req, res, next) => {
     const { token } = req.params
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
@@ -177,16 +225,27 @@ module.exports = {
     const { followId } = req.body
     try {
       const user = await User.findById(followId)
-        .populate('followings', ['name.firstName', 'name.lastName', 'email'])
-        .populate('followers', ['name.firstName', 'name.lastName', 'email'])
-        .exec()
       if (!user) {
         return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user exists!' })
       }
       // add to the followers list
       user.followers.unshift(req.user.id)
       await user.save()
-      return res.status(HttpStatus.OK).json({ user })
+      const obj = {
+        name: req.user.name.firstName,
+        followId: user._id
+      }
+      req.io.emit('New follower', obj)
+      notification.heading = 'New follower!'
+      notification.content = `${req.user.name.firstName} started following you!`
+      notification.tag = TAGS.FOLLOWER
+      notificationHelper.addToNotificationForUser(user._id, res, notification, next)
+      const userData = await User.findById(req.user._id)
+        .populate('followings', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+        .populate('followers', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+        .populate('blocked', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+        .exec()
+      return res.status(HttpStatus.OK).json({ user: userData })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -221,9 +280,6 @@ module.exports = {
     const { followId } = req.body
     try {
       const user = await User.findById(followId)
-        .populate('followings', ['name.firstName', 'name.lastName', 'email'])
-        .populate('followers', ['name.firstName', 'name.lastName', 'email'])
-        .exec()
       if (!user) {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exists!' })
       }
@@ -234,11 +290,18 @@ module.exports = {
       }
       user.followers.splice(isFollowingIndex, 1)
       await user.save()
-      return res.status(HttpStatus.OK).json({ user })
+      const userData = await User.findById(req.user._id)
+        .populate('followings', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+        .populate('followers', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+        .populate('blocked', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
+        .exec()
+      return res.status(HttpStatus.OK).json({ user: userData })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
   },
+
+  // BLOCK THE USER
   blockUser: async (req, res, next) => {
     const { id } = req.params
     try {
@@ -260,6 +323,8 @@ module.exports = {
       HANDLER.handleError(res, error)
     }
   },
+
+  // UNBLOCK USER
   unBlockUser: async (req, res, next) => {
     const { id } = req.params
     try {
@@ -282,6 +347,39 @@ module.exports = {
         return res.status(HttpStatus.NOT_FOUND).json({ user })
       }
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have permission!' })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+
+  // GET OVERALL PERSONAL OVERVIEW
+  getPersonalOverview: async (req, res, next) => {
+    const userId = req.user._id
+    const personalOverview = {}
+    try {
+      personalOverview.projects = await Projects.find({ createdBy: userId }).estimatedDocumentCount()
+      personalOverview.events = await Events.find({ createdBy: userId }).estimatedDocumentCount()
+      return res.status(HttpStatus.OK).json({ personalOverview })
+    } catch (error) {
+      HANDLER.handleError(req, error)
+    }
+  },
+
+  // REMOVE USER
+  removeUser: async (req, res, next) => {
+    const { id } = req.params
+    try {
+      const user = await User.findById(id)
+      if (!user) {
+        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exits!' })
+      }
+      // only admins can remove
+      if (!req.user.isAdmin) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You are not permitted!' })
+      }
+      user.isRemoved = true
+      await user.save()
+      return res.status(HttpStatus.OK).json({ user })
     } catch (error) {
       HANDLER.handleError(res, error)
     }

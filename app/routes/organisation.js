@@ -54,12 +54,34 @@ router.patch(
   OrgController.triggerMaintenance
 )
 
+// GET ORG OVERVIEW FOR INSIGHT PAGE
+router.get(
+  '/overview/all',
+  auth,
+  OrgController.getOrgOverView
+)
+
+// GET MEMBERS FOR INSIGHT PAGE
+router.get(
+  '/members/all',
+  auth,
+  OrgController.getMembers
+)
+
 // UPDATE THE ORG SETTINGS
 router.patch(
   '/:id/settings/update',
   isUnderMaintenance,
   auth,
   OrgController.updateSettings
+)
+
+// REMOVE ADMIN
+router.patch(
+  '/remove/:orgId/:userId',
+  isUnderMaintenance,
+  auth,
+  OrgController.removeAdmin
 )
 
 module.exports = router

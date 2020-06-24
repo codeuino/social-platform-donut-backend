@@ -3,6 +3,7 @@ const UserModel = require('../models/User')
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
 const imgUploadHelper = require('../utils/uploader')
+const permission = require('../utils/permission')
 const helper = require('../utils/paginate')
 
 module.exports = {
@@ -16,7 +17,8 @@ module.exports = {
     }
     try {
       await post.save()
-      res.status(HttpStatus.CREATED).json({ post })
+      // req.io.emit('new post created', { data: post.content })
+      return res.status(HttpStatus.CREATED).json({ post })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -25,7 +27,6 @@ module.exports = {
   // DELETE POST
   delete: async (req, res, next) => {
     const { id } = req.params
-    const userId = req.user.id.toString()
     try {
       const post = await PostModel.findById(id)
       if (!post) {
@@ -33,11 +34,16 @@ module.exports = {
           .status(HttpStatus.NOT_FOUND)
           .json({ message: 'No post exists' })
       }
+<<<<<<< HEAD
       // TODO ADD ADMIN RIGHTS AS WELL
       if (JSON.stringify(userId) !== JSON.stringify(post.userId)) {
         return res
           .status(HttpStatus.FORBIDDEN)
           .json({ message: 'Bad delete request' })
+=======
+      if (!permission.check(req, res, post.userId)) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Bad delete request' })
+>>>>>>> cf9a8ab8cc6eb2b29aeb7f4caf6de92494275952
       }
       await PostModel.findByIdAndRemove(id)
       res.status(HttpStatus.OK).json({ post: post, msg: 'Deleted!' })
@@ -51,7 +57,6 @@ module.exports = {
     const { id } = req.params
     const updates = Object.keys(req.body)
     const allowedUpdates = ['content', 'imgUrl']
-    const userId = req.user.id.toString()
     const isValidOperation = updates.every((update) => {
       return allowedUpdates.includes(update)
     })
@@ -68,10 +73,15 @@ module.exports = {
           .status(HttpStatus.BAD_REQUEST)
           .json({ message: 'No post exists' })
       }
+<<<<<<< HEAD
       if (JSON.stringify(userId) !== JSON.stringify(post.userId)) {
         return res
           .status(HttpStatus.FORBIDDEN)
           .json({ message: 'Bad update request' })
+=======
+      if (!permission.check(req, res, post.userId)) {
+        return res.status(HttpStatus.FORBIDDEN).json({ message: 'Bad update request' })
+>>>>>>> cf9a8ab8cc6eb2b29aeb7f4caf6de92494275952
       }
       updates.forEach((update) => {
         post[update] = req.body[update]
@@ -169,11 +179,9 @@ module.exports = {
         helper.paginate(req)
       )
         .populate('comments', ['content', 'votes'])
+        .populate('userId', ['name.firstName', 'name.lastName', '_id', 'isAdmin'])
         .sort({ updatedAt: -1 })
         .exec()
-      if (posts.length === 0) {
-        return res.status(HttpStatus.OK).json({ msg: 'No posts found!' })
-      }
       return res.status(HttpStatus.OK).json({ posts })
     } catch (error) {
       HANDLER.handleError(res, error)
