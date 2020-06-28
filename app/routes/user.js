@@ -30,14 +30,14 @@ router.patch(
 )
 
 // user forgot password request
-router.post(
-  '/password_reset',
+router.patch(
+  '/password_reset/request',
   isUnderMaintenance,
   userController.forgotPasswordRequest
 )
 
 // update password
-router.post(
+router.patch(
   '/password_reset/:token',
   isUnderMaintenance,
   userController.updatePassword
