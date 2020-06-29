@@ -30,4 +30,10 @@ router.post("/all", auth, proposalController.getAllProposals);
 // Comment on the given proposal
 router.post("/comment", auth, proposalController.commentOnProposal);
 
+router.post(
+  "/notifications",
+  auth,
+  proposalController.getProposalNotificationsByUser
+);
+
 module.exports = router;
