@@ -123,9 +123,9 @@ module.exports = {
       if (!EventData) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No such Event is available!' })
       }
-      res.status(HttpStatus.OK).json({ Event: EventData })
+      return res.status(HttpStatus.OK).json({ event: EventData })
     } catch (error) {
-      next(error)
+      HANDLER.handleError(res, error)
     }
   },
 

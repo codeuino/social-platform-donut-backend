@@ -100,9 +100,6 @@ module.exports = {
         .populate('userId', ['name.firstName', 'name.lastName', 'email', 'isAdmin'])
         .sort({ updatedAt: -1 })
         .exec()
-      if (!posts.length) {
-        return res.status(HttpStatus.NOT_FOUND).json({ message: 'No posts found' })
-      }
       return res.status(HttpStatus.OK).json({ posts: posts })
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -177,17 +174,14 @@ module.exports = {
   // GET ALL PINNED POST
   getPinned: async (req, res, next) => {
     try {
-      const posts = await PostModel.find({})
-      if (posts.length === 0) {
-        return res.status(HttpStatus.OK).json({ msg: 'No post to show!' })
-      }
+      const posts = await PostModel.find({}, {}, helper.paginate(req))
+        .populate('userId', ['name.firstName', 'name.lastName', 'email', 'isAdmin'])
+        .sort({ updatedAt: -1 })
+        .exec()
       // check for pinned post
       const pinnedPost = posts.filter((post) => {
         return post.isPinned === true
       })
-      if (pinnedPost.length === 0) {
-        return res.status(HttpStatus.OK).json({ msg: 'No post pinned yet!' })
-      }
       // else return pinned posts
       return res.status(HttpStatus.OK).json({ pinnedPost })
     } catch (error) {
