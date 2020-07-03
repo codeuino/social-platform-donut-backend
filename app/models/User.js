@@ -88,7 +88,6 @@ const UserSchema = new mongoose.Schema({
     about: {
       shortDescription: {
         type: String,
-        required: true,
         validate (shortDescription) {
           if (validator.isEmpty(shortDescription)) {
             throw new Error('Short description is required')
@@ -193,6 +192,10 @@ const UserSchema = new mongoose.Schema({
         ref: 'Post'
       }
     ]
+  },
+  firstRegister: {
+    type: Boolean,
+    default: false
   },
   isAdmin: {
     type: Boolean,

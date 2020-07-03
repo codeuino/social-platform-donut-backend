@@ -19,6 +19,12 @@ module.exports = {
   createUser: async (req, res, next) => {
     const user = new User(req.body)
     try {
+      const isRegisteredUserExists = await User.findOne({ firstRegister: true })
+      // for the first user who will be setting up the platform for their community
+      if (!isRegisteredUserExists) {
+        user.isAdmin = true
+        user.firstRegister = true
+      }
       await user.save()
       const token = await user.generateAuthToken()
       // Added fn to send email to activate account with warm message
@@ -77,7 +83,7 @@ module.exports = {
     try {
       const user = await User.findOne({ email: email })
       if (!user) {
-        res.status(HttpStatus.NOT_FOUND).json({ msg: 'User not found!' })
+        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'User not found!' })
       }
       const token = jwt.sign({ _id: user._id, expiry: Date.now() + 10800000 }, process.env.JWT_SECRET)
       await user.save()
@@ -86,7 +92,7 @@ module.exports = {
       if (process.env.NODE_ENV !== 'production' && error) {
         console.log('Error in forgotPasswordRequest ', error)
       }
-      res.status(HttpStatus.BAD_REQUEST).json({ error })
+      return res.status(HttpStatus.BAD_REQUEST).json({ error })
     }
   },
 

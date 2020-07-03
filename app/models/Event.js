@@ -47,7 +47,9 @@ const eventSchema = new Schema({
       }
     }
   },
-
+  eventTime: {
+    type: String
+  },
   rsvpYes: [{
     type: Schema.Types.ObjectId,
     ref: 'User'
