@@ -1,112 +1,112 @@
-const PostModel = require("../models/Post");
-const UserModel = require("../models/User");
-const HANDLER = require("../utils/response-helper");
-const HttpStatus = require("http-status-codes");
-const imgUploadHelper = require("../utils/uploader");
-const permission = require("../utils/permission");
-const helper = require("../utils/paginate");
+const PostModel = require('../models/Post')
+const UserModel = require('../models/User')
+const HANDLER = require('../utils/response-helper')
+const HttpStatus = require('http-status-codes')
+const imgUploadHelper = require('../utils/uploader')
+const permission = require('../utils/permission')
+const helper = require('../utils/paginate')
 
 module.exports = {
   // CREATE POST
   create: async (req, res, next) => {
-    const post = new PostModel(req.body);
-    const userId = req.user.id.toString();
-    post.userId = userId;
+    const post = new PostModel(req.body)
+    const userId = req.user.id.toString()
+    post.userId = userId
     if (req.file) {
-      imgUploadHelper.mapToDb(req, post);
+      imgUploadHelper.mapToDb(req, post)
     }
     try {
-      await post.save();
+      await post.save()
       // req.io.emit('new post created', { data: post.content })
-      return res.status(HttpStatus.CREATED).json({ post });
+      return res.status(HttpStatus.CREATED).json({ post })
     } catch (error) {
-      HANDLER.handleError(res, error);
+      HANDLER.handleError(res, error)
     }
   },
 
   // DELETE POST
   delete: async (req, res, next) => {
-    const { id } = req.params;
+    const { id } = req.params
     try {
-      const post = await PostModel.findById(id);
+      const post = await PostModel.findById(id)
       if (!post) {
         return res
           .status(HttpStatus.NOT_FOUND)
-          .json({ message: "No post exists" });
+          .json({ message: 'No post exists' })
       }
       if (!permission.check(req, res, post.userId)) {
         return res
           .status(HttpStatus.BAD_REQUEST)
-          .json({ message: "Bad delete request" });
+          .json({ message: 'Bad delete request' })
       }
-      await PostModel.findByIdAndRemove(id);
-      res.status(HttpStatus.OK).json({ post: post, msg: "Deleted!" });
+      await PostModel.findByIdAndRemove(id)
+      res.status(HttpStatus.OK).json({ post: post, msg: 'Deleted!' })
     } catch (error) {
-      HANDLER.handleError(res, error);
+      HANDLER.handleError(res, error)
     }
   },
 
   // UPDATE POST
   updatePost: async (req, res, next) => {
-    const { id } = req.params;
-    const updates = Object.keys(req.body);
-    const allowedUpdates = ["content", "imgUrl"];
+    const { id } = req.params
+    const updates = Object.keys(req.body)
+    const allowedUpdates = ['content', 'imgUrl']
     const isValidOperation = updates.every((update) => {
-      return allowedUpdates.includes(update);
-    });
+      return allowedUpdates.includes(update)
+    })
 
     if (!isValidOperation) {
       return res
         .status(HttpStatus.BAD_REQUEST)
-        .json({ message: "Invalid Update" });
+        .json({ message: 'Invalid Update' })
     }
     try {
-      const post = await PostModel.findById(id);
+      const post = await PostModel.findById(id)
       if (!post) {
         return res
           .status(HttpStatus.BAD_REQUEST)
-          .json({ message: "No post exists" });
+          .json({ message: 'No post exists' })
       }
       if (!permission.check(req, res, post.userId)) {
         return res
           .status(HttpStatus.FORBIDDEN)
-          .json({ message: "Bad update request" });
+          .json({ message: 'Bad update request' })
       }
       updates.forEach((update) => {
-        post[update] = req.body[update];
-      });
+        post[update] = req.body[update]
+      })
       if (req.file) {
-        imgUploadHelper.mapToDb(req, post);
+        imgUploadHelper.mapToDb(req, post)
       }
-      await post.save();
-      res.status(HttpStatus.OK).json({ post: post });
+      await post.save()
+      res.status(HttpStatus.OK).json({ post: post })
     } catch (error) {
-      HANDLER.handleError(res, error);
+      HANDLER.handleError(res, error)
     }
   },
 
   // GET POST BY ID
   getPostById: async (req, res, next) => {
-    const { id } = req.params;
+    const { id } = req.params
     try {
       const post = await PostModel.findById(id)
-        .populate("comments", ["content", "votes"])
-        .populate("userId", [
-          "name.firstName",
-          "name.lastName",
-          "email",
-          "isAdmin",
+        .populate('comments', ['content', 'votes'])
+        .populate('userId', [
+          'name.firstName',
+          'name.lastName',
+          'email',
+          'isAdmin'
         ])
         .lean()
-        .exec();
+        .exec()
       if (!post) {
         return res
           .status(HttpStatus.NOT_FOUND)
-          .json({ error: "Post not found" });
+          .json({ error: 'Post not found' })
       }
-      res.status(HttpStatus.OK).json({ post: post });
+      res.status(HttpStatus.OK).json({ post: post })
     } catch (error) {
-      HANDLER.handleError(res, error);
+      HANDLER.handleError(res, error)
     }
   },
 
@@ -114,49 +114,49 @@ module.exports = {
   getAllPost: async (req, res, next) => {
     try {
       const posts = await PostModel.find({}, {}, helper.paginate(req))
-        .populate("userId", [
-          "name.firstName",
-          "name.lastName",
-          "email",
-          "isAdmin",
+        .populate('userId', [
+          'name.firstName',
+          'name.lastName',
+          'email',
+          'isAdmin'
         ])
         .sort({ updatedAt: -1 })
-        .exec();
+        .exec()
       if (!posts.length) {
         return res
           .status(HttpStatus.NOT_FOUND)
-          .json({ message: "No posts found" });
+          .json({ message: 'No posts found' })
       }
-      return res.status(HttpStatus.OK).json({ posts: posts });
+      return res.status(HttpStatus.OK).json({ posts: posts })
     } catch (error) {
-      HANDLER.handleError(res, error);
+      HANDLER.handleError(res, error)
     }
   },
 
   // UPVOTE POST
   upvote: async (req, res, next) => {
-    const { id } = req.params;
-    const userId = req.user.id.toString();
+    const { id } = req.params
+    const userId = req.user.id.toString()
     try {
-      const post = await PostModel.findById(id);
+      const post = await PostModel.findById(id)
       if (!post) {
         return res
           .status(HttpStatus.NOT_FOUND)
-          .json({ error: "No post found" });
+          .json({ error: 'No post found' })
       }
       // CHECKS IF THE USER HAS ALREADY UPVOTED THE COMMENT
       post.votes.upVotes.user.filter((user) => {
         if (JSON.stringify(user) === JSON.stringify(userId)) {
           return res
             .status(HttpStatus.BAD_REQUEST)
-            .json({ error: "Bad request" });
+            .json({ error: 'Bad request' })
         }
-      });
-      post.votes.upVotes.user.unshift(userId);
-      await post.save();
-      res.status(HttpStatus.OK).json({ post: post });
+      })
+      post.votes.upVotes.user.unshift(userId)
+      await post.save()
+      res.status(HttpStatus.OK).json({ post: post })
     } catch (error) {
-      HANDLER.handleError(res, error);
+      HANDLER.handleError(res, error)
     }
   },
 
@@ -167,49 +167,49 @@ module.exports = {
         {},
         helper.paginate(req)
       )
-        .populate("comments", ["content", "votes"])
-        .populate("userId", [
-          "name.firstName",
-          "name.lastName",
-          "_id",
-          "isAdmin",
+        .populate('comments', ['content', 'votes'])
+        .populate('userId', [
+          'name.firstName',
+          'name.lastName',
+          '_id',
+          'isAdmin'
         ])
         .sort({ updatedAt: -1 })
-        .exec();
-      return res.status(HttpStatus.OK).json({ posts });
+        .exec()
+      return res.status(HttpStatus.OK).json({ posts })
     } catch (error) {
-      HANDLER.handleError(res, error);
+      HANDLER.handleError(res, error)
     }
   },
 
   // PIN THE POST
   pinPost: async (req, res, next) => {
-    const { id } = req.params;
+    const { id } = req.params
     try {
-      const post = await PostModel.findById(id);
-      const user = await UserModel.findById(req.user._id);
+      const post = await PostModel.findById(id)
+      const user = await UserModel.findById(req.user._id)
       if (!post) {
         return res
           .status(HttpStatus.NOT_FOUND)
-          .json({ msg: "No such post exists!" });
+          .json({ msg: 'No such post exists!' })
       }
       // toggle pinned post
-      post.isPinned = !post.isPinned;
+      post.isPinned = !post.isPinned
       // if already pinned then remove from their pinned items
-      const PinnedItems = user.pinned.postId;
+      const PinnedItems = user.pinned.postId
       if (PinnedItems.length > 0) {
-        const pinnedPostIndex = PinnedItems.indexOf(id);
-        user.pinned.postId.splice(pinnedPostIndex, 1);
-        await user.save();
+        const pinnedPostIndex = PinnedItems.indexOf(id)
+        user.pinned.postId.splice(pinnedPostIndex, 1)
+        await user.save()
       } else {
         // save to the user pinned items
-        user.pinned.postId.unshift(id);
-        await user.save();
+        user.pinned.postId.unshift(id)
+        await user.save()
       }
-      await post.save();
-      return res.status(HttpStatus.OK).json({ post });
+      await post.save()
+      return res.status(HttpStatus.OK).json({ post })
     } catch (error) {
-      HANDLER.handleError(res, error);
+      HANDLER.handleError(res, error)
     }
   },
 
@@ -217,22 +217,22 @@ module.exports = {
   getPinned: async (req, res, next) => {
     try {
       const posts = await PostModel.find({}, {}, helper.paginate(req))
-        .populate("userId", [
-          "name.firstName",
-          "name.lastName",
-          "email",
-          "isAdmin",
+        .populate('userId', [
+          'name.firstName',
+          'name.lastName',
+          'email',
+          'isAdmin'
         ])
         .sort({ updatedAt: -1 })
-        .exec();
+        .exec()
       // check for pinned post
       const pinnedPost = posts.filter((post) => {
-        return post.isPinned === true;
-      });
+        return post.isPinned === true
+      })
       // else return pinned posts
-      return res.status(HttpStatus.OK).json({ pinnedPost });
+      return res.status(HttpStatus.OK).json({ pinnedPost })
     } catch (error) {
-      HANDLER.handleError(res, error);
+      HANDLER.handleError(res, error)
     }
-  },
-};
+  }
+}
