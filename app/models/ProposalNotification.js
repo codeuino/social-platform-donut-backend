@@ -1,22 +1,22 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+const mongoose = require('mongoose')
+const Schema = mongoose.Schema
 
 const ProposalNotification = new Schema({
   heading: {
-    type: String,
+    type: String
   },
   proposal: {
-    type: String,
+    type: String
   },
   content: {
-    type: String,
+    type: String
   },
   tag: {
-    type: String,
+    type: String
   },
   createdAt: {
     type: Date,
-    default: new Date().toISOString().substring(0, 25),
-  },
-});
-module.exports = mongoose.model("ProposalNotification", ProposalNotification);
+    default: new Date().toISOString().substring(0, 25)
+  }
+})
+module.exports = mongoose.model('ProposalNotification', ProposalNotification)

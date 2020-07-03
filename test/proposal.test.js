@@ -175,6 +175,9 @@ test('Should delete the proposal', async (done) => {
     .send(deleteProposalContent)
     .expect(HttpStatus.OK)
 
+  // confirm that the proposal was deleted
+  const proposal = await Proposal.findById(testProposalId)
+  expect(proposal).toBeNull()
   done()
 })
 

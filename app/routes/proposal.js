@@ -1,39 +1,37 @@
-const express = require("express");
-const router = express.Router();
-const auth = require("../middleware/auth");
-const proposalController = require("../controllers/proposal");
+const express = require('express')
+const router = express.Router()
+const proposalController = require('../controllers/proposal')
 
 // Create a new proposal
-router.post("/", auth, proposalController.createProposal);
+router.post('/', proposalController.createProposal)
 
 // Save the content of a proposal
-router.patch("/:proposalId", auth, proposalController.saveProposal);
+router.patch('/:proposalId', proposalController.saveProposal)
 
 // Attach file to the given proposal
-router.post("/attach/:proposalId", auth, proposalController.attachFile);
+router.post('/attach/:proposalId', proposalController.attachFile)
 
 // Get proposals by userId
-router.get("/user/:userId", auth, proposalController.getByUserId);
+router.get('/user/:userId', proposalController.getByUserId)
 
 // get proposal by proposalId
-router.get("/:proposalId", auth, proposalController.getProposalById);
+router.get('/:proposalId', proposalController.getProposalById)
 
 // Deletes a proposal by given proposalId
-router.delete("/", auth, proposalController.deleteById);
+router.delete('/', proposalController.deleteById)
 
 // Update proposal state
-router.patch("/change/:proposalId", auth, proposalController.changeState);
+router.patch('/change/:proposalId', proposalController.changeState)
 
 // Get all the proposals
-router.post("/all", auth, proposalController.getAllProposals);
+router.post('/all', proposalController.getAllProposals)
 
-// Comment on the given proposal
-router.post("/comment", auth, proposalController.commentOnProposal);
+// Comment on the given proposala
+router.post('/comment', proposalController.commentOnProposal)
 
 router.post(
-  "/notifications",
-  auth,
+  '/notifications',
   proposalController.getProposalNotificationsByUser
-);
+)
 
-module.exports = router;
+module.exports = router

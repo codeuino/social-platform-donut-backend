@@ -1,5 +1,5 @@
 module.exports.fileParameters = {
-  limit: "200mb",
+  limit: '200mb',
   extended: true,
-  parameterLimit: 1000000,
-};
+  parameterLimit: 1000000
+}

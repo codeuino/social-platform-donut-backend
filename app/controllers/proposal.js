@@ -1,289 +1,292 @@
-const ProposalModel = require("../models/Proposal");
-const UserModal = require("../models/User");
-const HANDLER = require("../utils/response-helper");
-const HttpStatus = require("http-status-codes");
-const AWS = require("aws-sdk");
-const TAGS = require("../utils/notificationTags");
-const proposalNotificationHelper = require("../utils/proposal-notif-helper");
-
-const notification = {
-  heading: "",
-  content: "",
-  tag: "",
-};
+const ProposalModel = require('../models/Proposal')
+const UserModal = require('../models/User')
+const HANDLER = require('../utils/response-helper')
+const HttpStatus = require('http-status-codes')
+const AWS = require('aws-sdk')
+const TAGS = require('../utils/notificationTags')
+const proposalNotificationHelper = require('../utils/proposal-notif-helper')
 
 module.exports = {
   // Creating a proposal
   createProposal: async (req, res, next) => {
-    const proposal = new ProposalModel(req.body);
-    const creator = req.body.creator;
+    const proposal = new ProposalModel(req.body)
+    const creator = req.body.creator
 
     try {
-      await proposal.save();
+      await proposal.save()
 
-      const user = await UserModal.findById(creator);
-      const name = `${user.name.firstName} ${user.name.lastName}`;
+      const user = await UserModal.findById(creator)
+      const name = `${user.name.firstName} ${user.name.lastName}`
 
-      req.io.emit("new proposal created", {
-        heading: "New Proposal Created",
+      req.io.emit('new proposal created', {
+        heading: 'New Proposal Created',
         content: `New Proposal ${proposal.title} created by ${name}`,
-        tag: TAGS.NEW,
-      });
+        tag: TAGS.NEW
+      })
       proposalNotificationHelper.addNotificationForAll(
         req,
         res,
         {
-          heading: "New Proposal Created",
+          heading: 'New Proposal Created',
           content: `New Proposal ${proposal.title} created by ${name}`,
-          tag: TAGS.NEW,
+          tag: TAGS.NEW
         },
         next
-      );
+      )
 
-      res.status(HttpStatus.CREATED).json({ proposal });
+      res.status(HttpStatus.CREATED).json({ proposal })
     } catch (error) {
-      HANDLER.handleError(res, error);
+      HANDLER.handleError(res, error)
     }
   },
 
   // Updates the content of the proposal
   saveProposal: async (req, res, next) => {
-    const { proposalId } = req.params;
-    const content = req.body.content;
-    const title = req.body.title;
-    const description = req.body.description;
+    const { proposalId } = req.params
+    const { content, title, description } = req.body
+
     try {
       const proposal = await ProposalModel.findByIdAndUpdate(proposalId, {
         content: content,
         title: title,
-        proposalDescription: description,
-      });
+        proposalDescription: description
+      })
       if (!proposal) {
         return res
           .status(HttpStatus.NOT_FOUND)
-          .json({ message: "No proposal exists under the provided ID" });
+          .json({ message: 'No proposal exists under the provided ID' })
       }
-      res.status(HttpStatus.OK).json({ proposal: proposal });
+      res.status(HttpStatus.OK).json({ proposal: proposal })
     } catch (error) {
-      HANDLER.handleError(res, error);
+      HANDLER.handleError(res, error)
     }
   },
 
   // attaches a file to the given proposal
   attachFile: (req, res, next) => {
-    const { proposalId } = req.params;
-    const file = req.file;
-    const s3FileURL = process.env.AWS_UPLOADED_FILE_URL_LINK;
+    const { proposalId } = req.params
+    const file = req.file
+    const s3FileURL = process.env.AWS_UPLOADED_FILE_URL_LINK
 
     const s3bucket = new AWS.S3({
       accessKeyId: process.env.AWS_ACCESS_KEY_ID,
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      region: process.env.AWS_REGION,
-    });
+      region: process.env.AWS_REGION
+    })
 
     var params = {
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: file.originalname,
       Body: file.buffer,
       ContentType: file.mimetype,
-      ACL: "public-read",
-    };
+      ACL: 'public-read'
+    }
 
     s3bucket.upload(params, function (err, data) {
       if (err) {
-        res.status(500).json({ error: true, Message: err });
+        res.status(500).json({ error: true, Message: err })
       } else {
         var newFileUploaded = {
           fileLink: s3FileURL + file.originalname,
-          s3_key: params.Key,
-        };
+          s3_key: params.Key
+        }
 
         ProposalModel.findOneAndUpdate(
           { _id: proposalId },
           { $push: { attachments: newFileUploaded } },
           function (error, success) {
             if (error) {
-              console.log(error);
+              console.log(error)
             } else {
-              console.log(success);
+              console.log(success)
             }
           }
-        );
+        )
 
-        res.send({ data });
+        res.send({ data })
       }
-    });
+    })
   },
 
   // Get proposals by userId
   getByUserId: async (req, res, next) => {
-    const { userId } = req.params;
+    const { userId } = req.params
 
     try {
-      const proposals = await ProposalModel.find({ creator: userId });
+      const proposals = await ProposalModel.find({ creator: userId })
 
       if (!proposals) {
         return res
           .status(HttpStatus.NOT_FOUND)
-          .json({ message: "No proposals found for the given user ID" });
+          .json({ message: 'No proposals found for the given user ID' })
       }
-      return res.status(HttpStatus.OK).json({ proposal: proposals });
+      return res.status(HttpStatus.OK).json({ proposal: proposals })
     } catch (error) {
-      HANDLER.handleError(res, error);
+      HANDLER.handleError(res, error)
     }
   },
 
   // Delete proposal by proposalId
   deleteById: async (req, res, next) => {
     try {
-      const proposalId = req.body.proposalId;
+      const proposalId = req.body.proposalId
 
-      const result = await ProposalModel.findByIdAndDelete(proposalId);
-      const creator = result.creator;
+      console.log(proposalId)
+      const result = await ProposalModel.findByIdAndDelete(proposalId)
+      const creator = result.creator
 
-      const user = await UserModal.findById(creator);
-      const name = `${user.name.firstName} ${user.name.lastName}`;
+      const user = await UserModal.findById(creator)
+      const name = `${user.name.firstName} ${user.name.lastName}`
 
       proposalNotificationHelper.addNotificationForAll(
         req,
         res,
         {
-          heading: "Proposal Deleted",
+          heading: 'Proposal Deleted',
           content: `Proposal: "${result.title}" deleted by ${name}`,
-          tag: TAGS.NEW,
+          tag: TAGS.NEW
         },
         next
-      );
-      req.io.emit("proposal deleted", {
-        heading: "Proposal Deleted",
+      )
+      req.io.emit('proposal deleted', {
+        heading: 'Proposal Deleted',
         content: `Proposal: "${result.title}" deleted by ${name}`,
-        tag: TAGS.NEW,
-      });
+        tag: TAGS.NEW
+      })
 
-      return res.status(HttpStatus.OK).json({ result: result });
+      return res.status(HttpStatus.OK).json({ result: result })
     } catch (error) {
-      HANDLER.handleError(res, error);
+      HANDLER.handleError(res, error)
     }
   },
 
   // Changes the state of a given proposal
   changeState: async (req, res, next) => {
-    const { proposalId } = req.params;
-    const proposalStatus = req.body.proposalStatus;
+    const { proposalId } = req.params
+    const proposalStatus = req.body.proposalStatus
     try {
       const proposal = await ProposalModel.findByIdAndUpdate(proposalId, {
-        proposalStatus: proposalStatus,
-      });
+        proposalStatus: proposalStatus
+      })
       if (!proposal) {
         return res
           .status(HttpStatus.NOT_FOUND)
-          .json({ message: "No proposal exists under the provided ID" });
+          .json({ message: 'No proposal exists under the provided ID' })
       }
-      res.status(HttpStatus.OK).json({ proposal: proposal });
+
+      req.io.emit('proposal submitted', {
+        heading: 'Proposal Submitted',
+        content: `Proposal ${proposal.title} was submitted for review`,
+        tag: TAGS.NEW
+      })
+      proposalNotificationHelper.addNotificationForAll(
+        req,
+        res,
+        {
+          heading: 'Proposal Submitted',
+          content: `Proposal "${proposal.title}" was submitted for review`,
+          tag: TAGS.NEW
+        },
+        next
+      )
+      res.status(HttpStatus.OK).json({ proposal: proposal })
     } catch (error) {
-      HANDLER.handleError(res, error);
+      HANDLER.handleError(res, error)
     }
   },
 
   // Obtains the proposal by given proposal ID
   getProposalById: async (req, res, next) => {
-    const { proposalId } = req.params;
+    const { proposalId } = req.params
 
     try {
-      const proposal = await ProposalModel.findById(proposalId);
+      const proposal = await ProposalModel.findById(proposalId)
 
       if (!proposal) {
         return res
           .status(HttpStatus.NOT_FOUND)
-          .json({ error: "Proposal not found" });
+          .json({ error: 'Proposal not found' })
       }
-      return res.status(HttpStatus.OK).json({ proposal: proposal });
+      return res.status(HttpStatus.OK).json({ proposal: proposal })
     } catch (error) {
-      HANDLER.handleError(res, error);
+      HANDLER.handleError(res, error)
     }
   },
 
   getAllProposals: async (req, res, next) => {
+    console.log('All proposals called')
     try {
-      const user = await UserModal.findById(req.body.userId);
-
-      if (user.isAdmin == true) {
-        const proposals = await ProposalModel.find({});
-
-        if (!proposals.length) {
-          return res
-            .status(HttpStatus.NOT_FOUND)
-            .json({ message: "No posts found" });
-        }
-        return res.status(HttpStatus.OK).json({ proposals: proposals });
+      const proposals = await ProposalModel.find({})
+      if (!proposals.length) {
+        return res
+          .status(HttpStatus.NOT_FOUND)
+          .json({ message: 'No proposals found' })
       }
-      return res
-        .status(HttpStatus.BAD_REQUEST)
-        .json({ msg: "You don't have permission for this request" });
+      return res.status(HttpStatus.OK).json({ proposals: proposals })
     } catch (error) {
-      HANDLER.handleError(res, error);
+      HANDLER.handleError(res, error)
     }
   },
 
   commentOnProposal: async (req, res, next) => {
-    const { proposalId, comment, userId, isAuthor, author } = req.body;
+    const { proposalId, comment, userId, isAuthor, author } = req.body
 
     try {
-      const user = await UserModal.findById(userId);
+      const user = await UserModal.findById(userId)
       if (!user) {
         return res
           .status(HttpStatus.BAD_REQUEST)
-          .json({ message: "No user exists" });
+          .json({ message: 'No user exists' })
       }
-      const name = `${user.name.firstName} ${user.name.lastName}`;
+      const name = `${user.name.firstName} ${user.name.lastName}`
 
       const proposal = await ProposalModel.updateOne(
         { _id: proposalId },
         { $push: { comments: { userName: name, comment: comment } } }
-      );
+      )
 
-      const updatedProposal = await ProposalModel.findById(proposalId);
+      const updatedProposal = await ProposalModel.findById(proposalId)
 
       if (!proposal) {
         return res
           .status(HttpStatus.BAD_REQUEST)
-          .json({ message: "Proposal could not be found!" });
+          .json({ message: 'Proposal could not be found!' })
       }
       if (!isAuthor) {
         proposalNotificationHelper.addToNotificationForUser(
           author,
           res,
           {
-            heading: "New comment",
+            heading: 'New comment',
             content: `New comments in your proposal "${updatedProposal.title}" by ${name}`,
-            tag: TAGS.COMMENT,
+            tag: TAGS.COMMENT
           },
           next
-        );
+        )
       }
 
-      return res.status(HttpStatus.OK).json({ proposal: proposal });
+      return res.status(HttpStatus.OK).json({ proposal: proposal })
     } catch (error) {
-      HANDLER.handleError(res, error);
+      HANDLER.handleError(res, error)
     }
   },
 
   getProposalNotificationsByUser: async (req, res, next) => {
-    const userId = req.body.userId;
+    const userId = req.body.userId
 
     try {
-      const user = await UserModal.findById(userId);
+      const user = await UserModal.findById(userId)
       if (!user) {
         return res
           .status(HttpStatus.BAD_REQUEST)
-          .json({ message: "No user exists" });
+          .json({ message: 'No user exists' })
       }
 
       return res
         .status(HttpStatus.OK)
-        .json({ notifications: user.proposalNotifications });
+        .json({ notifications: user.proposalNotifications })
     } catch (error) {
-      HANDLER.handleError(res, error);
+      HANDLER.handleError(res, error)
     }
-  },
-};
+  }
+}

@@ -1,9 +1,9 @@
-const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
-const validator = require("validator");
-const jwt = require("jsonwebtoken");
+const mongoose = require('mongoose')
+const bcrypt = require('bcrypt')
+const validator = require('validator')
+const jwt = require('jsonwebtoken')
 
-const saltRounds = 8;
+const saltRounds = 8
 
 // user schema
 const UserSchema = new mongoose.Schema({
@@ -12,21 +12,21 @@ const UserSchema = new mongoose.Schema({
       type: String,
       trim: true,
       required: true,
-      validate(firstName) {
+      validate (firstName) {
         if (validator.isEmpty(firstName)) {
-          throw new Error("First name field can not be empty!");
+          throw new Error('First name field can not be empty!')
         }
-      },
+      }
     },
     lastName: {
       type: String,
       trim: true,
-      validate(lastName) {
+      validate (lastName) {
         if (validator.isEmpty(lastName)) {
-          throw new Error("Last name field can not be empty!");
+          throw new Error('Last name field can not be empty!')
         }
-      },
-    },
+      }
+    }
   },
   email: {
     type: String,
@@ -34,82 +34,82 @@ const UserSchema = new mongoose.Schema({
     required: true,
     unique: true,
     lowercase: true,
-    validate(email) {
+    validate (email) {
       if (!validator.isEmail(email)) {
-        throw new Error("Invalid emailId");
+        throw new Error('Invalid emailId')
       }
       if (validator.isEmpty(email)) {
-        throw new Error("Email is required!");
+        throw new Error('Email is required!')
       }
-    },
+    }
   },
   phone: {
     type: String,
     trim: true,
     minlength: 10,
-    validate(phone) {
+    validate (phone) {
       if (!validator.isLength(phone, { min: 10, max: 10 })) {
-        throw new Error("Phone number is invalid!");
+        throw new Error('Phone number is invalid!')
       }
-    },
+    }
   },
   password: {
     type: String,
     trim: true,
     required: true,
     minlength: 6,
-    validate(password) {
+    validate (password) {
       if (!validator.isLength(password, { min: 6 })) {
-        throw new Error("Password should be min 6 characters long!");
+        throw new Error('Password should be min 6 characters long!')
       }
       if (validator.isEmpty(password)) {
-        throw new Error("Password is required!");
+        throw new Error('Password is required!')
       }
-    },
+    }
   },
   socialMedia: {
     youtube: {
-      type: String,
+      type: String
     },
     facebook: {
-      type: String,
+      type: String
     },
     twitter: {
-      type: String,
+      type: String
     },
     instagram: {
-      type: String,
+      type: String
     },
     linkedin: {
-      type: String,
-    },
+      type: String
+    }
   },
   info: {
     about: {
       shortDescription: {
         type: String,
         required: true,
-        validate(shortDescription) {
+        validate (shortDescription) {
           if (validator.isEmpty(shortDescription)) {
-            throw new Error("Short description is required");
+            throw new Error('Short description is required')
           }
-        },
+        }
       },
       longDescription: {
-        type: String,
+        type: String
       },
       website: {
         type: String,
         trim: true,
-        validate(website) {
+        validate (website) {
           if (!validator.isURL(website)) {
-            throw new Error("Invalid website link!");
+            throw new Error('Invalid website link!')
           }
-        },
+        }
       },
       designation: {
         type: String,
-        trim: true,
+        trim: true
       },
       education: [
         {
@@ -117,158 +117,158 @@ const UserSchema = new mongoose.Schema({
           school: {
             schoolName: {
               type: String,
-              trim: true,
+              trim: true
             },
             year: {
-              type: String,
-            },
-          },
-        },
+              type: String
+            }
+          }
+        }
       ],
       skills: [
         {
-          type: String,
-        },
+          type: String
+        }
       ],
       location: {
         type: String,
-        trim: true,
-      },
-    },
+        trim: true
+      }
+    }
   },
   notifications: [
     {
       heading: {
-        type: String,
+        type: String
       },
       content: {
-        type: String,
+        type: String
       },
       tag: {
-        type: String,
-      },
-    },
+        type: String
+      }
+    }
   ],
   proposalNotifications: [
     {
       heading: {
-        type: String,
+        type: String
       },
       content: {
-        type: String,
+        type: String
       },
       tag: {
-        type: String,
+        type: String
       },
       createdAt: {
         type: Date,
         required: true,
-        default: Date.now(),
-      },
-    },
+        default: Date.now()
+      }
+    }
   ],
   followers: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
+      ref: 'User'
+    }
   ],
   followings: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
+      ref: 'User'
+    }
   ],
   blocked: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
+      ref: 'User'
+    }
   ],
   pinned: {
     _id: false,
     postId: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Post",
-      },
-    ],
+        ref: 'Post'
+      }
+    ]
   },
   isAdmin: {
     type: Boolean,
-    default: false,
+    default: false
   },
   isActivated: {
     type: Boolean,
-    default: false,
+    default: false
   },
   isRemoved: {
     type: Boolean,
-    default: false,
+    default: false
   },
   createdAt: {
     type: Date,
     required: true,
-    default: Date.now(),
+    default: Date.now()
   },
   updatedAt: {
     type: Date,
     required: true,
-    default: Date.now(),
+    default: Date.now()
   },
   tokens: [
     {
       token: {
         type: String,
-        required: true,
-      },
-    },
-  ],
-});
+        required: true
+      }
+    }
+  ]
+})
 
 // generate auth token
 // Schema Methods, needs to be invoked by an instance of a Mongoose document
 UserSchema.methods.generateAuthToken = async function () {
-  const user = this;
+  const user = this
   const token = jwt.sign(
     { _id: user._id.toString() },
-    "process.env.JWT_SECRET"
-  );
+    'process.env.JWT_SECRET'
+  )
 
-  user.tokens = user.tokens.concat({ token: token });
-  await user.save();
+  user.tokens = user.tokens.concat({ token: token })
+  await user.save()
 
-  return token;
-};
+  return token
+}
 
 // Schema Statics are methods that can be invoked directly by a Model
 UserSchema.statics.findByCredentials = async (email, password) => {
   const user = await User.findOne({
-    email: email,
-  });
+    email: email
+  })
 
   if (!user) {
-    throw new Error("No such user");
+    throw new Error('No such user')
   } else {
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password)
     if (!isMatch) {
-      throw new Error("Incorrect password provided");
+      throw new Error('Incorrect password provided')
     } else {
-      return user;
+      return user
     }
   }
-};
+}
 
 // hash user password before saving into database
-UserSchema.pre("save", async function (next) {
-  const user = this;
+UserSchema.pre('save', async function (next) {
+  const user = this
 
-  if (user.isModified("password")) {
-    user.password = await bcrypt.hash(user.password, saltRounds);
+  if (user.isModified('password')) {
+    user.password = await bcrypt.hash(user.password, saltRounds)
   }
 
-  next();
-});
+  next()
+})
 
-const User = mongoose.model("User", UserSchema);
-module.exports = User;
+const User = mongoose.model('User', UserSchema)
+module.exports = User
