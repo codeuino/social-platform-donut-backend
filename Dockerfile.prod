@@ -1,0 +1,14 @@
+FROM node:latest
+
+ENV NODE_ENV="production"
+
+WORKDIR /server
+
+RUN git clone https://github.com/codeuino/social-platform-donut-backend.git
+
+WORKDIR /server/social-platform-donut-backend
+
+RUN npm install && npm cache clean --force --loglevel=error
+
+# Start the server
+CMD [ "npm", "start" ]
