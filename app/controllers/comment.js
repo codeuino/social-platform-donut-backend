@@ -112,7 +112,7 @@ module.exports = {
       })
       comment.votes.upVotes.user.unshift(userId)
       await comment.save()
-      res.status(HttpStatus.OK).json({ comment: comment })
+      return res.status(HttpStatus.OK).json({ comment: comment })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -143,7 +143,7 @@ module.exports = {
       })
       comment.votes.downVotes.user.unshift(userId)
       await comment.save()
-      res.status(HttpStatus.OK).json({ comment: comment })
+      return res.status(HttpStatus.OK).json({ comment: comment })
     } catch (error) {
       HANDLER.handleError(res, error)
     }

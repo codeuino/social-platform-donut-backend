@@ -57,7 +57,7 @@ module.exports = {
         helper.mapToDb(req, org)
       }
       await org.save()
-      res.status(HttpStatus.OK).json({ organization: org })
+      return res.status(HttpStatus.OK).json({ organization: org })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -141,13 +141,19 @@ module.exports = {
           notification.heading = 'Maintenance mode on!'
           notification.content = `${organization.name} is kept under maintenance!`
           notificationHelper.addToNotificationForAll(req, res, notification, next)
-          return res.status(HttpStatus.OK).json({ msg: 'Organization is kept under the maintenance!!' })
+          return res.status(HttpStatus.OK).json({
+            maintenance: true,
+            msg: 'Organization is kept under the maintenance!!'
+          })
         }
 
         req.io.emit('org revoked maintenance', { data: organization.name })
         notification.heading = 'Maintenance mode off!'
         notification.content = `${organization.name} is revoked from maintenance!`
-        return res.status(HttpStatus.OK).json({ msg: 'Organization is recovered from maintenance!!' })
+        return res.status(HttpStatus.OK).json({
+          maintenance: false,
+          msg: 'Organization is recovered from maintenance!!'
+        })
       } else {
         return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You don\'t have access to triggerMaintenance!' })
       }
@@ -186,7 +192,7 @@ module.exports = {
             organization.options[update] = req.body[update]
           })
           await organization.save()
-          return res.status(HttpStatus.OK).json({ msg: 'Successfully updated!' })
+          return res.status(HttpStatus.OK).json({ organization })
         }
         // invalid update
         return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Invalid update' })
@@ -274,6 +280,9 @@ module.exports = {
       await org.save()
       // also make isAdmin false
       const user = await User.findById(userId)
+      if (!user) {
+        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exists!' })
+      }
       user.isAdmin = false
       await user.save()
       return res.status(HttpStatus.OK).json({ org })
