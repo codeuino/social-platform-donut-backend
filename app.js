@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser')
 const createError = require('http-errors')
 const path = require('path')
 const socket = require('socket.io')
+const helmet = require('helmet')
 
 const indexRouter = require('./app/routes/index')
 const authRouter = require('./app/routes/auth')
@@ -40,10 +41,29 @@ app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
 app.use(express.static(path.join(__dirname, 'public')))
 app.use((req, res, next) => {
-  res.append('X-Frame-Options', 'SAMEORIGIN')
   req.io = io
   next()
 })
+
+// setting headers for security
+app.disable('x-powered-by')
+app.use(helmet.xssFilter())
+app.use(helmet.referrerPolicy({ policy: 'same-origin' }))
+app.use(helmet.noSniff())
+app.use(helmet.frameguard({ action: 'sameorigin' }))
+app.use(helmet.hsts({
+  maxAge: 5184000,
+  includeSubDomains: true
+}))
+app.use(helmet.dnsPrefetchControl())
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    baseUri: ["'self'"]
+  },
+  browserSniff: false
+}))
+app.use(helmet.ieNoOpen())
 
 app.use('/notification', notificationRouter)
 app.use('/', indexRouter)

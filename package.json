@@ -18,6 +18,7 @@
     "dotenv": "^8.2.0",
     "ejs": "~2.6.1",
     "express": "^4.16.4",
+    "helmet": "^3.23.3",
     "http-status-codes": "^1.4.0",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.7.7",
