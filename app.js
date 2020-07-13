@@ -60,6 +60,7 @@ app.use(helmet.contentSecurityPolicy({
   directives: {
     defaultSrc: ["'self'"],
     baseUri: ["'self'"]
+    // other sources have to mentioned here
   },
   browserSniff: false
 }))

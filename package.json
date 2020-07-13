@@ -20,10 +20,12 @@
     "express": "^4.16.4",
     "helmet": "^3.23.3",
     "http-status-codes": "^1.4.0",
+    "ioredis": "^4.17.3",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.7.7",
     "morgan": "^1.9.1",
     "multer": "^1.4.2",
+    "rate-limiter-flexible": "^2.1.9",
     "socket.io": "^2.3.0",
     "validator": "^10.11.0"
   },

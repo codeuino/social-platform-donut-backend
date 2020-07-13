@@ -3,7 +3,7 @@ services:
   server:
     container_name: server-prod
     restart: always
-    expose: 
+    expose:
       - "5000"
     build:
       context: .
@@ -19,6 +19,10 @@ services:
       - DATABASE_URL="mongodb://mongo:27017/donut-development"
       - SENDGRID_API_KEY='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'
       - SOCKET_PORT=8810
+      - REDIS_HOST="redis"
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD="auth"
+      - REDIS_DB=0
   mongo:
     container_name: mongo
     image: mongo
@@ -26,5 +30,14 @@ services:
       - db-data:/data/db
     ports:
       - "27017:27017"
+  redis:
+    container_name: redis
+    image: redis:5-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --requirepass auth
 volumes:
   db-data:
+  redis-data:
