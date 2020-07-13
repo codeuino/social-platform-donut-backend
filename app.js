@@ -17,6 +17,7 @@ const organizationRouter = require('./app/routes/organisation')
 const commentRouter = require('./app/routes/comment')
 const projectRouter = require('./app/routes/project')
 const notificationRouter = require('./app/routes/notification')
+const { reset } = require('nodemon')
 
 const app = express()
 const server = require('http').Server(app)
@@ -41,6 +42,8 @@ app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
 app.use(express.static(path.join(__dirname, 'public')))
 app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store')
+  res.setHeader('Expires', 0)
   req.io = io
   next()
 })
