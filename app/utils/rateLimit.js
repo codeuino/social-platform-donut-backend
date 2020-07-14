@@ -33,7 +33,7 @@ function getFibonacciBlockDurationMinutes (countConsecutiveOutOfLimits) {
 }
 
 module.exports = {
-  // Notifications for a user
+  // restrict brute for attacks on login
   rateLimit: async (email, isLoggedIn) => {
     const redisUserID = await loginLimiter.get(email)
     let retrySecs = 0

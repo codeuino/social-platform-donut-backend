@@ -17,7 +17,6 @@ const organizationRouter = require('./app/routes/organisation')
 const commentRouter = require('./app/routes/comment')
 const projectRouter = require('./app/routes/project')
 const notificationRouter = require('./app/routes/notification')
-const { reset } = require('nodemon')
 
 const app = express()
 const server = require('http').Server(app)
