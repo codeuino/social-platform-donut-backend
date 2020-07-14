@@ -1,0 +1,27 @@
+version: "3"
+services:
+  server:
+    container_name: server
+    restart: always
+    expose: 
+      - "5000"
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./:/server
+    ports:
+      - "5000:5000"
+    links:
+      - mongo
+    env_file:
+      - .env.dev
+  mongo:
+    container_name: mongo
+    image: mongo
+    volumes:
+      - db-data:/data/db
+    ports:
+      - "27017:27017"
+volumes:
+  db-data:
