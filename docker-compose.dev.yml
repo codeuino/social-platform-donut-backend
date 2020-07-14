@@ -3,7 +3,7 @@ services:
   server:
     container_name: server
     restart: always
-    expose: 
+    expose:
       - "5000"
     build:
       context: .
@@ -23,5 +23,14 @@ services:
       - db-data:/data/db
     ports:
       - "27017:27017"
+  redis:
+    container_name: redis
+    image: redis:5-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --requirepass auth
 volumes:
   db-data:
+  redis-data:
