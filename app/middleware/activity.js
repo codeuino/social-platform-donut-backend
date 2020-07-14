@@ -6,50 +6,58 @@ const activity = async (req, res, next) => {
   if (route === '/user/logout') {
     // Fetch data from redis
     const token = req.token
-    var routeNamesDict = {}
-    var timeStamps
+    var routeNamesDict
     var mailid
     const data = await User.findOne({
       'tokens.token': token
     })
-    mailid = data.email
+    mailid = String(data.email)
     if (!mailid) {
       throw new Error()
     }
-    redisClient.hgetall(mailid).then(function (value) {
-      routeNamesDict = value // json object
-    })
-    console.log(routeNamesDict)
+    routeNamesDict = await redisClient.hgetall(mailid)
     let key, value
+    console.log(routeNamesDict)
     for (key in routeNamesDict) {
       console.log(key)
       value = routeNamesDict[key]
       console.log(value)
-      redisClient.smembers(String(value)).then(function (timeStamp) {
-        timeStamps = timeStamp
-        var activityData = {
-          routeName: String(key),
-          route: timeStamps
-        }
-        var activityLength = data.activity.length
-        console.log(activityLength)
-        if (activityLength === 0) {
+      var timeStampSet = await redisClient.smembers(String(value))
+      console.log("Time stamp set")
+      console.log(timeStampSet)
+      var activityData = {
+        routeName: String(key),
+        route: Array(timeStampSet)
+      }
+      var activityLength = data.activity.length
+      console.log('act len')
+      console.log(activityLength)
+      console.log('activities')
+      console.log(data.activity)
+      if (activityLength === 0) {
+        data.activity.push(activityData)
+      } else {
+        var filterData = data.activity.filter(activity => activity.routeName === key)
+        if (filterData.length === 0) {
           data.activity.push(activityData)
         } else {
-          var filterData = data.activity.filter(activity => activity.routeName === key)
-          if (filterData.length === 0) {
-            data.activity.push(activityData)
+          var tempTimeStamps = data.activity.route
+          if (tempTimeStamps) {
+            tempTimeStamps.concat(timeStampSet)
+            for (let index = 0; index < tempTimeStamps.length; index++) {
+              data.activity.route.push(tempTimeStamps[index])
+            }
           } else {
-            var tempTimeStamps = data.activity.route
-            tempTimeStamps.concat(timeStamps)
-            data.activity.route = tempTimeStamps
+            data.activity.route = []
+            for (let index = 0; index < timeStampSet.length; index++) {
+              data.activity.route.push(timeStampSet[index])
+            }
           }
         }
-      })
-      console.log(timeStamps)
+      }
     }
     await data.save()
-  //  console.log(data)
+    console.log(data)
   } else {
     const { email } = req.body
     const timeStamp = new Date(Date.now())
@@ -64,7 +72,7 @@ const activity = async (req, res, next) => {
         console.log(value)
       }
       if (value !== null) { uniqueHash = value } else {
-        uniqueHash = timeStamp.toISOString().concat([email, route])
+        uniqueHash = timeStamp.toISOString().concat(email)
         console.log('New hash:'.concat(uniqueHash))
         redisClient.hset(email, route, uniqueHash)
       }

@@ -236,8 +236,7 @@ const UserSchema = new mongoose.Schema({
       required: true
     },
     route: [{
-      type: String,
-      required: true
+      type: String
     }]
   }]
 })
