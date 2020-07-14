@@ -46,31 +46,35 @@ const orgSchema = new Schema({
       }
     }
   },
-  logo: {
-    type: Buffer,
+  image: {
+    data: Buffer,
     contentType: String
   },
-  logoUrl: {
+  imgUrl: {
     type: String,
     trim: true,
-    validator (logoUrl) {
-      if (!validator.isURL(logoUrl)) {
-        throw new Error('Invalid logo URL!')
+    validator (imgUrl) {
+      if (!validator.isURL(imgUrl)) {
+        throw new Error('Invalid image URL!')
       }
     }
   },
   contactInfo: {
-    emailId: {
+    email: {
       type: String,
       required: true,
-      validate (emailId) {
-        if (validator.isEmpty(emailId)) {
+      validate (email) {
+        if (validator.isEmpty(email)) {
           throw new Error('EmailId or org is required!')
         }
-        if (!validator.isEmail(emailId)) {
+        if (!validator.isEmail(email)) {
           throw new Error('Invalid emailId')
         }
       }
+    },
+    adminEmail: {
+      type: String,
+      trim: true
     },
     website: {
       type: String,
@@ -87,29 +91,91 @@ const orgSchema = new Schema({
     },
     chattingPlatform: [
       {
+        _id: false,
         link: {
           type: String
         }
       }
     ]
   },
-  adminInfo: {
-    type: Object,
-    required: true,
-    validate (adminInfo) {
-      if (validator.isEmpty(adminInfo)) {
-        throw new Error('Admin info is required!')
+  options: {
+    _id: false,
+    settings: {
+      enableEmail: {
+        type: Boolean,
+        default: true
+      },
+      language: {
+        type: String,
+        enum: ['English', 'French', 'German'],
+        default: 'English'
+      },
+      timeFormat: {
+        type: String,
+        enum: ['24', '12'],
+        default: '12'
+      }
+    },
+    permissions: {
+      sendInvite: {
+        type: String,
+        enum: ['BOTH', 'ADMINS', 'NONE'],
+        default: 'BOTH'
+      },
+      canCreateManage: {
+        type: String,
+        enum: ['BOTH', 'ADMINS', 'MEMBERS'],
+        default: 'BOTH'
+      },
+      canChangeEmail: {
+        type: Boolean,
+        default: true
+      },
+      canChangeName: {
+        type: Boolean,
+        default: true
+      }
+    },
+    authentication: {
+      email: {
+        type: Boolean,
+        default: true
+      },
+      google: {
+        type: Boolean,
+        default: false
+      },
+      github: {
+        type: Boolean,
+        default: false
+      },
+      gitlab: {
+        type: Boolean,
+        default: false
       }
     }
   },
+  adminInfo: {
+    _id: false,
+    adminId: [{
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    }]
+  },
   moderatorInfo: {
-    type: Object,
-    required: true,
-    validate (adminInfo) {
-      if (validator.isEmpty(adminInfo)) {
-        throw new Error('Admin info is required!')
-      }
-    }
+    _id: false,
+    adminId: [{
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    }]
+  },
+  isArchived: {
+    type: Boolean,
+    default: false
+  },
+  isMaintenance: {
+    type: Boolean,
+    default: false
   },
   createdAt: {
     type: Date,

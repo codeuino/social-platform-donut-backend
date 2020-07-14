@@ -46,7 +46,6 @@ const UserSchema = new mongoose.Schema({
   phone: {
     type: String,
     trim: true,
-    unique: true,
     minlength: 10,
     validate (phone) {
       if (!validator.isLength(phone, { min: 10, max: 10 })) {
@@ -89,7 +88,6 @@ const UserSchema = new mongoose.Schema({
     about: {
       shortDescription: {
         type: String,
-        required: true,
         validate (shortDescription) {
           if (validator.isEmpty(shortDescription)) {
             throw new Error('Short description is required')
@@ -137,6 +135,80 @@ const UserSchema = new mongoose.Schema({
       }
     }
   },
+  notifications: [
+    {
+      heading: {
+        type: String
+      },
+      content: {
+        type: String
+      },
+      tag: {
+        type: String
+      }
+    }
+  ],
+  proposalNotifications: [
+    {
+      heading: {
+        type: String
+      },
+      content: {
+        type: String
+      },
+      tag: {
+        type: String
+      },
+      createdAt: {
+        type: Date,
+        required: true,
+        default: Date.now()
+      }
+    }
+  ],
+  followers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  ],
+  followings: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  ],
+  blocked: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  ],
+  pinned: {
+    _id: false,
+    postId: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Post'
+      }
+    ]
+  },
+  firstRegister: {
+    type: Boolean,
+    default: false
+  },
+  isAdmin: {
+    type: Boolean,
+    default: false
+  },
+  isActivated: {
+    type: Boolean,
+    default: false
+  },
+  isRemoved: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     required: true,
@@ -147,20 +219,24 @@ const UserSchema = new mongoose.Schema({
     required: true,
     default: Date.now()
   },
-  tokens: [{
-    token: {
-      type: String,
-      required: true
+  tokens: [
+    {
+      token: {
+        type: String,
+        required: true
+      }
     }
-  }]
-}
-)
+  ]
+})
 
 // generate auth token
 // Schema Methods, needs to be invoked by an instance of a Mongoose document
 UserSchema.methods.generateAuthToken = async function () {
   const user = this
-  const token = jwt.sign({ _id: user._id.toString() }, process.env.JWT_SECRET)
+  const token = jwt.sign(
+    { _id: user._id.toString() },
+    'process.env.JWT_SECRET'
+  )
 
   user.tokens = user.tokens.concat({ token: token })
   await user.save()
@@ -175,11 +251,11 @@ UserSchema.statics.findByCredentials = async (email, password) => {
   })
 
   if (!user) {
-    throw new Error('Unable to login')
+    throw new Error('No such user')
   } else {
     const isMatch = await bcrypt.compare(password, user.password)
     if (!isMatch) {
-      throw new Error('Unable to login')
+      throw new Error('Incorrect password provided')
     } else {
       return user
     }

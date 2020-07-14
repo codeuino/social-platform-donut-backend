@@ -22,13 +22,9 @@ const projectSchema = new Schema({
       type: String,
       required: true,
       trim: true,
-      minlength: 10,
       validate (short) {
         if (validator.isEmpty(short)) {
           throw new Error('Short description for the project is required!')
-        }
-        if (!validator.isLength(short)) {
-          throw new Error('Short description should be min 10 characters long!')
         }
       }
     },
@@ -52,24 +48,14 @@ const projectSchema = new Schema({
   },
   version: {
     type: String,
-    trim: true,
-    required: true,
-    validate (version) {
-      if (validator.isEmpty(version)) {
-        throw new Error('Short description for the project is required!')
-      }
-    }
+    trim: true
   },
   links: [
     {
       githubLink: {
         type: String,
-        required: true,
         trim: true,
         validate (githubLink) {
-          if (validator.isEmpty(githubLink)) {
-            throw new Error('Project github link is required!')
-          }
           if (!validator.isURL(githubLink)) {
             throw new Error('Invalid project url!')
           }
@@ -89,6 +75,10 @@ const projectSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'User'
   }],
+  createdBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
   createdAt: {
     type: Date,
     default: Date.now()
