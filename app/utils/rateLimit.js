@@ -1,14 +1,8 @@
 
-const Redis = require('ioredis')
+const Redis = require('../../config/redis')
 const { RateLimiterRedis } = require('rate-limiter-flexible')
 
-const redisClient = new Redis({
-  port: process.env.REDIS_PORT,
-  host: process.env.REDIS_HOST,
-  family: 4,
-  password: process.env.REDIS_PASSWORD,
-  db: process.env.REDIS_DB
-})
+const redisClient = Redis.redisClient
 
 const loginLimiter = new RateLimiterRedis({
   storeClient: redisClient,
