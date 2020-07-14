@@ -5,6 +5,10 @@ const cookieParser = require('cookie-parser')
 const createError = require('http-errors')
 const path = require('path')
 const socket = require('socket.io')
+const multer = require('multer')
+const bodyParser = require('body-parser')
+const cors = require('cors')
+const fileConstants = require('./config/fileHandlingConstants')
 
 const indexRouter = require('./app/routes/index')
 const authRouter = require('./app/routes/auth')
@@ -16,9 +20,18 @@ const organizationRouter = require('./app/routes/organisation')
 const commentRouter = require('./app/routes/comment')
 const projectRouter = require('./app/routes/project')
 const notificationRouter = require('./app/routes/notification')
+const proposalRouter = require('./app/routes/proposal')
 
 const app = express()
 const server = require('http').Server(app)
+
+app.use(cors())
+
+app.use(bodyParser.json({ limit: '200mb' }))
+app.use(bodyParser.urlencoded(fileConstants.fileParameters))
+
+const memoryStorage = multer.memoryStorage()
+app.use(multer({ storage: memoryStorage }).single('file'))
 
 server.listen(process.env.SOCKET_PORT || 8810)
 // WARNING: app.listen(80) will NOT work here!
@@ -54,10 +67,11 @@ app.use('/event', eventRouter)
 app.use('/shortUrl', shortUrlRouter)
 app.use('/comment', commentRouter)
 app.use('/project', projectRouter)
+app.use('/proposal', proposalRouter)
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-  next(createError(404, 'route doesn\'t exist'))
+  next(createError(404, "route doesn't exist"))
 })
 
 // error handler

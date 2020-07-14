@@ -20,4 +20,7 @@ router.get(
   notificationController.getUserNotification
 )
 
+// GET NOTICATIONS FOR PROPOSALS
+router.get('/proposal/all', notificationController.getProposalNotifications)
+
 module.exports = router
