@@ -51,6 +51,15 @@ const activity = async (req, res, next) => {
     if (process.env.NODE_ENV !== 'production') {
       console.log(data)
     }
+    // Deleting data from Redis
+    routeNamesDict = await redisClient.hgetall(mailid)
+    // delete all sets
+    for (k in routeNamesDict) {
+      var val = routeNamesDict[k]
+      await redisClient.del(val)
+    }
+    // delete complete user hash
+    await redisClient.del(mailid)
   } else {
     const { email } = req.body
     const timeStamp = new Date(Date.now())
