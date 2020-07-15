@@ -4,6 +4,7 @@ const userController = require('../controllers/user')
 const auth = require('../middleware/auth')
 const isUnderMaintenance = require('../middleware/maintenance')
 // const email = require('../middleware/email')
+const activity = require('../middleware/activity')
 
 // create a user
 router.post(
@@ -77,6 +78,7 @@ router.delete(
 router.post(
   '/logout',
   auth,
+  activity,
   userController.logout
 )
 
