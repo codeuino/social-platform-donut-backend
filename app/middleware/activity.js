@@ -17,63 +17,47 @@ const activity = async (req, res, next) => {
     }
     routeNamesDict = await redisClient.hgetall(mailid)
     let key, value
-    console.log(routeNamesDict)
     for (key in routeNamesDict) {
-      console.log(key)
       value = routeNamesDict[key]
-      console.log(value)
       var timeStampSet = await redisClient.smembers(String(value))
-      console.log("Time stamp set")
-      console.log(timeStampSet)
       var activityData = {
         routeName: String(key),
-        route: Array(timeStampSet)
+        route: timeStampSet
       }
       var activityLength = data.activity.length
-      console.log('act len')
-      console.log(activityLength)
-      console.log('activities')
-      console.log(data.activity)
       if (activityLength === 0) {
         data.activity.push(activityData)
       } else {
-        var filterData = data.activity.filter(activity => activity.routeName === key)
-        if (filterData.length === 0) {
+        var routeIndex = null
+        for (let index1 = 0; index1 < data.activity.length; index1++) {
+          if (data.activity[index1].routeName === key) {
+            routeIndex = index1
+          }
+        }
+        if (routeIndex === null) {
           data.activity.push(activityData)
         } else {
-          var tempTimeStamps = data.activity.route
-          if (tempTimeStamps) {
-            tempTimeStamps.concat(timeStampSet)
-            for (let index = 0; index < tempTimeStamps.length; index++) {
-              data.activity.route.push(tempTimeStamps[index])
-            }
+          var tempTimeStamps = data.activity[routeIndex].route
+          if (tempTimeStamps.length > 0) {
+            tempTimeStamps.push(...timeStampSet)
+            data.activity[routeIndex].route.push(...tempTimeStamps)
           } else {
-            data.activity.route = []
-            for (let index = 0; index < timeStampSet.length; index++) {
-              data.activity.route.push(timeStampSet[index])
-            }
+            data.activity[routeIndex].route.push(...timeStampSet)
           }
         }
       }
     }
-    await data.save()
-    console.log(data)
+    await data.update()
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(data)
+    }
   } else {
     const { email } = req.body
     const timeStamp = new Date(Date.now())
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('User: '.concat(String(email)))
-      console.log('Route: '.concat(String(route)))
-      console.log('TimeStamp: '.concat(timeStamp.toString()))
-    }
     var uniqueHash = ''
     redisClient.hget(email, route).then(function (value) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log(value)
-      }
       if (value !== null) { uniqueHash = value } else {
         uniqueHash = timeStamp.toISOString().concat(email)
-        console.log('New hash:'.concat(uniqueHash))
         redisClient.hset(email, route, uniqueHash)
       }
       redisClient.sadd(uniqueHash, timeStamp.toString())
