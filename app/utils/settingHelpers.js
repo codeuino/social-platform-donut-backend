@@ -1,4 +1,5 @@
 const Organization = require('../models/Organisation')
+const moment = require('moment')
 
 module.exports = {
   isEnabledEmail: async () => {
@@ -10,7 +11,7 @@ module.exports = {
         return true
       }
       // check if allowed in org settings
-      if (org[0].settings.options.enableEmail) {
+      if (org[0].options.settings.enableEmail) {
         console.log('yes email isEnabledEmail')
         return true
       }
@@ -82,6 +83,45 @@ module.exports = {
       return 'BOTH'
     } catch (error) {
       console.log(error)
+    }
+  },
+  canEdit: async () => {
+    try {
+      const org = await Organization.find({}).lean().exec()
+      if (org[0].options.settings.canEdit) {
+        return true
+      }
+      // not allowed
+      return false
+    } catch (error) {
+      console.log(error)
+    }
+  },
+  isEditAllowedNow: async (createdAt) => {
+    try {
+      const org = await Organization.find({}).lean().exec()
+      const limit = org[0].options.settings.editingLimit
+      if (limit !== 'Always') {
+        const now = moment().format('YYYY-MM-DD hh:mm:ss')
+        const allowedTill = moment(createdAt).add(limit, 'minutes').format('YYYY-MM-DD hh:mm:ss')
+        if (now < allowedTill) {
+          return true
+        }
+        return false
+      }
+      // Always allowed
+      return true
+    } catch (error) {
+      console.log(error)
+    }
+  },
+  addAdmin: async (userId) => {
+    try {
+      const org = await Organization.find({})
+      org[0].adminInfo.adminId.unshift(userId)
+      await org[0].save()
+    } catch (error) {
+      console.log('error ', error)
     }
   }
 }

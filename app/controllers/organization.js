@@ -182,7 +182,7 @@ module.exports = {
         'authentication'
       ]
       // if admin then check if valid update
-      if (isAdmin !== -1) {
+      if (isAdmin !== -1 || req.user.isAdmin === true) {
         const isValidOperation = updates.every((update) => {
           return allowedUpdates.includes(update)
         })

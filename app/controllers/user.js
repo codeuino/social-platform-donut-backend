@@ -31,7 +31,10 @@ module.exports = {
       if (Org.length > 0) {
         user.orgId = Org[0]._id
       }
-      await user.save()
+      const data = await user.save()
+      if (!isRegisteredUserExists || req.body.isAdmin === true) {
+        settingHelper.addAdmin(data._id)
+      }
       const token = await user.generateAuthToken()
       // Added fn to send email to activate account with warm message
       await emailController.sendEmail(req, res, next, token)
