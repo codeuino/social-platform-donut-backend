@@ -31,10 +31,14 @@ module.exports = {
     try {
       const post = await PostModel.findById(id)
       if (!post) {
-        return res.status(HttpStatus.NOT_FOUND).json({ message: 'No post exists' })
+        return res
+          .status(HttpStatus.NOT_FOUND)
+          .json({ message: 'No post exists' })
       }
       if (!permission.check(req, res, post.userId)) {
-        return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Bad delete request' })
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ message: 'Bad delete request' })
       }
       await PostModel.findByIdAndRemove(id)
       res.status(HttpStatus.OK).json({ post: post, msg: 'Deleted!' })
@@ -53,12 +57,16 @@ module.exports = {
     })
 
     if (!isValidOperation) {
-      return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Invalid Update' })
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json({ message: 'Invalid Update' })
     }
     try {
       const post = await PostModel.findById(id)
       if (!post) {
-        return res.status(HttpStatus.BAD_REQUEST).json({ message: 'No post exists' })
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ message: 'No post exists' })
       }
       // permission check for admin and creator || edit allowed or not
       if (!permission.check(req, res, post.userId) || (!settingsHelper.canEdit())) {
@@ -87,11 +95,18 @@ module.exports = {
     try {
       const post = await PostModel.findById(id)
         .populate('comments', ['content', 'votes'])
-        .populate('userId', ['name.firstName', 'name.lastName', 'email', 'isAdmin'])
+        .populate('userId', [
+          'name.firstName',
+          'name.lastName',
+          'email',
+          'isAdmin'
+        ])
         .lean()
         .exec()
       if (!post) {
-        return res.status(HttpStatus.NOT_FOUND).json({ error: 'Post not found' })
+        return res
+          .status(HttpStatus.NOT_FOUND)
+          .json({ error: 'Post not found' })
       }
       res.status(HttpStatus.OK).json({ post: post })
     } catch (error) {
@@ -103,9 +118,19 @@ module.exports = {
   getAllPost: async (req, res, next) => {
     try {
       const posts = await PostModel.find({}, {}, helper.paginate(req))
-        .populate('userId', ['name.firstName', 'name.lastName', 'email', 'isAdmin'])
+        .populate('userId', [
+          'name.firstName',
+          'name.lastName',
+          'email',
+          'isAdmin'
+        ])
         .sort({ updatedAt: -1 })
         .exec()
+      if (!posts.length) {
+        return res
+          .status(HttpStatus.NOT_FOUND)
+          .json({ message: 'No posts found' })
+      }
       return res.status(HttpStatus.OK).json({ posts: posts })
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -119,12 +144,16 @@ module.exports = {
     try {
       const post = await PostModel.findById(id)
       if (!post) {
-        return res.status(HttpStatus.NOT_FOUND).json({ error: 'No post found' })
+        return res
+          .status(HttpStatus.NOT_FOUND)
+          .json({ error: 'No post found' })
       }
       // CHECKS IF THE USER HAS ALREADY UPVOTED THE COMMENT
-      post.votes.upVotes.user.filter(user => {
+      post.votes.upVotes.user.filter((user) => {
         if (JSON.stringify(user) === JSON.stringify(userId)) {
-          return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Bad request' })
+          return res
+            .status(HttpStatus.BAD_REQUEST)
+            .json({ error: 'Bad request' })
         }
       })
       post.votes.upVotes.user.unshift(userId)
@@ -137,9 +166,18 @@ module.exports = {
 
   getPostByUser: async (req, res, next) => {
     try {
-      const posts = await PostModel.find({ userId: req.user._id }, {}, helper.paginate(req))
+      const posts = await PostModel.find(
+        { userId: req.user._id },
+        {},
+        helper.paginate(req)
+      )
         .populate('comments', ['content', 'votes'])
-        .populate('userId', ['name.firstName', 'name.lastName', '_id', 'isAdmin'])
+        .populate('userId', [
+          'name.firstName',
+          'name.lastName',
+          '_id',
+          'isAdmin'
+        ])
         .sort({ updatedAt: -1 })
         .exec()
       return res.status(HttpStatus.OK).json({ posts })
@@ -155,7 +193,9 @@ module.exports = {
       const post = await PostModel.findById(id)
       const user = await UserModel.findById(req.user._id)
       if (!post) {
-        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such post exists!' })
+        return res
+          .status(HttpStatus.NOT_FOUND)
+          .json({ msg: 'No such post exists!' })
       }
       // toggle pinned post
       post.isPinned = !post.isPinned
@@ -181,7 +221,12 @@ module.exports = {
   getPinned: async (req, res, next) => {
     try {
       const posts = await PostModel.find({}, {}, helper.paginate(req))
-        .populate('userId', ['name.firstName', 'name.lastName', 'email', 'isAdmin'])
+        .populate('userId', [
+          'name.firstName',
+          'name.lastName',
+          'email',
+          'isAdmin'
+        ])
         .sort({ updatedAt: -1 })
         .exec()
       // check for pinned post

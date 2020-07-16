@@ -5,6 +5,7 @@ const tags = {
   NEW: 'New!',
   MAINTENANCE: 'Maintenance',
   FOLLOWER: 'Follower',
-  ACTIVATE: 'Activate'
+  ACTIVATE: 'Activate',
+  COMMENT: 'Comment'
 }
 module.exports = tags

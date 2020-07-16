@@ -139,35 +139,63 @@ const UserSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Organization'
   },
-  notifications: [{
-    heading: {
-      type: String
-    },
-    content: {
-      type: String
-    },
-    tag: {
-      type: String
+  notifications: [
+    {
+      heading: {
+        type: String
+      },
+      content: {
+        type: String
+      },
+      tag: {
+        type: String
+      }
     }
-  }],
-  followers: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }],
-  followings: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }],
-  blocked: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }],
+  ],
+  proposalNotifications: [
+    {
+      heading: {
+        type: String
+      },
+      content: {
+        type: String
+      },
+      tag: {
+        type: String
+      },
+      createdAt: {
+        type: Date,
+        required: true,
+        default: Date.now()
+      }
+    }
+  ],
+  followers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  ],
+  followings: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  ],
+  blocked: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  ],
   pinned: {
     _id: false,
-    postId: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Post'
-    }]
+    postId: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Post'
+      }
+    ]
   },
   firstRegister: {
     type: Boolean,
@@ -188,27 +216,32 @@ const UserSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     required: true,
-    default: Date.now()
+    default: Date.now(),
+    select: true
   },
   updatedAt: {
     type: Date,
     required: true,
     default: Date.now()
   },
-  tokens: [{
-    token: {
-      type: String,
-      required: true
+  tokens: [
+    {
+      token: {
+        type: String,
+        required: true
+      }
     }
-  }]
-}
-)
+  ]
+})
 
 // generate auth token
 // Schema Methods, needs to be invoked by an instance of a Mongoose document
 UserSchema.methods.generateAuthToken = async function () {
   const user = this
-  const token = jwt.sign({ _id: user._id.toString() }, 'process.env.JWT_SECRET')
+  const token = jwt.sign(
+    { _id: user._id.toString() },
+    'process.env.JWT_SECRET'
+  )
 
   user.tokens = user.tokens.concat({ token: token })
   await user.save()

@@ -223,12 +223,12 @@ module.exports = {
       if (user && Date.now() <= decodedToken.expiry) {
         console.log('Valid invite!')
         if (decodedToken.role === 'user') {
-          // TODO: CHANGE THE URL IN PRODUCTION
-          return res.redirect('http://localhost:3000/')
+          // TODO: CHANGE THE URL IN PRODUCTION (in env file)
+          return res.redirect(process.env.clientbaseurl)
         }
         if (decodedToken.role === 'admin') {
-          // TODO: CHANGE THE URL IN PRODUCTION
-          return res.redirect('http://localhost:3000/admin')
+          // TODO: CHANGE THE URL IN PRODUCTION (in env file)
+          return res.redirect(`${process.env.clientbaseurl}/admin`)
         }
       }
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Invalid token!' })
