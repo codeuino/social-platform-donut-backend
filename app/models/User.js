@@ -231,13 +231,22 @@ const UserSchema = new mongoose.Schema({
     }
   }],
   activity: [{
-    routeName: {
+    route: {
       type: String,
       required: true
     },
-    route: [{
-      type: String
-    }]
+    method: {
+      type: String,
+      required: true
+    },
+    collectionType: {
+      type: String,
+      required: true
+    },
+    id: {
+      type: String,
+      required: true
+    },
   }]
 })
 
