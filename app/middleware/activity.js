@@ -4,75 +4,44 @@ const activity = async (req, res, next) => {
   var redisClient = redis.redisClient
   var route = req.originalUrl.replace(/\?.*$/, '')
   if (route === '/user/logout') {
-    // Fetch data from redis
-    const token = req.token
-    var routeNamesDict
-    var mailid
+    var userID = req.user.id.toString()
+    var activityData = await redisClient.lrange(userID, 0, -1)
     const data = await User.findOne({
-      'tokens.token': token
+      _id: userID
     })
-    mailid = String(data.email)
-    if (!mailid) {
-      throw new Error()
+    var activityElement = {
+      route: "",
+      method: "",
+      collectionType: "",
+      id: "",
     }
-    routeNamesDict = await redisClient.hgetall(mailid)
-    let key, value
-    for (key in routeNamesDict) {
-      value = routeNamesDict[key]
-      var timeStampSet = await redisClient.smembers(String(value))
-      var activityData = {
-        routeName: String(key),
-        route: timeStampSet
-      }
-      var activityLength = data.activity.length
-      if (activityLength === 0) {
-        data.activity.push(activityData)
-      } else {
-        var routeIndex = null
-        for (let index1 = 0; index1 < data.activity.length; index1++) {
-          if (data.activity[index1].routeName === key) {
-            routeIndex = index1
-          }
-        }
-        if (routeIndex === null) {
-          data.activity.push(activityData)
-        } else {
-          var tempTimeStamps = data.activity[routeIndex].route
-          if (tempTimeStamps.length > 0) {
-            tempTimeStamps.push(...timeStampSet)
-            data.activity[routeIndex].route.push(...tempTimeStamps)
-          } else {
-            data.activity[routeIndex].route.push(...timeStampSet)
-          }
-        }
-      }
+    for (let index = 0; index < activityData.length; index++) {
+      var activityDataElement = activityData[index].split(',')
+      activityElement.route = activityDataElement[0]
+      activityElement.method = activityDataElement[1]
+      activityElement.collectionType = activityDataElement[2]
+      activityElement.id = activityDataElement[3]
+      data.activity.push(activityElement)
     }
     await data.update()
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(data)
+    console.log("DATA")
+    console.log(data)
+    // clear data from redis
+    await redisClient.del(userID)
+  } else if (method != 'GET') {
+    var objectID = res.locals.data._id
+    var method = req.method
+    var userID = objectID
+    var collectionType = res.locals.collectionType
+    if (typeof res.locals.data.userId !== 'undefined') {
+      userID = res.locals.data.userId
     }
-    // Deleting data from Redis
-    routeNamesDict = await redisClient.hgetall(mailid)
-    // delete all sets
-    for (k in routeNamesDict) {
-      var val = routeNamesDict[k]
-      await redisClient.del(val)
-    }
-    // delete complete user hash
-    await redisClient.del(mailid)
-  } else {
-    const { email } = req.body
-    const timeStamp = new Date(Date.now())
-    var uniqueHash = ''
-    redisClient.hget(email, route).then(function (value) {
-      if (value !== null) { uniqueHash = value } else {
-        uniqueHash = timeStamp.toISOString().concat(email)
-        redisClient.hset(email, route, uniqueHash)
-      }
-      redisClient.sadd(uniqueHash, timeStamp.toString())
-    })
+    // example /auth/login,POST,user,5ed09e9d446f2b1c208b6ba8
+    var activityElement = route.concat(",", method, ",", collectionType, ",", objectID)
+    // userID => [(route, collection, method, objectID), (route,method, collection, objectID) ...]
+    await redisClient.rpush(userID, activityElement)
+
   }
-  next()
 }
 
 module.exports = activity
