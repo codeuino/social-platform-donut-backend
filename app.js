@@ -4,6 +4,10 @@ const logger = require('morgan')
 const cookieParser = require('cookie-parser')
 const createError = require('http-errors')
 const path = require('path')
+const csurf = require('csurf')
+const helmet = require('helmet')
+const session = require('express-session')
+const hpp = require('hpp')
 
 const indexRouter = require('./app/routes/index')
 const authRouter = require('./app/routes/auth')
@@ -11,6 +15,26 @@ const usersRouter = require('./app/routes/user')
 const postRouter = require('./app/routes/post')
 
 const app = express()
+
+app.use(helmet());
+app.use(hpp());
+
+const csrfMiddleware = csurf({
+  cookie: true
+});
+
+app.use(session({
+  secret: 'codeuino',
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+      secure: true,
+      httpOnly: true
+  }
+}));
+
+app.use(cookieParser());
+app.use(csrfMiddleware);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'))
