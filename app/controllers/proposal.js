@@ -33,8 +33,9 @@ module.exports = {
         },
         next
       )
-
+      res.locals.data = proposal
       res.status(HttpStatus.CREATED).json({ proposal })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -56,7 +57,9 @@ module.exports = {
           .status(HttpStatus.NOT_FOUND)
           .json({ message: 'No proposal exists under the provided ID' })
       }
+      res.locals.data = proposal
       res.status(HttpStatus.OK).json({ proposal: proposal })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -102,8 +105,9 @@ module.exports = {
             }
           }
         )
-
+        res.locals.data._id = proposalId
         res.send({ data })
+        next()
       }
     })
   },
@@ -189,7 +193,9 @@ module.exports = {
         },
         next
       )
+      res.locals.data = proposal
       res.status(HttpStatus.OK).json({ proposal: proposal })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -264,8 +270,9 @@ module.exports = {
           next
         )
       }
-
-      return res.status(HttpStatus.OK).json({ proposal: proposal })
+      res.locals.data = updatedProposal
+      res.status(HttpStatus.OK).json({ proposal: proposal })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }

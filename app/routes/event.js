@@ -3,6 +3,7 @@ const auth = require('../middleware/auth')
 const router = express.Router()
 const eventController = require('../controllers/event')
 const isUnderMaintenance = require('../middleware/maintenance')
+const activity = require('../middleware/activity')
 
 // get all the events
 router.get(
@@ -25,7 +26,8 @@ router.post(
   '/',
   isUnderMaintenance,
   auth,
-  eventController.createEvent
+  eventController.createEvent,
+  activity
 )
 // get event by id
 router.get(
@@ -39,21 +41,24 @@ router.patch(
   '/:id',
   isUnderMaintenance,
   auth,
-  eventController.updateEvent
+  eventController.updateEvent,
+  activity
 )
 // rsvp by user
 router.patch(
   '/rsvp/:id',
   isUnderMaintenance,
   auth,
-  eventController.rsvp
+  eventController.rsvp,
+  activity
 )
 // delete an event
 router.delete(
   '/:id',
   isUnderMaintenance,
   auth,
-  eventController.deleteEvent
+  eventController.deleteEvent,
+  activity
 )
 
 // GET ALL EVENT POSTED BY A USER

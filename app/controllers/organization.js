@@ -28,7 +28,9 @@ module.exports = {
       notification.content = `${org.name} is created!`
       notification.tag = TAGS.NEW
       notificationHelper.addToNotificationForAll(req, res, notification, next)
-      return res.status(HttpStatus.CREATED).json({ org })
+      res.locals.data = org
+      res.status(HttpStatus.CREATED).json({ org })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -70,7 +72,9 @@ module.exports = {
         helper.mapToDb(req, org)
       }
       await org.save()
-      return res.status(HttpStatus.OK).json({ organization: org })
+      res.locals.data = org
+      res.status(HttpStatus.OK).json({ organization: org })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -100,7 +104,9 @@ module.exports = {
           .status(HttpStatus.NOT_FOUND)
           .json({ error: 'No such organization exists!' })
       }
+      res.locals.data = orgData
       res.status(HttpStatus.OK).json({ organization: orgData })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -126,7 +132,9 @@ module.exports = {
       notification.content = `${org.name} is deleted!`
       notification.tag = TAGS.DELETE
       notificationHelper.addToNotificationForAll(req, res, notification, next)
-      return res.status(HttpStatus.OK).json({ organization: org })
+      res.locals.data = org
+      res.status(HttpStatus.OK).json({ organization: org })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -143,7 +151,9 @@ module.exports = {
       }
       org.isArchived = true
       await org.save()
-      return res.status(HttpStatus.OK).json({ organization: org })
+      res.locals.data = org
+      res.status(HttpStatus.OK).json({ organization: org })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -221,7 +231,9 @@ module.exports = {
             organization.options[update] = req.body[update]
           })
           await organization.save()
-          return res.status(HttpStatus.OK).json({ organization })
+          res.locals.data = organization
+          res.status(HttpStatus.OK).json({ organization })
+          next()
         }
         // invalid update
         return res
@@ -324,7 +336,9 @@ module.exports = {
       }
       user.isAdmin = false
       await user.save()
-      return res.status(HttpStatus.OK).json({ org })
+      res.locals.data = user
+      res.status(HttpStatus.OK).json({ org })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }

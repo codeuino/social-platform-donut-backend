@@ -5,6 +5,7 @@ const postController = require('../controllers/post')
 const uploader = require('../utils/uploader')
 const auth = require('../middleware/auth')
 const isUnderMaintenance = require('../middleware/maintenance')
+const activity = require('../middleware/activity')
 
 // CREATE A POST
 router.post(
@@ -12,7 +13,8 @@ router.post(
   isUnderMaintenance,
   auth,
   uploader.upload.single('image'),
-  postController.create
+  postController.create,
+  activity
 )
 
 // GET ALL POSTS
@@ -29,7 +31,8 @@ router.patch(
   isUnderMaintenance,
   auth,
   uploader.upload.single('image'),
-  postController.updatePost
+  postController.updatePost,
+  activity
 )
 
 // DELETE A POST BY ID
@@ -37,7 +40,8 @@ router.delete(
   '/:id',
   isUnderMaintenance,
   auth,
-  postController.delete
+  postController.delete,
+  activity
 )
 
 // GET POST BY ID
@@ -53,7 +57,8 @@ router.patch(
   '/upvote/:id',
   isUnderMaintenance,
   auth,
-  postController.upvote
+  postController.upvote,
+  activity
 )
 
 // GET POST PER USER
@@ -68,7 +73,8 @@ router.patch(
   '/pin/:id/',
   isUnderMaintenance,
   auth,
-  postController.pinPost
+  postController.pinPost,
+  activity
 )
 
 // GET ALL PINNED POSTS

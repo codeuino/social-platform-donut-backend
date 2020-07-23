@@ -22,7 +22,9 @@ module.exports = {
       notification.content = `${event.eventName} is added!`
       notification.tag = 'New!'
       notificationHelper.addToNotificationForAll(req, res, notification, next)
+      res.locals.data = event
       res.status(HttpStatus.CREATED).json({ event: event })
+      next()
     } catch (error) {
       res.status(HttpStatus.BAD_REQUEST).json({ error: error })
     }
@@ -53,7 +55,9 @@ module.exports = {
       notification.content = `${event.eventName} is updated!`
       notification.tag = 'Update'
       notificationHelper.addToNotificationForAll(req, res, notification, next)
+      res.locals.data = event
       res.status(HttpStatus.OK).json({ event: event })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -84,10 +88,12 @@ module.exports = {
         try {
           event.rsvpYes.push(req.user.id)
           await event.save()
+          res.locals.data = event
           req.io.emit('rsvp done', { data: 'RSVP successfully done!' })
           notification.heading = 'RSVP done!'
           notification.content = 'RSVP successfully done!'
           notificationHelper.addToNotificationForUser(req.user._id, res, notification, next)
+          next()
           res.status(HttpStatus.OK).json({ rsvpData: data })
         } catch (error) {
           return res.status(HttpStatus.BAD_REQUEST).json({ error: error })
@@ -97,10 +103,12 @@ module.exports = {
         try {
           event.rsvpNo.push(req.user.id)
           await event.save()
+          res.locals.data = event
           req.io.emit('rsvp done', { data: 'RSVP successfully done!' })
           notification.heading = 'RSVP done!'
           notification.content = 'RSVP successfully done!'
           notificationHelper.addToNotificationForUser(req.user._id, res, notification, next)
+          next()
           res.status(HttpStatus.OK).json({ rsvpData: data })
         } catch (error) {
           return res.status(HttpStatus.BAD_REQUEST).json({ error: error })
@@ -110,11 +118,13 @@ module.exports = {
         try {
           event.rsvpMaybe.push(req.user.id)
           await event.save()
+          res.locals.data = event
           req.io.emit('rsvp done', { data: 'RSVP successfully done!' })
           notification.heading = 'RSVP done!'
           notification.content = 'RSVP successfully done!'
           notificationHelper.addToNotificationForUser(req.user._id, res, notification, next)
           res.status(HttpStatus.OK).json({ rsvpData: data })
+          next()
         } catch (error) {
           return res.status(HttpStatus.BAD_REQUEST).json({ error: error })
         }
@@ -158,12 +168,14 @@ module.exports = {
       }
       if (permission.check(req, res, deleteEvent.createdBy)) {
         await Event.findByIdAndRemove(id)
+        res.locals.data = event
         req.io.emit('event deleted', { data: deleteEvent.eventName })
         notification.heading = 'Event deleted!'
         notification.content = `Event ${deleteEvent.eventName} is deleted!`
         notification.tag = 'Deleted'
         notificationHelper.addToNotificationForAll(req, res, notification, next)
-        return res.status(HttpStatus.OK).json({ deleteEvent: deleteEvent, message: 'Deleted the event' })
+        res.status(HttpStatus.OK).json({ deleteEvent: deleteEvent, message: 'Deleted the event' })
+        next()
       }
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Not permitted!' })
     } catch (error) {

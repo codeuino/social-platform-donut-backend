@@ -8,21 +8,19 @@ const activity = require('../middleware/activity')
 router.post(
   '/login',
   isUnderMaintenance,
-  activity,
   authController.authenticateUser
 )
 
 // user logout
 router.post(
   '/logout',
-  activity,
-  authController.logout
+  authController.logout,
+  activity
 )
 
 // logout all sessions
 router.post(
   '/logoutAll',
-  activity,
   authController.logoutAll
 )
 

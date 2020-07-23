@@ -78,8 +78,8 @@ router.delete(
 router.post(
   '/logout',
   auth,
-  activity,
-  userController.logout
+  userController.logout,
+  activity
 )
 
 // follow the user
@@ -88,7 +88,8 @@ router.patch(
   isUnderMaintenance,
   auth,
   userController.addFollowing,
-  userController.addFollower
+  userController.addFollower,
+  activity
 )
 
 // unFollow the user
@@ -97,7 +98,8 @@ router.patch(
   isUnderMaintenance,
   auth,
   userController.removeFollowing,
-  userController.removeFollower
+  userController.removeFollower,
+  activity
 )
 
 // BLOCK THE USER
