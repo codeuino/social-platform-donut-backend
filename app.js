@@ -83,6 +83,12 @@ app.use(function (err, req, res, next) {
   // render the error page
   res.status(err.status || 500)
   res.render('error')
+  // Socket event error handler (On max event)
+  req.io.on('error', function (err) {
+    console.error('------REQ ERROR')
+    console.error(err.stack)
+  })
+  next()
 })
 
 module.exports = { app, io }

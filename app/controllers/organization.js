@@ -2,6 +2,7 @@ const Organization = require('../models/Organisation')
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
 const helper = require('../utils/uploader')
+const paginater = require('../utils/paginate')
 const notificationHelper = require('../utils/notif-helper')
 const User = require('../models/User')
 const Project = require('../models/Project')
@@ -69,7 +70,7 @@ module.exports = {
         helper.mapToDb(req, org)
       }
       await org.save()
-      res.status(HttpStatus.OK).json({ organization: org })
+      return res.status(HttpStatus.OK).json({ organization: org })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -172,23 +173,20 @@ module.exports = {
           req.io.emit('org under maintenance', { data: organization.name })
           notification.heading = 'Maintenance mode on!'
           notification.content = `${organization.name} is kept under maintenance!`
-          notificationHelper.addToNotificationForAll(
-            req,
-            res,
-            notification,
-            next
-          )
-          return res
-            .status(HttpStatus.OK)
-            .json({ msg: 'Organization is kept under the maintenance!!' })
+          notificationHelper.addToNotificationForAll(req, res, notification, next)
+          return res.status(HttpStatus.OK).json({
+            maintenance: true,
+            msg: 'Organization is kept under the maintenance!!'
+          })
         }
 
         req.io.emit('org revoked maintenance', { data: organization.name })
         notification.heading = 'Maintenance mode off!'
         notification.content = `${organization.name} is revoked from maintenance!`
-        return res
-          .status(HttpStatus.OK)
-          .json({ msg: 'Organization is recovered from maintenance!!' })
+        return res.status(HttpStatus.OK).json({
+          maintenance: false,
+          msg: 'Organization is recovered from maintenance!!'
+        })
       } else {
         return res
           .status(HttpStatus.BAD_REQUEST)
@@ -209,15 +207,11 @@ module.exports = {
           .status(HttpStatus.NOT_FOUND)
           .json({ msg: 'No Organization found!' })
       }
-      // check if user is admin or not
-      const adminIds = organization.adminInfo.adminId
-      const isAdmin = adminIds.indexOf(req.user.id)
       const updates = Object.keys(req.body)
       console.log('req.body ', req.body)
-      console.log('isAdmin ', isAdmin)
       const allowedUpdates = ['settings', 'permissions', 'authentication']
       // if admin then check if valid update
-      if (isAdmin !== -1) {
+      if (req.user.isAdmin === true) {
         const isValidOperation = updates.every((update) => {
           return allowedUpdates.includes(update)
         })
@@ -227,9 +221,7 @@ module.exports = {
             organization.options[update] = req.body[update]
           })
           await organization.save()
-          return res
-            .status(HttpStatus.OK)
-            .json({ msg: 'Successfully updated!' })
+          return res.status(HttpStatus.OK).json({ organization })
         }
         // invalid update
         return res
@@ -272,8 +264,8 @@ module.exports = {
             { 'name.firstName': { $regex: regex } },
             { 'name.lastName': { $regex: regex } }
           ]
-        })
-          .select('name email isAdmin info.about.designation isRemoved')
+        }, {}, paginater.paginate(req))
+          .select('name email isAdmin info.about.designation isRemoved createdAt')
           .lean()
           .sort({ createdAt: -1 })
           .exec()
@@ -282,7 +274,7 @@ module.exports = {
         }
         return res.status(HttpStatus.OK).json({ member })
       } else {
-        const members = await User.find({})
+        const members = await User.find({}, {}, paginater.paginate(req))
           .select('name email isAdmin info.about.designation isRemoved')
           .lean()
           .sort({ createdAt: -1 })
@@ -327,6 +319,9 @@ module.exports = {
       await org.save()
       // also make isAdmin false
       const user = await User.findById(userId)
+      if (!user) {
+        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exists!' })
+      }
       user.isAdmin = false
       await user.save()
       return res.status(HttpStatus.OK).json({ org })

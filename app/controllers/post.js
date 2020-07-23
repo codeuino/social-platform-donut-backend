@@ -5,6 +5,7 @@ const HttpStatus = require('http-status-codes')
 const imgUploadHelper = require('../utils/uploader')
 const permission = require('../utils/permission')
 const helper = require('../utils/paginate')
+const settingsHelper = require('../utils/settingHelpers')
 
 module.exports = {
   // CREATE POST
@@ -67,10 +68,13 @@ module.exports = {
           .status(HttpStatus.BAD_REQUEST)
           .json({ message: 'No post exists' })
       }
-      if (!permission.check(req, res, post.userId)) {
-        return res
-          .status(HttpStatus.FORBIDDEN)
-          .json({ message: 'Bad update request' })
+      // permission check for admin and creator || edit allowed or not
+      if (!permission.check(req, res, post.userId) || (!settingsHelper.canEdit())) {
+        return res.status(HttpStatus.FORBIDDEN).json({ message: 'Bad update request' })
+      }
+      // if allowed edit limit check
+      if (!settingsHelper.isEditAllowedNow(post.createdAt)) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Edit limit expired!' })
       }
       updates.forEach((update) => {
         post[update] = req.body[update]
