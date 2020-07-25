@@ -63,7 +63,8 @@ module.exports = {
     const allowedUpdates = [
       'phone',
       'info',
-      'about'
+      'about',
+      'isDeactivated'
     ]
     // added control as per org settings
     if (settingHelper.canChangeName()) {
@@ -418,6 +419,16 @@ module.exports = {
       return res.status(HttpStatus.OK).json({ user })
     } catch (error) {
       HANDLER.handleError(res, error)
+    }
+  },
+  // DEACTIVATE ACCOUNT (BY USER ITSELF)
+  deactivateAccount: async (req, res, next) => {
+    try {
+      req.user.isActivated = !req.user.isActivated
+      const user = await req.user.save()
+      return res.status(HttpStatus.OK).json({ user })
+    } catch (error) {
+      HANDLER.handleError(error)
     }
   }
 }
