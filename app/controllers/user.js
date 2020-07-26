@@ -40,7 +40,6 @@ module.exports = {
       await emailController.sendEmail(req, res, next, token)
       return res.status(HttpStatus.CREATED).json({ user: user, token: token })
     } catch (error) {
-      console.log(error)
       return res.status(HttpStatus.NOT_ACCEPTABLE).json({ error: error })
     }
   },
@@ -63,7 +62,8 @@ module.exports = {
     const allowedUpdates = [
       'phone',
       'info',
-      'about'
+      'about',
+      'isDeactivated'
     ]
     // added control as per org settings
     if (settingHelper.canChangeName()) {
@@ -103,9 +103,6 @@ module.exports = {
       await user.save()
       return res.status(HttpStatus.OK).json({ success: true, token })
     } catch (error) {
-      if (process.env.NODE_ENV !== 'production' && error) {
-        console.log('Error in forgotPasswordRequest ', error)
-      }
       return res.status(HttpStatus.BAD_REQUEST).json({ error })
     }
   },
@@ -135,15 +132,9 @@ module.exports = {
         notificationHelper.addToNotificationForUser(id, res, notification, next)
         return res.status(HttpStatus.OK).json({ updated: true })
       } else {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('token expired')
-        }
         res.status(HttpStatus.BAD_REQUEST).json({ error: 'Token expired' })
       }
     } catch (error) {
-      if (process.env.NODE_ENV !== 'production' && error) {
-        console.log('Something went wrong ', error)
-      }
       res.status(HttpStatus.BAD_REQUEST).json({ error })
     }
   },
@@ -374,7 +365,6 @@ module.exports = {
       if (user.isAdmin === true) {
         const blockedIds = user.blocked.map(item => item._id)
         const unblockIndex = blockedIds.indexOf(id)
-        console.log('UnblockIndex ', unblockIndex)
         if (unblockIndex !== -1) {
           user.blocked.splice(unblockIndex, 1)
           await user.save()
@@ -418,6 +408,16 @@ module.exports = {
       return res.status(HttpStatus.OK).json({ user })
     } catch (error) {
       HANDLER.handleError(res, error)
+    }
+  },
+  // DEACTIVATE ACCOUNT (BY USER ITSELF)
+  deactivateAccount: async (req, res, next) => {
+    try {
+      req.user.isActivated = !req.user.isActivated
+      const user = await req.user.save()
+      return res.status(HttpStatus.OK).json({ user })
+    } catch (error) {
+      HANDLER.handleError(error)
     }
   }
 }

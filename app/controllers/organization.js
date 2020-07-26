@@ -208,7 +208,6 @@ module.exports = {
           .json({ msg: 'No Organization found!' })
       }
       const updates = Object.keys(req.body)
-      console.log('req.body ', req.body)
       const allowedUpdates = ['settings', 'permissions', 'authentication']
       // if admin then check if valid update
       if (req.user.isAdmin === true) {
@@ -307,7 +306,6 @@ module.exports = {
       // console.log('Permitted to removeAdmin')
       // REMOVE ADMINS FROM ADMINS LIST
       const admins = org.adminInfo.adminId
-      console.log('adminIds ', admins)
       const removableIndex = admins.indexOf(userId)
       if (removableIndex === -1) {
         return res

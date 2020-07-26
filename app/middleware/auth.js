@@ -32,7 +32,7 @@ const auth = async (req, res, next) => {
         'isAdmin'
       ])
       .exec()
-    console.log(user)
+    // console.log(user)
 
     if (!user) {
       throw new Error()

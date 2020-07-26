@@ -130,4 +130,12 @@ router.patch(
   userController.removeUser
 )
 
+// DEACTIVATE ACCOUNT BY USER
+router.patch(
+  '/deactivate/toggler',
+  isUnderMaintenance,
+  auth,
+  userController.deactivateAccount
+)
+
 module.exports = router

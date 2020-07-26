@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@sendgrid/mail": "^7.0.0",
+    "app-root-path": "^3.0.0",
     "aws-sdk": "^2.691.0",
     "bcrypt": "^3.0.6",
     "body-parser": "^1.19.0",
@@ -28,7 +29,8 @@
     "morgan": "^1.9.1",
     "multer": "^1.4.2",
     "socket.io": "^2.3.0",
-    "validator": "^10.11.0"
+    "validator": "^10.11.0",
+    "winston": "^3.3.3"
   },
   "jest": {
     "testEnvironment": "node",
