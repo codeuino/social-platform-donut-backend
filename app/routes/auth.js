@@ -3,7 +3,7 @@ const router = express.Router()
 const authController = require('../controllers/auth')
 // const isActivated = require('../middleware/activate')
 const isUnderMaintenance = require('../middleware/maintenance')
-
+const activity = require('../middleware/activity')
 // user login
 router.post(
   '/login',
@@ -14,7 +14,8 @@ router.post(
 // user logout
 router.post(
   '/logout',
-  authController.logout
+  authController.logout,
+  activity
 )
 
 // logout all sessions

@@ -11,7 +11,9 @@ module.exports = {
       const project = await new Project(req.body)
       project.createdBy = req.user._id
       await project.save()
-      return res.status(HttpStatus.CREATED).json({ project })
+      res.locals.data = project
+      res.status(HttpStatus.CREATED).json({ project })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -81,7 +83,9 @@ module.exports = {
         project[update] = req.body[update]
       })
       await project.save()
-      return res.status(HttpStatus.OK).json({ project })
+      res.locals.data = project
+      res.status(HttpStatus.OK).json({ project })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -96,7 +100,9 @@ module.exports = {
       // check if admin or user who created this project
       if (permission.check(req, res, project.createdBy)) {
         await Project.findByIdAndRemove(id)
-        return res.status(HttpStatus.OK).json({ msg: 'Project deleted!' })
+        res.locals.data = project
+        res.status(HttpStatus.OK).json({ msg: 'Project deleted!' })
+        next()
       }
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Not permitted!' })
     } catch (error) {

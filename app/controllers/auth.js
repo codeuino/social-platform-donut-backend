@@ -14,6 +14,7 @@ module.exports = {
   },
   logout: (req, res, next) => {
     res.status(HttpStatus.OK).json({ success: 'ok' })
+    next()
   },
   logoutAll: (req, res, next) => {
     res.status(HttpStatus.OK).json({ success: 'ok' })

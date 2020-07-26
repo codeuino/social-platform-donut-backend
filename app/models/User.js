@@ -224,14 +224,34 @@ const UserSchema = new mongoose.Schema({
     required: true,
     default: Date.now()
   },
-  tokens: [
-    {
-      token: {
-        type: String,
-        required: true
-      }
+  tokens: [{
+    token: {
+      type: String,
+      required: true
     }
-  ]
+  }],
+  activity: [{
+    route: {
+      type: String,
+      required: true
+    },
+    method: {
+      type: String,
+      required: true
+    },
+    collectionType: {
+      type: String,
+      required: true
+    },
+    id: {
+      type: String,
+      required: true
+    },
+    timestamp: {
+      type: String,
+      required: true
+    }
+  }]
 })
 
 // generate auth token

@@ -19,7 +19,9 @@ module.exports = {
     try {
       await post.save()
       // req.io.emit('new post created', { data: post.content })
-      return res.status(HttpStatus.CREATED).json({ post })
+      res.locals.data = post
+      res.status(HttpStatus.CREATED).json({ post })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -41,7 +43,9 @@ module.exports = {
           .json({ message: 'Bad delete request' })
       }
       await PostModel.findByIdAndRemove(id)
+      res.locals.data = post
       res.status(HttpStatus.OK).json({ post: post, msg: 'Deleted!' })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -83,7 +87,9 @@ module.exports = {
         imgUploadHelper.mapToDb(req, post)
       }
       await post.save()
+      res.locals.data = post
       res.status(HttpStatus.OK).json({ post: post })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -158,7 +164,9 @@ module.exports = {
       })
       post.votes.upVotes.user.unshift(userId)
       await post.save()
+      res.locals.data = post
       res.status(HttpStatus.OK).json({ post: post })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -211,7 +219,9 @@ module.exports = {
         await user.save()
       }
       await post.save()
-      return res.status(HttpStatus.OK).json({ post })
+      res.locals.data = post
+      res.status(HttpStatus.OK).json({ post })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }

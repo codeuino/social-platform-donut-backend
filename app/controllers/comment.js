@@ -14,7 +14,9 @@ module.exports = {
       comment.userId = userId
       comment.postId = id // added postId
       await comment.save()
+      res.locals.data = comment
       res.status(HttpStatus.CREATED).json({ comment: comment })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -32,8 +34,10 @@ module.exports = {
       if (!permission.check(req, res, comment.userId)) {
         return res.status(HttpStatus.FORBIDDEN).json({ message: 'Bad delete request' })
       }
+      res.locals.data = comment
       await CommentModel.findByIdAndRemove(id)
       res.status(HttpStatus.OK).json({ comment: comment })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -63,7 +67,9 @@ module.exports = {
         comment[update] = req.body[update]
       })
       await comment.save()
+      res.locals.data = comment
       res.status(HttpStatus.OK).json({ comment: comment })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -112,7 +118,9 @@ module.exports = {
       })
       comment.votes.upVotes.user.unshift(userId)
       await comment.save()
-      return res.status(HttpStatus.OK).json({ comment: comment })
+      res.locals.data = comment
+      res.status(HttpStatus.OK).json({ comment: comment })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -143,7 +151,9 @@ module.exports = {
       })
       comment.votes.downVotes.user.unshift(userId)
       await comment.save()
-      return res.status(HttpStatus.OK).json({ comment: comment })
+      res.locals.data = comment
+      res.status(HttpStatus.OK).json({ comment: comment })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }

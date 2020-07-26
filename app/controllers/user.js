@@ -272,7 +272,9 @@ module.exports = {
         .populate('followers', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
         .populate('blocked', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
         .exec()
-      return res.status(HttpStatus.OK).json({ user: userData })
+      res.locals.data = user
+      res.status(HttpStatus.OK).json({ user: userData })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -322,7 +324,9 @@ module.exports = {
         .populate('followers', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
         .populate('blocked', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
         .exec()
-      return res.status(HttpStatus.OK).json({ user: userData })
+      res.locals.data = user
+      res.status(HttpStatus.OK).json({ user: userData })
+      next()
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -368,7 +372,8 @@ module.exports = {
         if (unblockIndex !== -1) {
           user.blocked.splice(unblockIndex, 1)
           await user.save()
-          return res.status(HttpStatus.OK).json({ user })
+          res.locals.data = 
+          res.status(HttpStatus.OK).json({ user })
         }
         return res.status(HttpStatus.NOT_FOUND).json({ user })
       }
