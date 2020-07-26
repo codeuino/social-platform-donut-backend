@@ -2,20 +2,21 @@ const express = require('express')
 const router = express.Router()
 const analyticsController = require('../controllers/analytics')
 const auth = require('../middleware/auth')
+const isUnderMaintenance = require('../middleware/maintenance')
 
 // Get Browser analytics
-router.get('/browser', auth, analyticsController.getBrowser)
+router.get('/browser', isUnderMaintenance, auth, analyticsController.getBrowser)
 
 // Get country analytics
-router.get('/countries', auth, analyticsController.getCountries)
+router.get('/countries', isUnderMaintenance, auth, analyticsController.getCountries)
 
 // Get Device analytics
-router.get('/device', auth, analyticsController.getDevice)
+router.get('/device', isUnderMaintenance, auth, analyticsController.getDevice)
 
 // Get most viewed Proposals
-router.get('/mostviewed', auth, analyticsController.getTopProposals)
+router.get('/mostviewed', isUnderMaintenance, auth, analyticsController.getTopProposals)
 
 // Get Views of a specific proposal
-router.get('/views', auth, analyticsController.getProposalViews)
+router.get('/views', isUnderMaintenance, auth, analyticsController.getProposalViews)
 
 module.exports = router
