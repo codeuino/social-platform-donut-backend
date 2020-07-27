@@ -8,7 +8,7 @@ const HttpStatus = require('http-status-codes')
 module.exports = {
   getBrowser: async (req, res, next) => {
     const { startDate, endDate, proposalId } = req.body
-
+    console.log(req.body)
     try {
       const result = await analytics.data.ga.get({
         auth: jwt,
@@ -19,7 +19,7 @@ module.exports = {
         'end-date': endDate,
         filters: `ga:pagePath==/${proposalId}`
       })
-      res.status(HttpStatus.OK).json(result.data)
+      res.status(HttpStatus.OK).json({ analytics: result.data.rows })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -38,7 +38,7 @@ module.exports = {
         'end-date': endDate,
         filters: `ga:pagePath==/${proposalId}`
       })
-      res.status(HttpStatus.OK).json(result.data)
+      res.status(HttpStatus.OK).json({ analytics: result.data.rows })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -57,7 +57,7 @@ module.exports = {
         'end-date': endDate,
         filters: `ga:pagePath==/${proposalId}`
       })
-      res.status(HttpStatus.OK).json(result.data)
+      res.status(HttpStatus.OK).json({ analytics: result.data.rows })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -76,7 +76,7 @@ module.exports = {
         'end-date': endDate,
         filters: 'ga:pagePath!=/homepage'
       })
-      res.status(HttpStatus.OK).json(result.data)
+      res.status(HttpStatus.OK).json({ analytics: result.data })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -89,14 +89,14 @@ module.exports = {
       const result = await analytics.data.ga.get({
         auth: jwt,
         ids: `ga:${viewId}`,
-        metrics: 'ga:users',
-        dimensions: ['ga:deviceCategory'],
+        metrics: 'ga:pageviews',
+        dimensions: ['ga:date'],
         'start-date': startDate,
         'end-date': endDate,
         filters: `ga:pagePath==/${proposalId}`
       })
 
-      res.status(HttpStatus.OK).json(result.data)
+      res.status(HttpStatus.OK).json({ analytics: result.data.rows })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
