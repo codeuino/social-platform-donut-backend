@@ -34,7 +34,9 @@ app.use(bodyParser.urlencoded(fileConstants.fileParameters))
 const memoryStorage = multer.memoryStorage()
 app.use(multer({ storage: memoryStorage }).single('file'))
 
-server.listen(process.env.SOCKET_PORT || 8810)
+if (process.env.NODE_ENV !== 'testing') {
+  server.listen(process.env.SOCKET_PORT || 8810)
+}
 // WARNING: app.listen(80) will NOT work here!
 
 const io = socket.listen(server)
