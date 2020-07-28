@@ -209,7 +209,7 @@ test('Should not delete profile of unauthenticated user', async () => {
 /** Forgot password request **/
 test('Should send the request to change the password ', async () => {
   const response = await request(app)
-    .post('/user/password_reset')
+    .patch('/user/password_reset/request')
     .send({
       email: `${testUser.email}`
     })
@@ -221,7 +221,7 @@ test('Should send the request to change the password ', async () => {
 /* Password update */
 test('Should update the password ', async () => {
   await request(app)
-    .post(`/user/password_reset/${passwordToken}`)
+    .patch(`/user/password_reset/${passwordToken}`)
     .send({
       password: 'newPassword',
       id: testUserId
@@ -243,7 +243,7 @@ test('Should activate the account ', async (done) => {
 /* Get invite link */
 test('Should generate an invite link and send', async () => {
   const response = await request(app)
-    .get('/user/invite')
+    .get('/user/invite?role=user')
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send()
     .expect(HttpStatus.OK)
@@ -258,7 +258,7 @@ test('Should validate the invite link token ', async () => {
   await request(app)
     .get(`/user/invite/${inviteToken}`)
     .send()
-    .expect(HttpStatus.OK)
+    .expect(HttpStatus.MOVED_TEMPORARILY)
 })
 
 /* Logout the user */
