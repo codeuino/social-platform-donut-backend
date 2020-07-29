@@ -129,7 +129,7 @@ module.exports = {
         notification.heading = 'Forgot password!'
         notification.content = 'Password successfully updated!'
         notification.tag = TAGS.UPDATE
-        notificationHelper.addToNotificationForUser(id, res, notification, next)
+        await notificationHelper.addToNotificationForUser(id, res, notification, next)
         return res.status(HttpStatus.OK).json({ updated: true })
       } else {
         res.status(HttpStatus.BAD_REQUEST).json({ error: 'Token expired' })
@@ -184,7 +184,7 @@ module.exports = {
         notification.heading = 'Account activate!'
         notification.content = 'Account successfully activated!'
         notification.tag = TAGS.ACTIVATE
-        notificationHelper.addToNotificationForUser(user._id, res, notification, next)
+        await notificationHelper.addToNotificationForUser(user._id, res, notification, next)
         return res.status(HttpStatus.OK).json({ msg: 'Succesfully activated!' })
       }
     } catch (Error) {
@@ -266,7 +266,7 @@ module.exports = {
       notification.heading = 'New follower!'
       notification.content = `${req.user.name.firstName} started following you!`
       notification.tag = TAGS.FOLLOWER
-      notificationHelper.addToNotificationForUser(user._id, res, notification, next)
+      await notificationHelper.addToNotificationForUser(user._id, res, notification, next)
       const userData = await User.findById(req.user._id)
         .populate('followings', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
         .populate('followers', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])

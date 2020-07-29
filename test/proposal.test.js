@@ -1,4 +1,4 @@
-const app = require('../app')
+const app = require('../app').app
 const mongoose = require('mongoose')
 const jwt = require('jsonwebtoken')
 const HttpStatus = require('http-status-codes')
@@ -194,4 +194,13 @@ test('Should return the proposal by the given Id', async (done) => {
     .expect(HttpStatus.OK)
 
   done()
+})
+
+afterAll(async () => {
+  // avoid jest open handle error
+  await new Promise((resolve) => setTimeout(() => resolve(), 500))
+  // close server
+  await server.close()
+  // Closing the DB connection allows Jest to exit successfully.
+  await mongoose.connection.close()
 })
