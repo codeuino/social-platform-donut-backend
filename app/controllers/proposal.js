@@ -5,10 +5,15 @@ const HttpStatus = require('http-status-codes')
 const AWS = require('aws-sdk')
 const TAGS = require('../utils/notificationTags')
 const proposalNotificationHelper = require('../utils/proposal-notif-helper')
+const Notification = require('../utils/notificationClass')
 
-module.exports = {
+class ProposalClass extends Notification {
+  constructor() {
+    super()
+  }
+
   // Creating a proposal
-  createProposal: async (req, res, next) => {
+  async createProposal(req, res, next) {
     const proposal = new ProposalModel(req.body)
     const creator = req.body.creator
 
@@ -23,25 +28,21 @@ module.exports = {
         content: `New Proposal ${proposal.title} created by ${name}`,
         tag: TAGS.NEW
       })
-      proposalNotificationHelper.addNotificationForAll(
-        req,
-        res,
-        {
-          heading: 'New Proposal Created',
-          content: `New Proposal ${proposal.title} created by ${name}`,
-          tag: TAGS.NEW
-        },
-        next
+      const newNotif = this.pushNotification(
+        'New Proposal Created',
+        `New Proposal ${proposal.title} created by ${name}`,
+        TAGS.NEW
       )
+      proposalNotificationHelper.addNotificationForAll( req, res, newNotif, next)
 
       res.status(HttpStatus.CREATED).json({ proposal })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // Updates the content of the proposal
-  saveProposal: async (req, res, next) => {
+  async saveProposal(req, res, next) {
     const { proposalId } = req.params
     const { content, title, description } = req.body
 
@@ -60,10 +61,10 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // attaches a file to the given proposal
-  attachFile: (req, res, next) => {
+  attachFile (req, res, next) {
     const { proposalId } = req.params
     const file = req.file
     const s3FileURL = process.env.AWS_UPLOADED_FILE_URL_LINK
@@ -106,10 +107,10 @@ module.exports = {
         res.send({ data })
       }
     })
-  },
+  }
 
   // Get proposals by userId
-  getByUserId: async (req, res, next) => {
+  async getByUserId(req, res, next) {
     const { userId } = req.params
 
     try {
@@ -124,10 +125,10 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // Delete proposal by proposalId
-  deleteById: async (req, res, next) => {
+  async deleteById(req, res, next) {
     try {
       const proposalId = req.body.proposalId
 
@@ -137,14 +138,15 @@ module.exports = {
       const user = await UserModal.findById(creator)
       const name = `${user.name.firstName} ${user.name.lastName}`
 
+      const newNotif = this.pushNotification(
+        'Proposal Deleted',
+        `Proposal: "${result.title}" deleted by ${name}`,
+        TAGS.NEW
+      )
       proposalNotificationHelper.addNotificationForAll(
         req,
         res,
-        {
-          heading: 'Proposal Deleted',
-          content: `Proposal: "${result.title}" deleted by ${name}`,
-          tag: TAGS.NEW
-        },
+        newNotif,
         next
       )
       req.io.emit('proposal deleted', {
@@ -157,10 +159,10 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // Changes the state of a given proposal
-  changeState: async (req, res, next) => {
+  async changeState(req, res, next) {
     const { proposalId } = req.params
     const proposalStatus = req.body.proposalStatus
     try {
@@ -178,24 +180,25 @@ module.exports = {
         content: `Proposal ${proposal.title} was submitted for review`,
         tag: TAGS.NEW
       })
+      const newNotif = this.pushNotification(
+        'Proposal Submitted',
+        `Proposal "${proposal.title}" was submitted for review`,
+        TAGS.NEW
+      )
       proposalNotificationHelper.addNotificationForAll(
         req,
         res,
-        {
-          heading: 'Proposal Submitted',
-          content: `Proposal "${proposal.title}" was submitted for review`,
-          tag: TAGS.NEW
-        },
+        newNotif,
         next
       )
       res.status(HttpStatus.OK).json({ proposal: proposal })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // Obtains the proposal by given proposal ID
-  getProposalById: async (req, res, next) => {
+  async getProposalById(req, res, next) {
     const { proposalId } = req.params
 
     try {
@@ -210,9 +213,9 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
-  getAllProposals: async (req, res, next) => {
+  async getAllProposals(req, res, next) {
     try {
       const proposals = await ProposalModel.find({})
       if (!proposals.length) {
@@ -224,9 +227,9 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
-  commentOnProposal: async (req, res, next) => {
+  async commentOnProposal(req, res, next) {
     const { proposalId, comment, userId, isAuthor, author } = req.body
 
     try {
@@ -251,14 +254,15 @@ module.exports = {
           .json({ message: 'Proposal could not be found!' })
       }
       if (!isAuthor) {
+        const newNotif = this.pushNotification(
+           'New comment',
+          `New comments in your proposal "${updatedProposal.title}" by ${name}`,
+          TAGS.COMMENT
+        )
         proposalNotificationHelper.addToNotificationForUser(
           author,
           res,
-          {
-            heading: 'New comment',
-            content: `New comments in your proposal "${updatedProposal.title}" by ${name}`,
-            tag: TAGS.COMMENT
-          },
+          newNotif,
           next
         )
       }
@@ -267,9 +271,9 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
-  getProposalNotificationsByUser: async (req, res, next) => {
+  async getProposalNotificationsByUser(req, res, next) {
     const userId = req.body.userId
 
     try {
@@ -288,3 +292,5 @@ module.exports = {
     }
   }
 }
+
+module.exports = ProposalClass

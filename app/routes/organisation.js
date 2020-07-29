@@ -1,9 +1,10 @@
 const express = require('express')
 const router = express.Router()
 const auth = require('../middleware/auth')
-const OrgController = require('../controllers/organization')
 const uploader = require('../utils/uploader')
 const isUnderMaintenance = require('../middleware/maintenance')
+const OrganizationClass = require('../controllers/organization')
+const OrgController = new OrganizationClass()
 
 // CREATE ORG
 router.post(

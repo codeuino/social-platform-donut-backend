@@ -7,9 +7,9 @@ const permission = require('../utils/permission')
 const helper = require('../utils/paginate')
 const settingsHelper = require('../utils/settingHelpers')
 
-module.exports = {
+class PostClass {
   // CREATE POST
-  create: async (req, res, next) => {
+  async create(req, res, next) {
     const post = new PostModel(req.body)
     const userId = req.user.id.toString()
     post.userId = userId
@@ -23,10 +23,10 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // DELETE POST
-  delete: async (req, res, next) => {
+  async delete(req, res, next) {
     const { id } = req.params
     try {
       const post = await PostModel.findById(id)
@@ -45,10 +45,10 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // UPDATE POST
-  updatePost: async (req, res, next) => {
+  async updatePost(req, res, next) {
     const { id } = req.params
     const updates = Object.keys(req.body)
     const allowedUpdates = ['content', 'imgUrl']
@@ -87,10 +87,10 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // GET POST BY ID
-  getPostById: async (req, res, next) => {
+  async getPostById(req, res, next) {
     const { id } = req.params
     try {
       const post = await PostModel.findById(id)
@@ -112,10 +112,10 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // GET ALL THE POSTS
-  getAllPost: async (req, res, next) => {
+  async getAllPost(req, res, next) {
     try {
       const posts = await PostModel.find({}, {}, helper.paginate(req))
         .populate('userId', [
@@ -135,10 +135,10 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // UPVOTE POST
-  upvote: async (req, res, next) => {
+ async upvote(req, res, next) {
     const { id } = req.params
     const userId = req.user.id.toString()
     try {
@@ -162,9 +162,9 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
-  getPostByUser: async (req, res, next) => {
+  async getPostByUser(req, res, next) {
     try {
       const posts = await PostModel.find(
         { userId: req.user._id },
@@ -184,10 +184,10 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // PIN THE POST
-  pinPost: async (req, res, next) => {
+  async pinPost(req, res, next) {
     const { id } = req.params
     try {
       const post = await PostModel.findById(id)
@@ -215,10 +215,10 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // GET ALL PINNED POST
-  getPinned: async (req, res, next) => {
+  async getPinned(req, res, next) {
     try {
       const posts = await PostModel.find({}, {}, helper.paginate(req))
         .populate('userId', [
@@ -240,3 +240,5 @@ module.exports = {
     }
   }
 }
+
+module.exports = PostClass

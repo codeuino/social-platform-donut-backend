@@ -1,8 +1,10 @@
 const express = require('express')
 const router = express.Router()
 const auth = require('../middleware/auth')
-const commentController = require('../controllers/comment')
 const isUnderMaintenance = require('../middleware/maintenance')
+const CommentModel = require('../models/Comment')
+const CommentClass = require('../controllers/comment')
+const commentController = new CommentClass(CommentModel)
 
 // CREATE COMMENT
 router.post(

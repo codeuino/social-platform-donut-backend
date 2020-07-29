@@ -5,34 +5,55 @@ const permission = require('../utils/permission')
 const helper = require('../utils/paginate')
 const notificationHelper = require('../utils/notif-helper')
 const settingsHelper = require('../utils/settingHelpers')
-const notification = {
-  heading: '',
-  content: '',
-  tag: ''
-}
+const Notification = require('../utils/notificationClass')
+const TAGS = require('../utils/notificationTags')
 
-module.exports = {
-  createEvent: async (req, res, next) => {
-    const event = new Event(req.body)
+class EventClass extends Notification {
+  constructor (eventModel) {
+    super()
+    this.#initDB(eventModel)
+    this.#initBinding()
+  }
+  //  (PRIVATE) ES6
+  #initDB = (eventModel) => {
+    this.EventModel = eventModel
+  }
+
+  //  (PRIVATE) ES6
+  #initBinding = () => {
+    this.createEvent = this.createEvent.bind(this)
+    this.updateEvent = this.updateEvent.bind(this)
+    this.deleteEvent = this.deleteEvent.bind(this)
+    this.GetAllEvent = this.GetAllEvent.bind(this)
+    this.GetEventById = this.GetEventById.bind(this)
+    this.getAllEventByUser = this.getAllEventByUser.bind(this)
+    this.rsvp = this.rsvp.bind(this)
+    this.UpComingEvents = this.UpComingEvents.bind(this)
+  }
+
+  async createEvent (req, res, next) {
+    const event = new this.EventModel(req.body)
     try {
       event.createdBy = req.user._id
       await event.save()
       req.io.emit('new event created', { data: event.eventName })
-      notification.heading = 'New Event!'
-      notification.content = `${event.eventName} is added!`
-      notification.tag = 'New!'
-      notificationHelper.addToNotificationForAll(req, res, notification, next)
+      const newNotif = this.pushNotification(
+        'New Event!',
+        `${event.eventName} is added!`,
+        TAGS.NEW
+      )
+      notificationHelper.addToNotificationForAll(req, res, newNotif, next)
       res.status(HttpStatus.CREATED).json({ event: event })
     } catch (error) {
       res.status(HttpStatus.BAD_REQUEST).json({ error: error })
     }
-  },
+  }
 
-  updateEvent: async (req, res, next) => {
+  async updateEvent (req, res, next) {
     const { id } = req.params
     const updates = Object.keys(req.body)
     try {
-      const event = await Event.findById(id)
+      const event = await this.EventModel.findById(id)
       if (!event) {
         return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No post exists' })
       }
@@ -49,22 +70,23 @@ module.exports = {
       })
       await event.save()
       req.io.emit('event update', { data: `Event: ${event.eventName} is updated!` })
-      notification.heading = 'Event update!'
-      notification.content = `${event.eventName} is updated!`
-      notification.tag = 'Update'
-      notificationHelper.addToNotificationForAll(req, res, notification, next)
+      const newNotif = this.pushNotification(
+        'Event update!',
+        `${event.eventName} is updated!`,
+        TAGS.UPDATE
+      )
+      notificationHelper.addToNotificationForAll(req, res, newNotif, next)
       res.status(HttpStatus.OK).json({ event: event })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
-  rsvp: async (req, res, next) => {
+  async rsvp (req, res, next) {
     const { yes, no, maybe } = req.body
     const { id } = req.params
-    notification.tag = 'RSVP'
     try {
-      const data = await Event.findById(id)
+      const data = await this.EventModel.findById(id)
       if (!data) {
         res.status(HttpStatus.BAD_REQUEST).json({ error: 'No Event is available' })
         return
@@ -73,21 +95,27 @@ module.exports = {
       data.rsvpNo.includes(req.user.id) ||
       data.rsvpYes.includes(req.user.id)) {
         req.io.emit('already rsvp', { data: 'You have already done the rsvp' })
-        notification.heading = 'Already rsvp!'
-        notification.content = 'You have already done the rsvp'
-        notificationHelper.addToNotificationForUser(req.user._id, res, notification, next)
+        const newNotif = this.pushNotification(
+          'Already rsvp!',
+          'You have already done the rsvp',
+          TAGS.RSVP
+        )
+        notificationHelper.addToNotificationForUser(req.user._id, res, newNotif, next)
         res.status(HttpStatus.OK).json({ msg: 'You have already done the rsvp' })
         return
       }
-      const event = await Event.findByIdAndUpdate(id)
+      const event = await this.EventModel.findByIdAndUpdate(id)
+      const newNotif = this.pushNotification(
+        'RSVP done!',
+        'RSVP successfully done!',
+        TAGS.RSVP
+      )
       if (yes) {
         try {
           event.rsvpYes.push(req.user.id)
           await event.save()
           req.io.emit('rsvp done', { data: 'RSVP successfully done!' })
-          notification.heading = 'RSVP done!'
-          notification.content = 'RSVP successfully done!'
-          notificationHelper.addToNotificationForUser(req.user._id, res, notification, next)
+          notificationHelper.addToNotificationForUser(req.user._id, res, newNotif, next)
           res.status(HttpStatus.OK).json({ rsvpData: data })
         } catch (error) {
           return res.status(HttpStatus.BAD_REQUEST).json({ error: error })
@@ -98,9 +126,7 @@ module.exports = {
           event.rsvpNo.push(req.user.id)
           await event.save()
           req.io.emit('rsvp done', { data: 'RSVP successfully done!' })
-          notification.heading = 'RSVP done!'
-          notification.content = 'RSVP successfully done!'
-          notificationHelper.addToNotificationForUser(req.user._id, res, notification, next)
+          notificationHelper.addToNotificationForUser(req.user._id, res, newNotif, next)
           res.status(HttpStatus.OK).json({ rsvpData: data })
         } catch (error) {
           return res.status(HttpStatus.BAD_REQUEST).json({ error: error })
@@ -111,9 +137,7 @@ module.exports = {
           event.rsvpMaybe.push(req.user.id)
           await event.save()
           req.io.emit('rsvp done', { data: 'RSVP successfully done!' })
-          notification.heading = 'RSVP done!'
-          notification.content = 'RSVP successfully done!'
-          notificationHelper.addToNotificationForUser(req.user._id, res, notification, next)
+          notificationHelper.addToNotificationForUser(req.user._id, res, newNotif, next)
           res.status(HttpStatus.OK).json({ rsvpData: data })
         } catch (error) {
           return res.status(HttpStatus.BAD_REQUEST).json({ error: error })
@@ -122,12 +146,12 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
-  GetEventById: async (req, res, next) => {
+  async GetEventById (req, res, next) {
     const { id } = req.params
     try {
-      const EventData = await Event.findById(id)
+      const EventData = await this.EventModel.findById(id)
       if (!EventData) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No such Event is available!' })
       }
@@ -135,11 +159,11 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
-  GetAllEvent: async (req, res, next) => {
+  async GetAllEvent (req, res, next) {
     try {
-      const EventData = await Event.find({}, {}, helper.paginate(req))
+      const EventData = await this.EventModel.find({}, {}, helper.paginate(req))
         .populate('createdBy', ['name.firstName', 'name.lastName', '_id', 'isAdmin'])
         .sort({ eventDate: -1 })
         .lean()
@@ -147,44 +171,50 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
-  deleteEvent: async (req, res, next) => {
+  async deleteEvent (req, res, next) {
     const { id } = req.params
     try {
-      const deleteEvent = await Event.findById(id)
+      const deleteEvent = await this.EventModel.findById(id)
       if (!deleteEvent) {
         return res.status(HttpStatus.NOT_FOUND).json({ message: 'No Event exists' })
       }
       if (permission.check(req, res, deleteEvent.createdBy)) {
         await Event.findByIdAndRemove(id)
         req.io.emit('event deleted', { data: deleteEvent.eventName })
-        notification.heading = 'Event deleted!'
-        notification.content = `Event ${deleteEvent.eventName} is deleted!`
-        notification.tag = 'Deleted'
-        notificationHelper.addToNotificationForAll(req, res, notification, next)
+        const newNotif = this.pushNotification(
+          'Event deleted!',
+          `Event ${deleteEvent.eventName} is deleted!`,
+          TAGS.DELETE
+        )
+        notificationHelper.addToNotificationForAll(req, res, newNotif, next)
         return res.status(HttpStatus.OK).json({ deleteEvent: deleteEvent, message: 'Deleted the event' })
       }
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Not permitted!' })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
-  UpComingEvents: async (req, res, next) => {
+  async UpComingEvents (req, res, next) {
     try {
-      const events = await Event.find({ eventDate: { $gt: Date.now() } }, {}, helper.paginate(req))
+      const events = await this.EventModel.find({
+        eventDate: {
+          $gt: Date.now()
+        }
+      }, {}, helper.paginate(req))
         .sort({ eventDate: -1 })
         .exec()
       return res.status(HttpStatus.OK).json({ events })
     } catch (error) {
       HANDLER.handleError(res, next)
     }
-  },
+  }
 
-  getAllEventByUser: async (req, res, next) => {
+  async getAllEventByUser (req, res, next) {
     try {
-      const events = await Event.find({ createdBy: req.user._id }, {}, helper.paginate(req))
+      const events = await this.EventModel.find({ createdBy: req.user._id }, {}, helper.paginate(req))
         .sort({ eventDate: -1 })
         .populate('createdBy', '_id name.firstName name.lastName')
         .exec()
@@ -194,3 +224,5 @@ module.exports = {
     }
   }
 }
+
+module.exports = EventClass

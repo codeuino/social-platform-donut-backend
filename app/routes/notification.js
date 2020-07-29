@@ -2,7 +2,12 @@ const express = require('express')
 const router = express.Router()
 const auth = require('../middleware/auth')
 const isUnderMaintenance = require('../middleware/maintenance')
-const notificationController = require('../controllers/notification')
+const Notifications = require('../models/Notifications')
+const User = require('../models/User')
+const ProposalNotifications = require('../models/ProposalNotification')
+const NotificationClass = require('../controllers/notification')
+const notificationController = new NotificationClass(Notifications, User, ProposalNotifications)
+
 
 // GET NOTIFICATIONS FOR ALL
 router.get(
@@ -21,6 +26,11 @@ router.get(
 )
 
 // GET NOTICATIONS FOR PROPOSALS
-router.get('/proposal/all', notificationController.getProposalNotifications)
+router.get(
+  '/proposal/all', 
+  isUnderMaintenance,
+  auth,
+  notificationController.getProposalNotifications
+)
 
 module.exports = router

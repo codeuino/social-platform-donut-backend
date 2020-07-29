@@ -1,8 +1,10 @@
 const express = require('express')
-const projectController = require('../controllers/project')
 const router = express.Router()
 const auth = require('../middleware/auth')
 const isUnderMaintenance = require('../middleware/maintenance')
+const ProjectClass = require('../controllers/project')
+const projectController = new ProjectClass()
+
 
 // ADD PROJECT
 router.post(

@@ -1,9 +1,14 @@
 const express = require('express')
 const router = express.Router()
-const userController = require('../controllers/user')
+const User = require('../models/User')
+const Projects = require('../models/Project')
+const Events = require('../models/Event')
+const Organization = require('../models/Organisation')
 const auth = require('../middleware/auth')
 const isUnderMaintenance = require('../middleware/maintenance')
 // const email = require('../middleware/email')
+const UserClass = require('../controllers/user')
+const userController = new UserClass(User, Events, Projects, Organization)
 
 // create a user
 router.post(
