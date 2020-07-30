@@ -9,9 +9,6 @@ module.exports = {
       const token = await user.generateAuthToken()
       res.send({ user: user, token: token })
     } catch (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log(error.name, '-', error.message)
-      }
       res.status(HttpStatus.BAD_REQUEST).json({ error: error.message })
     }
   },

@@ -176,7 +176,6 @@ module.exports = {
       const events = await Event.find({ eventDate: { $gt: Date.now() } }, {}, helper.paginate(req))
         .sort({ eventDate: -1 })
         .exec()
-      console.log('Upcoming events ', events)
       return res.status(HttpStatus.OK).json({ events })
     } catch (error) {
       HANDLER.handleError(res, next)

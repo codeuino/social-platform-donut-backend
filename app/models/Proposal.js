@@ -7,6 +7,9 @@ const proposalSchema = new Schema(
       type: String,
       required: true
     },
+    organization: {
+      type: String
+    },
     content: {
       type: String,
       required: true

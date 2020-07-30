@@ -46,7 +46,6 @@ module.exports = {
   getProposalNotifications: async (req, res, next) => {
     try {
       const notifications = await ProposalNotifications.find({})
-      console.log(notifications)
       return res.status(HttpStatus.OK).json({ notifications })
     } catch (error) {
       HANDLER.handleError(res, error)

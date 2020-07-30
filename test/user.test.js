@@ -185,6 +185,38 @@ test('Should not get profile for unauthenticated user', async () => {
     .expect(HttpStatus.UNAUTHORIZED)
 })
 
+/** Should update user profile */
+test('Should update profile or authenticated user', async () => {
+  await request(app)
+    .patch('/user/me')
+    .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+    .send({
+      email: 'updated@example.com'
+    })
+    .expect(HttpStatus.OK)
+})
+
+/** Should fail to make updates that are not allowed to user profile */
+test('Should be able to make only allowed updates to authenticated user', async () => {
+  await request(app)
+    .patch('/user/me')
+    .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+    .send({
+      gender: 'Male'
+    })
+    .expect(HttpStatus.BAD_REQUEST)
+})
+
+/** Should Fail updating profile of unauthenticate user */
+test('Should not update profile or unauthenticated user', async () => {
+  await request(app)
+    .patch('/user/me')
+    .send({
+      email: 'updated@example.com'
+    })
+    .expect(HttpStatus.UNAUTHORIZED)
+})
+
 /** Delete authenticated user profile */
 test('Should delete profile of authenticated user', async () => {
   await request(app)
@@ -209,7 +241,7 @@ test('Should not delete profile of unauthenticated user', async () => {
 /** Forgot password request **/
 test('Should send the request to change the password ', async () => {
   const response = await request(app)
-    .post('/user/password_reset')
+    .patch('/user/password_reset/request')
     .send({
       email: `${testUser.email}`
     })
@@ -221,7 +253,7 @@ test('Should send the request to change the password ', async () => {
 /* Password update */
 test('Should update the password ', async () => {
   await request(app)
-    .post(`/user/password_reset/${passwordToken}`)
+    .patch(`/user/password_reset/${passwordToken}`)
     .send({
       password: 'newPassword',
       id: testUserId
@@ -243,7 +275,7 @@ test('Should activate the account ', async (done) => {
 /* Get invite link */
 test('Should generate an invite link and send', async () => {
   const response = await request(app)
-    .get('/user/invite')
+    .get('/user/invite?role=user')
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send()
     .expect(HttpStatus.OK)
@@ -258,7 +290,7 @@ test('Should validate the invite link token ', async () => {
   await request(app)
     .get(`/user/invite/${inviteToken}`)
     .send()
-    .expect(HttpStatus.OK)
+    .expect(HttpStatus.MOVED_TEMPORARILY)
 })
 
 /* Logout the user */

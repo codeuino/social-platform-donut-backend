@@ -4,7 +4,7 @@ exports.handleError = (res, err) => {
     console.log(err)
   }
   // Sends error to user
-  res.status(err.code).json({
+  return res.status(err.code).json({
     errors: {
       msg: err.message
     }
