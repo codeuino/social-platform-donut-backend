@@ -1,35 +1,82 @@
+require('../../config/mongoose')
 const express = require('express')
 const router = express.Router()
-const userController = require('../controllers/post')
+const postController = require('../controllers/post')
+const uploader = require('../utils/uploader')
+const auth = require('../middleware/auth')
+const isUnderMaintenance = require('../middleware/maintenance')
 
 // CREATE A POST
 router.post(
   '/',
-  userController.create
+  isUnderMaintenance,
+  auth,
+  uploader.upload.single('image'),
+  postController.create
 )
 
-// GET ALL POSTS OF A USER
+// GET ALL POSTS
 router.get(
-  '/',
-  userController.authenticate
+  '/all_posts',
+  isUnderMaintenance,
+  auth,
+  postController.getAllPost
 )
 
-// GET PARTICULAR POST OF A USER
-router.get(
-  '/:id',
-  userController.test
-)
-
-// UPDATE A TASK
+// UPDATE POST
 router.patch(
   '/:id',
-  userController.test
+  isUnderMaintenance,
+  auth,
+  uploader.upload.single('image'),
+  postController.updatePost
 )
 
-// DELETE A TASK
+// DELETE A POST BY ID
 router.delete(
   '/:id',
-  userController.test
+  isUnderMaintenance,
+  auth,
+  postController.delete
+)
+
+// GET POST BY ID
+router.get(
+  '/:id',
+  isUnderMaintenance,
+  auth,
+  postController.getPostById
+)
+
+// UPVOTE POST BY POST ID
+router.patch(
+  '/upvote/:id',
+  isUnderMaintenance,
+  auth,
+  postController.upvote
+)
+
+// GET POST PER USER
+router.get(
+  '/me/all',
+  auth,
+  postController.getPostByUser
+)
+
+// PIN THE POST
+router.patch(
+  '/pin/:id/',
+  isUnderMaintenance,
+  auth,
+  postController.pinPost
+)
+
+// GET ALL PINNED POSTS
+router.get(
+  '/all/pinned/',
+  isUnderMaintenance,
+  auth,
+  postController.getPinned
 )
 
 module.exports = router
