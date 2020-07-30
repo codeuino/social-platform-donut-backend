@@ -91,7 +91,7 @@ class UserController extends Notification {
       'phone',
       'info',
       'about',
-      'isDeactivated'
+      'socialMedia'
     ]
     // added control as per org settings
     if (settingHelper.canChangeName()) {
@@ -158,7 +158,7 @@ class UserController extends Notification {
           'Forgot password!',
           'Password successfully updated!',
           TAGS.UPDATE)
-        notificationHelper.addToNotificationForUser(id, res, newNotif, next)
+        await notificationHelper.addToNotificationForUser(id, res, newNotif, next)
         return res.status(HttpStatus.OK).json({ updated: true })
       } else {
         res.status(HttpStatus.BAD_REQUEST).json({ error: 'Token expired' })
@@ -215,7 +215,7 @@ class UserController extends Notification {
           'Account successfully activated!',
           TAGS.ACTIVATE
         )
-        notificationHelper.addToNotificationForUser(user._id, res, newNotif, next)
+        await notificationHelper.addToNotificationForUser(user._id, res, newNotif, next)
         return res.status(HttpStatus.OK).json({ msg: 'Succesfully activated!' })
       }
     } catch (Error) {
@@ -250,7 +250,7 @@ class UserController extends Notification {
         }
         if (decodedToken.role === 'admin') {
           // TODO: CHANGE THE URL IN PRODUCTION (in env file)
-          return res.redirect(`${process.env.clientbaseurl}/admin`)
+          return res.redirect(`${process.env.clientbaseurl}admin`)
         }
       }
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Invalid token!' })
@@ -299,7 +299,7 @@ class UserController extends Notification {
         `${req.user.name.firstName} started following you!`,
         TAGS.FOLLOWER
       )
-      notificationHelper.addToNotificationForUser(user._id, res, newNotif, next)
+      await notificationHelper.addToNotificationForUser(user._id, res, newNotif, next)
       const userData = await this.UserModel.findById(req.user._id)
         .populate('followings', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
         .populate('followers', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])

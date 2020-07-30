@@ -3,10 +3,11 @@ const HttpStatus = require('http-status-codes')
 class Auth {
   constructor (UserModel) {
     this.UserModel = UserModel
-    this.initBinding()
+    this.#initBinding()
   }
 
-  initBinding () {
+  // PRIVATE ES6
+  #initBinding = () => {
     this.authenticateUser = this.authenticateUser.bind(this)
     this.logout = this.logout.bind(this)
     this.logoutAll = this.logoutAll.bind(this)

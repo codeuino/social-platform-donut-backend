@@ -20,17 +20,5 @@ class Connection {
       })
   }
 }
-
 // SINGLETON CLASS
-class Singleton {
-  constructor () {
-    if (!Singleton.instance) {
-      Singleton.instance = new Connection()
-    }
-  }
-
-  getInstance () {
-    return Singleton.instance
-  }
-}
-module.exports = Singleton
+module.exports = new Connection()

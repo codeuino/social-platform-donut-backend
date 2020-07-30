@@ -24,27 +24,30 @@ const notificationRouter = require('./app/routes/notification')
 const proposalRouter = require('./app/routes/proposal')
 const app = express()
 const server = require('http').Server(app)
-server.listen(process.env.SOCKET_PORT || 8810)
+if (process.env.NODE_ENV !== 'testing') {
+  server.listen(process.env.SOCKET_PORT || 8810)
+}
 // WARNING: app.listen(80) will NOT work here!
 const io = socket.listen(server)
 
 class ServerBuilder {
   constructor () {
-    this.initDB()
-    this.initMiddleware()
-    this.initViewEngine()
-    this.initLogger()
-    this.initSocket()
-    this.initRouter()
-    this.initErrorHandler()
+    this.#initDB()
+    this.#initMiddleware()
+    this.#initViewEngine()
+    this.#initLogger()
+    this.#initSocket()
+    this.#initRouter()
+    this.#initErrorHandler()
   }
 
-  initDB () {
-    const db = new Connection().getInstance()
-    db.connect()
+  // PRIVATE METHOD (ES6)
+  #initDB = async () => {
+    await Connection.connect()
   }
 
-  initMiddleware () {
+  // PRIVATE METHOD (ES6)
+  #initMiddleware = () => {
     app.use(cors())
 
     app.use(bodyParser.json({ limit: '200mb' }))
@@ -59,13 +62,15 @@ class ServerBuilder {
     app.use(cookieParser())
   }
 
-  initViewEngine () {
+  // PRIVATE METHOD (ES6)
+  #initViewEngine = () => {
     // view engine setup
     app.set('views', path.join(__dirname, 'views'))
     app.set('view engine', 'ejs')
   }
 
-  initLogger () {
+  // PRIVATE METHOD (ES6)
+  #initLogger = () => {
     morgan.token('data', (req, res) => {
       return JSON.stringify(req.body)
     })
@@ -78,7 +83,8 @@ class ServerBuilder {
     )
   }
 
-  initSocket () {
+  // PRIVATE METHOD (ES6)
+  #initSocket = () => {
     let count = 0
     io.on('connection', (socket) => {
       console.log('socket connected count ', count++)
@@ -91,7 +97,8 @@ class ServerBuilder {
     })
   }
 
-  initRouter () {
+  // PRIVATE METHOD (ES6)
+  #initRouter = () => {
     app.use('/notification', notificationRouter)
     app.use('/', indexRouter)
     app.use('/auth', authRouter)
@@ -105,7 +112,8 @@ class ServerBuilder {
     app.use('/proposal', proposalRouter)
   }
 
-  initErrorHandler () {
+  // PRIVATE METHOD (ES6)
+  #initErrorHandler = () => {
     // catch 404 and forward to error handler
     app.use(function (req, res, next) {
       next(createError(404, "route doesn't exist"))
@@ -134,8 +142,11 @@ class ServerBuilder {
       next()
     })
   }
+  static startServer() {
+    return new ServerBuilder()
+  }
 }
 
-// ANONYMOUS OBJECT
-new ServerBuilder()
+// STATIC METHOD CALLED
+ServerBuilder.startServer()
 module.exports = { app, io }

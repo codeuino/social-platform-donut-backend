@@ -7,17 +7,19 @@ const ProposalNotifications = require('../models/ProposalNotification')
 
 class NotificationProvider {
   constructor(NotificationModel, UserModel, ProposalModel) {
-    this.initModels(NotificationModel, UserModel, ProposalModel)
-    this.initBinding()
+    this.#initModels(NotificationModel, UserModel, ProposalModel)
+    this.#initBinding()
   }
 
-  initModels (NotificationModel, UserModel, ProposalModel) {
+  // PRIVATE ES6
+  #initModels = (NotificationModel, UserModel, ProposalModel) => {
     this.UserModel = UserModel
     this.NotificationModel = NotificationModel
     this.ProposalModel = ProposalModel
   }
 
-  initBinding () {
+  // PRIVATE ES6
+  #initBinding = () => {
     this.getOrgNotifications = this.getOrgNotifications.bind(this)
     this.getUserNotification = this.getUserNotification.bind(this)
     this.getProposalNotifications = this.getProposalNotifications.bind(this)

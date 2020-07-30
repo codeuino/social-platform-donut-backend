@@ -6,10 +6,11 @@ const helper = require('../utils/paginate')
 class Comment {
   constructor(CommentModel) {
     this.CommentModel = CommentModel
-    this.initBinding()
+    this.#initBinding()
   }
 
-  initBinding () {
+  // PRIVATE ES6
+  #initBinding = () => {
     this.comment = this.comment.bind(this)
     this.update = this.update.bind(this)
     this.delete = this.delete.bind(this)
