@@ -5,7 +5,7 @@ const HttpStatus = require('http-status-codes')
 const request = require('supertest')
 const Post = require('../app/models/Post')
 const User = require('../app/models/User')
-const Comment = require('../app/models/Comment')
+const Comment = require('../app/classes/Comment').getModel()
 const randomDigit = Math.floor(Math.random() * 90 + 10)
 
 const testUserId = new mongoose.Types.ObjectId()

@@ -2,7 +2,7 @@ const express = require('express')
 const auth = require('../middleware/auth')
 const router = express.Router()
 const eventController = require('../controllers/event')
-const isUnderMaintenance = require('../middleware/maintenance')
+const { isUnderMaintenance } = require('../middleware')
 
 // get all the events
 router.get(
