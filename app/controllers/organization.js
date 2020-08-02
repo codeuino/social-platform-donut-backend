@@ -9,14 +9,13 @@ const Project = require('../models/Project')
 const Event = require('../models/Event')
 const permission = require('../utils/permission')
 const TAGS = require('../utils/notificationTags')
-const notification = {
-  heading: '',
-  content: '',
-  tag: ''
-}
+const Notification = require('../utils/notificationClass')
 
-module.exports = {
-  createOrganization: async (req, res, next) => {
+class OrganizationClass extends Notification {
+  constructor() {
+    super()
+  }
+  async createOrganization (req, res, next) {
     const org = new Organization(req.body)
     if (req.file) {
       helper.mapToDb(req, org)
@@ -24,17 +23,19 @@ module.exports = {
     try {
       const orgData = await org.save()
       req.io.emit('new org created', { data: orgData.name })
-      notification.heading = 'New org!'
-      notification.content = `${orgData.name} is created!`
-      notification.tag = TAGS.NEW
-      notificationHelper.addToNotificationForAll(req, res, notification, next)
+      const newNotif = this.pushNotification(
+        'New org!',
+        `${orgData.name} is created!`,
+        TAGS.NEW
+      )
+      notificationHelper.addToNotificationForAll(req, res, newNotif, next)
       return res.status(HttpStatus.CREATED).json({ orgData })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
-  updateOrgDetails: async (req, res, next) => {
+  async updateOrgDetails (req, res, next) {
     const { id } = req.params
     const updates = Object.keys(req.body)
     const allowedUpdates = [
@@ -74,9 +75,9 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
-  getOrgDetailsById: async (req, res, next) => {
+  async getOrgDetailsById (req, res, next) {
     const { id } = req.params
     try {
       const orgData = await Organization.findById(id)
@@ -104,9 +105,9 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
-  deleteOrg: async (req, res, next) => {
+  async deleteOrg (req, res, next) {
     const { id } = req.params
     try {
       const org = await Organization.findByIdAndRemove(id)
@@ -122,17 +123,19 @@ module.exports = {
           .json({ msg: "You don't have the permission!" })
       }
       req.io.emit('org deleted', { data: org.name })
-      notification.heading = 'Org deleted!'
-      notification.content = `${org.name} is deleted!`
-      notification.tag = TAGS.DELETE
-      notificationHelper.addToNotificationForAll(req, res, notification, next)
+      const newNotif = this.pushNotification(
+        'Org deleted!',
+        `${org.name} is deleted!`,
+        TAGS.DELETE
+      )
+      notificationHelper.addToNotificationForAll(req, res, newNotif, next)
       return res.status(HttpStatus.OK).json({ organization: org })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
-  archiveOrg: async (req, res, next) => {
+  async archiveOrg (req, res, next) {
     const { id } = req.params
     try {
       const org = await Organization.findById(id)
@@ -147,9 +150,9 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
-  triggerMaintenance: async (req, res, next) => {
+  async triggerMaintenance (req, res, next) {
     const { id } = req.params
     try {
       const organization = await Organization.findById(id)
@@ -167,12 +170,14 @@ module.exports = {
         // toggle maintenance mode
         organization.isMaintenance = !organization.isMaintenance
         await organization.save()
-        notification.tag = TAGS.MAINTENANCE
 
         if (organization.isMaintenance) {
           req.io.emit('org under maintenance', { data: organization.name })
-          notification.heading = 'Maintenance mode on!'
-          notification.content = `${organization.name} is kept under maintenance!`
+          const newNotif = this.pushNotification(
+            'Maintenance mode on!',
+            `${organization.name} is kept under maintenance!`,
+            TAGS.MAINTENANCE
+          )
           notificationHelper.addToNotificationForAll(req, res, notification, next)
           return res.status(HttpStatus.OK).json({
             maintenance: true,
@@ -181,8 +186,11 @@ module.exports = {
         }
 
         req.io.emit('org revoked maintenance', { data: organization.name })
-        notification.heading = 'Maintenance mode off!'
-        notification.content = `${organization.name} is revoked from maintenance!`
+        const newNotif = this.pushNotification(
+          'Maintenance mode off!',
+           `${organization.name} is revoked from maintenance!`,
+          TAGS.MAINTENANCE
+        )
         return res.status(HttpStatus.OK).json({
           maintenance: false,
           msg: 'Organization is recovered from maintenance!!'
@@ -195,9 +203,9 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
-  updateSettings: async (req, res, next) => {
+  async updateSettings (req, res, next) {
     const { id } = req.params
     try {
       // check if org exists
@@ -234,8 +242,8 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
-  getOrgOverView: async (req, res, next) => {
+  }
+  async getOrgOverView (req, res, next) {
     const orgOverView = {}
     try {
       const org = await Organization.find({})
@@ -250,9 +258,9 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
   // SEARCH FUNCTIONALITY
-  getMembers: async (req, res, next) => {
+  async getMembers (req, res, next) {
     try {
       const { search } = req.query
       if (search) {
@@ -288,9 +296,9 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
   // REMOVE ADMIN
-  removeAdmin: async (req, res, next) => {
+  async removeAdmin (req, res, next) {
     try {
       const { userId, orgId } = req.params
       const org = await Organization.findById(orgId)
@@ -328,3 +336,6 @@ module.exports = {
     }
   }
 }
+
+module.exports = OrganizationClass
+

@@ -1,6 +1,8 @@
 const express = require('express')
 const router = express.Router()
-const authController = require('../controllers/auth')
+const User = require('../models/User')
+const AuthClass = require('../controllers/auth')
+const authController = new AuthClass(User)
 // const isActivated = require('../middleware/activate')
 const isUnderMaintenance = require('../middleware/maintenance')
 

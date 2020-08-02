@@ -5,8 +5,9 @@ const helper = require('../utils/paginate')
 const permission = require('../utils/permission')
 const settingsHelper = require('../utils/settingHelpers')
 
-module.exports = {
-  createProject: async (req, res, next) => {
+class ProjectClass {
+
+  async createProject (req, res, next) {
     try {
       const project = await new Project(req.body)
       project.createdBy = req.user._id
@@ -15,8 +16,8 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
-  getAllProjects: async (req, res, next) => {
+  }
+  async getAllProjects (req, res, next) {
     try {
       const projects = await Project.find({}, {}, helper.paginate(req))
         .populate('createdBy', '_id name.firstName name.lastName email')
@@ -26,8 +27,8 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
-  getProjectById: async (req, res, next) => {
+  }
+  async getProjectById (req, res, next) {
     const { id } = req.params
     try {
       const project = await Project.findById(id)
@@ -41,8 +42,8 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
-  updateProject: async (req, res, next) => {
+  }
+  async updateProject (req, res, next) {
     const { id } = req.params
     const updates = Object.keys(req.body)
     const allowedUpdates = [
@@ -85,8 +86,8 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
-  deleteProject: async (req, res, next) => {
+  }
+  async deleteProject (req, res, next) {
     const { id } = req.params
     try {
       const project = await Project.findById(id)
@@ -102,8 +103,8 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
-  projectCreatedByUser: async (req, res, next) => {
+  }
+  async projectCreatedByUser (req, res, next) {
     try {
       const { id } = req.user
       const projects = await Project.find({ createdBy: id }, {}, helper.paginate(req))
@@ -116,3 +117,5 @@ module.exports = {
     }
   }
 }
+
+module.exports = ProjectClass

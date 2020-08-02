@@ -1,15 +1,24 @@
 const mongoose = require('mongoose')
+class Connection {
+  constructor () {
+    console.log('DATABSE_URL ', process.env.DATABASE_URL)
+    this.url = `${process.env.DATABASE_URL}`
+  }
 
-mongoose
-  .connect(process.env.DATABASE_URL, {
-    useNewUrlParser: true,
-    useCreateIndex: true,
-    useUnifiedTopology: true,
-    useFindAndModify: false
-  })
-  .then(() => {
-    console.log('mongodb connection successful')
-  })
-  .catch((err) => {
-    console.log('mongodb connection error', err)
-  })
+  connect () {
+    mongoose.Promise = global.Promise
+    mongoose.set('useNewUrlParser', true)
+    mongoose.set('useFindAndModify', false)
+    mongoose.set('useCreateIndex', true)
+    mongoose.set('useUnifiedTopology', true)
+    mongoose.connect(this.url)
+      .then(() => {
+        console.log('mongodb connection successful')
+      })
+      .catch((err) => {
+        console.log('mongodb connection error', err)
+      })
+  }
+}
+// SINGLETON CLASS
+module.exports = new Connection()

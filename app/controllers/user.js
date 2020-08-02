@@ -1,28 +1,55 @@
-const User = require('../models/User')
 const jwt = require('jsonwebtoken')
 const HttpStatus = require('http-status-codes')
 const emailController = require('./email')
 const permission = require('../utils/permission')
 const HANDLER = require('../utils/response-helper')
 const notificationHelper = require('../utils/notif-helper')
-const Projects = require('../models/Project')
-const Events = require('../models/Event')
-const Organization = require('../models/Organisation')
 const TAGS = require('../utils/notificationTags')
 const settingHelper = require('../utils/settingHelpers')
-const notification = {
-  heading: '',
-  content: '',
-  tag: ''
-}
+const Notification = require('../utils/notificationClass')
 
-module.exports = {
+class UserController extends Notification {
+  constructor (User, Event, Project, Organisation) {
+    super()
+    this.#initModels(User, Event, Project, Organisation)
+    this.#initBinding()
+  }
+
+  // INIT MODELS (PRIVATE)
+  #initModels = (UserModel, EventModel, ProjectModel, OrganisationModel) => {
+    this.UserModel = UserModel
+    this.EventModel = EventModel
+    this.ProjectModel = ProjectModel
+    this.OrganisationModel = OrganisationModel
+  }
+
+  // BINDERS (PRIVATE)
+  #initBinding = () => {
+    this.createUser = this.createUser.bind(this)
+    this.userProfile = this.userProfile.bind(this)
+    this.userDelete = this.userDelete.bind(this)
+    this.activateAccount = this.activateAccount.bind(this)
+    this.addFollower = this.addFollower.bind(this)
+    this.addFollowing = this.addFollowing.bind(this)
+    this.removeFollower = this.removeFollower.bind(this)
+    this.removeFollowing = this.removeFollowing.bind(this)
+    this.blockUser = this.blockUser.bind(this)
+    this.unBlockUser = this.unBlockUser.bind(this)
+    this.deactivateAccount = this.deactivateAccount.bind(this)
+    this.getInviteLink = this.getInviteLink.bind(this)
+    this.processInvite = this.processInvite.bind(this)
+    this.forgotPasswordRequest = this.forgotPasswordRequest.bind(this)
+    this.getPersonalOverview = this.getPersonalOverview.bind(this)
+    this.logout = this.logout.bind(this)
+    this.updatePassword = this.updatePassword.bind(this)
+  }
+
   // CREATE USER
-  createUser: async (req, res, next) => {
-    const user = new User(req.body)
+  async createUser (req, res, next) {
+    const user = new this.UserModel(req.body)
     try {
-      const isRegisteredUserExists = await User.findOne({ firstRegister: true })
-      const Org = await Organization.find({}).lean().exec()
+      const isRegisteredUserExists = await this.UserModel.findOne({ firstRegister: true })
+      const Org = await this.OrganisationModel.find({}).lean().exec()
       // for the first user who will be setting up the platform for their community
       if (!isRegisteredUserExists) {
         user.isAdmin = true
@@ -42,9 +69,10 @@ module.exports = {
     } catch (error) {
       return res.status(HttpStatus.NOT_ACCEPTABLE).json({ error: error })
     }
-  },
+  }
+
   // GET USER PROFILE
-  userProfile: async (req, res, next) => {
+  async userProfile (req, res, next) {
     try {
       const user = req.user
       if (!user) {
@@ -54,16 +82,16 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // USER PROFILE UPDATE
-  userProfileUpdate: async (req, res, next) => {
+  async userProfileUpdate (req, res, next) {
     const updates = Object.keys(req.body)
     const allowedUpdates = [
       'phone',
       'info',
       'about',
-      'isDeactivated'
+      'socialMedia'
     ]
     // added control as per org settings
     if (settingHelper.canChangeName()) {
@@ -89,13 +117,13 @@ module.exports = {
     } catch (error) {
       return res.status(HttpStatus.BAD_REQUEST).json({ error })
     }
-  },
+  }
 
   // FORGOT PASSWORD REQUEST
-  forgotPasswordRequest: async (req, res) => {
+  async forgotPasswordRequest (req, res) {
     const { email } = req.body
     try {
-      const user = await User.findOne({ email: email })
+      const user = await this.UserModel.findOne({ email: email })
       if (!user) {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'User not found!' })
       }
@@ -105,16 +133,16 @@ module.exports = {
     } catch (error) {
       return res.status(HttpStatus.BAD_REQUEST).json({ error })
     }
-  },
+  }
 
-  updatePassword: async (req, res, next) => {
+  async updatePassword (req, res, next) {
     const { password, id } = req.body
     const { token } = req.params
     try {
       const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
 
       if (Date.now() <= decodedToken.expiry) {
-        const user = await User.findById({
+        const user = await this.UserModel.findById({
           _id: id
         })
         if (!user) {
@@ -126,10 +154,11 @@ module.exports = {
           userId: user._id
         }
         req.io.emit('Password update', obj)
-        notification.heading = 'Forgot password!'
-        notification.content = 'Password successfully updated!'
-        notification.tag = TAGS.UPDATE
-        await notificationHelper.addToNotificationForUser(id, res, notification, next)
+        const newNotif = this.pushNotification(
+          'Forgot password!',
+          'Password successfully updated!',
+          TAGS.UPDATE)
+        await notificationHelper.addToNotificationForUser(id, res, newNotif, next)
         return res.status(HttpStatus.OK).json({ updated: true })
       } else {
         res.status(HttpStatus.BAD_REQUEST).json({ error: 'Token expired' })
@@ -137,10 +166,10 @@ module.exports = {
     } catch (error) {
       res.status(HttpStatus.BAD_REQUEST).json({ error })
     }
-  },
+  }
 
   // LOGOUT USER
-  logout: async (req, res, next) => {
+  async logout (req, res, next) {
     try {
       req.user.tokens = []
       await req.user.save()
@@ -148,10 +177,10 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // REMOVE USER
-  userDelete: async (req, res, next) => {
+  async userDelete (req, res, next) {
     try {
       if (permission.check(req, res)) {
         await req.user.remove()
@@ -161,16 +190,16 @@ module.exports = {
     } catch (error) {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error })
     }
-  },
+  }
 
   // USER ACCOUNT ACTIVATION
-  activateAccount: async (req, res, next) => {
+  async activateAccount (req, res, next) {
     try {
       const { token } = req.params
       const decodedToken = jwt.verify(token, 'process.env.JWT_SECRET')
       const expiryTime = decodedToken.iat + 24 * 3600 * 1000 // 24 hrs
       if (expiryTime <= Date.now()) {
-        const user = await User.findById(decodedToken._id)
+        const user = await this.UserModel.findById(decodedToken._id)
         if (!user) {
           return res.status(HttpStatus.NOT_FOUND).json({ msg: 'User not found!' })
         }
@@ -181,19 +210,21 @@ module.exports = {
           userId: user._id
         }
         req.io.emit('Account activate', obj)
-        notification.heading = 'Account activate!'
-        notification.content = 'Account successfully activated!'
-        notification.tag = TAGS.ACTIVATE
-        await notificationHelper.addToNotificationForUser(user._id, res, notification, next)
+        const newNotif = this.pushNotification(
+          'Account activate!',
+          'Account successfully activated!',
+          TAGS.ACTIVATE
+        )
+        await notificationHelper.addToNotificationForUser(user._id, res, newNotif, next)
         return res.status(HttpStatus.OK).json({ msg: 'Succesfully activated!' })
       }
     } catch (Error) {
       return res.status(HttpStatus.BAD_REQUEST).json({ Error })
     }
-  },
+  }
 
   // GET INVITE LINK
-  getInviteLink: async (req, res, next) => {
+  async getInviteLink (req, res, next) {
     try {
       const { role } = req.query
       const token = jwt.sign({ _id: req.user._id, role: role, expiry: Date.now() + 24 * 3600 * 1000 }, process.env.JWT_SECRET)
@@ -202,15 +233,15 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // PROCESS THE INVITE LINK
-  processInvite: async (req, res, next) => {
+  async processInvite (req, res, next) {
     try {
       const { token } = req.params
       const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
       // check if token not expired and sender exist in db then valid request
-      const user = await User.findById(decodedToken._id)
+      const user = await this.UserModel.findById(decodedToken._id)
       if (user && Date.now() <= decodedToken.expiry) {
         console.log('Valid invite!')
         if (decodedToken.role === 'user') {
@@ -219,23 +250,23 @@ module.exports = {
         }
         if (decodedToken.role === 'admin') {
           // TODO: CHANGE THE URL IN PRODUCTION (in env file)
-          return res.redirect(`${process.env.clientbaseurl}/admin`)
+          return res.redirect(`${process.env.clientbaseurl}admin`)
         }
       }
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Invalid token!' })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // ADD TO THE FOLLOWINGS LIST
-  addFollowing: async (req, res, next) => {
+  async addFollowing (req, res, next) {
     const { followId } = req.body
     try {
       if (followId === req.user._id) {
         return res.status(HttpStatus.OK).json({ msg: 'You can not follow yourself!' })
       }
-      const user = await User.findById(req.user.id)
+      const user = await this.UserModel.findById(req.user.id)
       if (!user) {
         return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user exists!' })
       }
@@ -245,13 +276,13 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // ADD TO FOLLOWERS LIST
-  addFollower: async (req, res, next) => {
+  async addFollower (req, res, next) {
     const { followId } = req.body
     try {
-      const user = await User.findById(followId)
+      const user = await this.UserModel.findById(followId)
       if (!user) {
         return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user exists!' })
       }
@@ -263,11 +294,13 @@ module.exports = {
         followId: user._id
       }
       req.io.emit('New follower', obj)
-      notification.heading = 'New follower!'
-      notification.content = `${req.user.name.firstName} started following you!`
-      notification.tag = TAGS.FOLLOWER
-      await notificationHelper.addToNotificationForUser(user._id, res, notification, next)
-      const userData = await User.findById(req.user._id)
+      const newNotif = this.pushNotification(
+        'New follower!',
+        `${req.user.name.firstName} started following you!`,
+        TAGS.FOLLOWER
+      )
+      await notificationHelper.addToNotificationForUser(user._id, res, newNotif, next)
+      const userData = await this.UserModel.findById(req.user._id)
         .populate('followings', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
         .populate('followers', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
         .populate('blocked', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
@@ -276,13 +309,13 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // REMOVE FROM FOLLOWINGS LIST
-  removeFollowing: async (req, res, next) => {
+  async removeFollowing (req, res, next) {
     const { followId } = req.body
     try {
-      const user = await User.findById(req.user._id)
+      const user = await this.UserModel.findById(req.user._id)
       if (!user) {
         return res.status(HttpStatus.OK).json({ msg: 'No such user exists!' })
       }
@@ -300,13 +333,13 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // REMOVE FROM FOLLOWERS LIST
-  removeFollower: async (req, res, next) => {
+  async removeFollower (req, res, next) {
     const { followId } = req.body
     try {
-      const user = await User.findById(followId)
+      const user = await this.UserModel.findById(followId)
       if (!user) {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exists!' })
       }
@@ -317,7 +350,7 @@ module.exports = {
       }
       user.followers.splice(isFollowingIndex, 1)
       await user.save()
-      const userData = await User.findById(req.user._id)
+      const userData = await this.UserModel.findById(req.user._id)
         .populate('followings', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
         .populate('followers', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
         .populate('blocked', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
@@ -326,13 +359,13 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // BLOCK THE USER
-  blockUser: async (req, res, next) => {
+  async blockUser (req, res, next) {
     const { id } = req.params
     try {
-      const user = await User.findById(req.user._id)
+      const user = await this.UserModel.findById(req.user._id)
         .populate('blocked', ['name.firstName', 'name.lastName', 'email'])
         .exec()
       if (!user) {
@@ -349,13 +382,13 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // UNBLOCK USER
-  unBlockUser: async (req, res, next) => {
+  async unBlockUser (req, res, next) {
     const { id } = req.params
     try {
-      const user = await User.findById(req.user._id)
+      const user = await this.UserModel.findById(req.user._id)
         .populate('blocked', ['name.firstName', 'name.lastName', 'email'])
         .exec()
       if (!user) {
@@ -376,26 +409,26 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // GET OVERALL PERSONAL OVERVIEW
-  getPersonalOverview: async (req, res, next) => {
+  async getPersonalOverview (req, res, next) {
     const userId = req.user._id
     const personalOverview = {}
     try {
-      personalOverview.projects = await Projects.find({ createdBy: userId }).estimatedDocumentCount()
-      personalOverview.events = await Events.find({ createdBy: userId }).estimatedDocumentCount()
+      personalOverview.projects = await this.ProjectModel.find({ createdBy: userId }).estimatedDocumentCount()
+      personalOverview.events = await this.EventModel.find({ createdBy: userId }).estimatedDocumentCount()
       return res.status(HttpStatus.OK).json({ personalOverview })
     } catch (error) {
       HANDLER.handleError(req, error)
     }
-  },
+  }
 
   // REMOVE USER
-  removeUser: async (req, res, next) => {
+  async removeUser (req, res, next) {
     const { id } = req.params
     try {
-      const user = await User.findById(id)
+      const user = await this.UserModel.findById(id)
       if (!user) {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exits!' })
       }
@@ -409,9 +442,10 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
+
   // DEACTIVATE ACCOUNT (BY USER ITSELF)
-  deactivateAccount: async (req, res, next) => {
+  async deactivateAccount (req, res, next) {
     try {
       req.user.isActivated = !req.user.isActivated
       const user = await req.user.save()
@@ -421,3 +455,5 @@ module.exports = {
     }
   }
 }
+
+module.exports = UserController

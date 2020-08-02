@@ -1,10 +1,11 @@
 require('../../config/mongoose')
 const express = require('express')
 const router = express.Router()
-const postController = require('../controllers/post')
 const uploader = require('../utils/uploader')
 const auth = require('../middleware/auth')
 const isUnderMaintenance = require('../middleware/maintenance')
+const PostClass = require('../controllers/post')
+const postController = new PostClass()
 
 // CREATE A POST
 router.post(

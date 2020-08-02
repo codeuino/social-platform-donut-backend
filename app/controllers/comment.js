@@ -1,16 +1,30 @@
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
-const CommentModel = require('../models/Comment')
 const permission = require('../utils/permission')
 const helper = require('../utils/paginate')
 
-module.exports = {
+class Comment {
+  constructor(CommentModel) {
+    this.CommentModel = CommentModel
+    this.#initBinding()
+  }
+
+  // PRIVATE ES6
+  #initBinding = () => {
+    this.comment = this.comment.bind(this)
+    this.update = this.update.bind(this)
+    this.delete = this.delete.bind(this)
+    this.getCommentByPost = this.getCommentByPost.bind(this)
+    this.upvote= this.upvote.bind(this)
+    this.downvote = this.downvote.bind(this)
+  }
+
   // CREATE COMMENT (ISSUE IN CREATE COMMENT )
-  comment: async (req, res, next) => {
+  async comment(req, res, next) {
     const { id } = req.params
     const userId = req.user.id.toString()
     try {
-      const comment = new CommentModel(req.body)
+      const comment = new this.CommentModel(req.body)
       comment.userId = userId
       comment.postId = id // added postId
       await comment.save()
@@ -18,13 +32,13 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // DELETE COMMENT
-  delete: async (req, res, next) => {
+  async delete(req, res, next) {
     const { id } = req.params
     try {
-      const comment = await CommentModel.findById(id)
+      const comment = await this.CommentModel.findById(id)
       if (!comment) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No comment exist' })
       }
@@ -32,15 +46,15 @@ module.exports = {
       if (!permission.check(req, res, comment.userId)) {
         return res.status(HttpStatus.FORBIDDEN).json({ message: 'Bad delete request' })
       }
-      await CommentModel.findByIdAndRemove(id)
+      await this.CommentModel.findByIdAndRemove(id)
       res.status(HttpStatus.OK).json({ comment: comment })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // UPDATE COMMENT
-  update: async (req, res, next) => {
+  async update(req, res, next) {
     const { id } = req.params
     const updates = Object.keys(req.body)
     const valid = ['content']
@@ -51,7 +65,7 @@ module.exports = {
       return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Wrong Update Request' })
     }
     try {
-      const comment = await CommentModel.findById(id)
+      const comment = await this.CommentModel.findById(id)
       if (!comment) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No comment exist' })
       }
@@ -67,13 +81,13 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // GET ALL COMMENTS OF A POST BY postId
-  getCommentByPost: async (req, res, next) => {
+  async getCommentByPost(req, res, next) {
     const { id } = req.params
     try {
-      const comments = await CommentModel.find({ postId: id }, {}, helper.paginate(req))
+      const comments = await this.CommentModel.find({ postId: id }, {}, helper.paginate(req))
         .populate('userId', ['name.firstName', 'name.lastName'])
         .sort({ updatedAt: -1 })
         .lean()
@@ -85,14 +99,14 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // UPVOTE COMMENT
-  upvote: async (req, res, next) => {
+  async upvote(req, res, next) {
     const { id } = req.params
     const userId = req.user.id.toString()
     try {
-      const comment = await CommentModel.findById(id)
+      const comment = await this.CommentModel.findById(id)
       if (!comment) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No comment found' })
       }
@@ -116,14 +130,14 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
-  },
+  }
 
   // DOWNVOTE COMMENT
-  downvote: async (req, res, next) => {
+  async downvote(req, res, next) {
     const { id } = req.params
     const userId = req.user.id.toString()
     try {
-      const comment = await CommentModel.findById(id)
+      const comment = await this.CommentModel.findById(id)
       if (!comment) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No comment found' })
       }
@@ -149,3 +163,5 @@ module.exports = {
     }
   }
 }
+
+module.exports =  Comment
