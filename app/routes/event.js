@@ -58,7 +58,7 @@ router.delete(
 
 // GET ALL EVENT POSTED BY A USER
 router.get(
-  '/me/all',
+  '/:id/all',
   isUnderMaintenance,
   auth,
   eventController.getAllEventByUser

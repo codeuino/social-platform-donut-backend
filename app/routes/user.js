@@ -15,7 +15,7 @@ router.post(
 
 // get user profile
 router.get(
-  '/me',
+  '/:id',
   isUnderMaintenance,
   auth,
   userController.userProfile
@@ -23,7 +23,7 @@ router.get(
 
 // update user info
 router.patch(
-  '/me',
+  '/:id',
   isUnderMaintenance,
   auth,
   userController.userProfileUpdate
@@ -45,7 +45,7 @@ router.patch(
 
 // get invite link (for sender)
 router.get(
-  '/invite',
+  '/link/invite',
   isUnderMaintenance,
   auth,
   userController.getInviteLink
@@ -116,7 +116,7 @@ router.patch(
 
 // GET PERSONAL OVERVIEW
 router.get(
-  '/overview',
+  '/me/overview',
   isUnderMaintenance,
   auth,
   userController.getPersonalOverview

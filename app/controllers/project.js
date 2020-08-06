@@ -105,7 +105,7 @@ module.exports = {
   },
   projectCreatedByUser: async (req, res, next) => {
     try {
-      const { id } = req.user
+      const { id } = req.params
       const projects = await Project.find({ createdBy: id }, {}, helper.paginate(req))
         .populate('createdBy', '_id name.firstName name.lastName email')
         .sort({ updatedAt: -1 })
