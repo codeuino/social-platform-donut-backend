@@ -7,7 +7,9 @@ const HANDLER = require('../utils/response-helper')
 const notificationHelper = require('../utils/notif-helper')
 const Projects = require('../models/Project')
 const Events = require('../models/Event')
+const Organization = require('../models/Organisation')
 const TAGS = require('../utils/notificationTags')
+const settingHelper = require('../utils/settingHelpers')
 const notification = {
   heading: '',
   content: '',
@@ -20,25 +22,54 @@ module.exports = {
     const user = new User(req.body)
     try {
       const isRegisteredUserExists = await User.findOne({ firstRegister: true })
+      const Org = await Organization.find({}).lean().exec()
       // for the first user who will be setting up the platform for their community
       if (!isRegisteredUserExists) {
         user.isAdmin = true
         user.firstRegister = true
       }
-      await user.save()
+      if (Org.length > 0) {
+        user.orgId = Org[0]._id
+      }
+      const data = await user.save()
+      if (!isRegisteredUserExists || req.body.isAdmin === true) {
+        settingHelper.addAdmin(data._id)
+      }
       const token = await user.generateAuthToken()
       // Added fn to send email to activate account with warm message
       await emailController.sendEmail(req, res, next, token)
       return res.status(HttpStatus.CREATED).json({ user: user, token: token })
     } catch (error) {
-      console.log(error)
       return res.status(HttpStatus.NOT_ACCEPTABLE).json({ error: error })
     }
   },
   // GET USER PROFILE
   userProfile: async (req, res, next) => {
     try {
-      const user = req.user
+      const id = req.params.id ? req.params.id : req.user._id 
+      const user = await User.findById({ _id: id })
+      .populate('followings', [
+          'name.firstName',
+          'name.lastName',
+          'info.about.designation',
+          '_id',
+          'isAdmin'
+        ])
+        .populate('followers', [
+          'name.firstName',
+          'name.lastName',
+          'info.about.designation',
+          '_id',
+          'isAdmin'
+        ])
+        .populate('blocked', [
+          'name.firstName',
+          'name.lastName',
+          'info.about.designation',
+          '_id',
+          'isAdmin'
+        ])
+        .exec()
       if (!user) {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exist!' })
       }
@@ -52,12 +83,18 @@ module.exports = {
   userProfileUpdate: async (req, res, next) => {
     const updates = Object.keys(req.body)
     const allowedUpdates = [
-      'name',
-      'email',
       'phone',
       'info',
-      'about'
+      'about',
+      'isDeactivated'
     ]
+    // added control as per org settings
+    if (settingHelper.canChangeName()) {
+      allowedUpdates.unshift('name')
+    }
+    if (settingHelper.canChangeEmail()) {
+      allowedUpdates.unshift('email')
+    }
     const isValidOperation = updates.every((update) => {
       return allowedUpdates.includes(update)
     })
@@ -67,11 +104,13 @@ module.exports = {
     }
 
     try {
+      const { id } = req.params
+      const user = await User.findById(id)
       updates.forEach((update) => {
-        req.user[update] = req.body[update]
+        user[update] = req.body[update]
       })
-      await req.user.save()
-      return res.status(HttpStatus.OK).json({ data: req.user })
+      await user.save()
+      return res.status(HttpStatus.OK).json({ data: user })
     } catch (error) {
       return res.status(HttpStatus.BAD_REQUEST).json({ error })
     }
@@ -89,9 +128,6 @@ module.exports = {
       await user.save()
       return res.status(HttpStatus.OK).json({ success: true, token })
     } catch (error) {
-      if (process.env.NODE_ENV !== 'production' && error) {
-        console.log('Error in forgotPasswordRequest ', error)
-      }
       return res.status(HttpStatus.BAD_REQUEST).json({ error })
     }
   },
@@ -118,18 +154,12 @@ module.exports = {
         notification.heading = 'Forgot password!'
         notification.content = 'Password successfully updated!'
         notification.tag = TAGS.UPDATE
-        notificationHelper.addToNotificationForUser(id, res, notification, next)
+        await notificationHelper.addToNotificationForUser(id, res, notification, next)
         return res.status(HttpStatus.OK).json({ updated: true })
       } else {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('token expired')
-        }
         res.status(HttpStatus.BAD_REQUEST).json({ error: 'Token expired' })
       }
     } catch (error) {
-      if (process.env.NODE_ENV !== 'production' && error) {
-        console.log('Something went wrong ', error)
-      }
       res.status(HttpStatus.BAD_REQUEST).json({ error })
     }
   },
@@ -179,7 +209,7 @@ module.exports = {
         notification.heading = 'Account activate!'
         notification.content = 'Account successfully activated!'
         notification.tag = TAGS.ACTIVATE
-        notificationHelper.addToNotificationForUser(user._id, res, notification, next)
+        await notificationHelper.addToNotificationForUser(user._id, res, notification, next)
         return res.status(HttpStatus.OK).json({ msg: 'Succesfully activated!' })
       }
     } catch (Error) {
@@ -189,22 +219,38 @@ module.exports = {
 
   // GET INVITE LINK
   getInviteLink: async (req, res, next) => {
-    const token = jwt.sign({ _id: req.user._id, expiry: Date.now() + 24 * 3600 * 1000 }, process.env.JWT_SECRET)
-    const inviteLink = `${req.protocol}://${req.get('host')}/user/invite/${token}`
-    return res.status(HttpStatus.OK).json({ inviteLink: inviteLink })
+    try {
+      const { role } = req.query
+      const token = jwt.sign({ _id: req.user._id, role: role, expiry: Date.now() + 24 * 3600 * 1000 }, process.env.JWT_SECRET)
+      const inviteLink = `${req.protocol}://${req.get('host')}/user/invite/${token}`
+      return res.status(HttpStatus.OK).json({ inviteLink: inviteLink })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
   },
 
   // PROCESS THE INVITE LINK
   processInvite: async (req, res, next) => {
-    const { token } = req.params
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
-    // check if token not expired and sender exist in db then valid request
-    const user = await User.findById(decodedToken._id)
-    if (user && Date.now() <= decodedToken.expiry) {
-      console.log('Valid invite!')
-      return res.status(HttpStatus.OK).json({ success: true, msg: 'Redirect user to register in client side!' })
+    try {
+      const { token } = req.params
+      const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
+      // check if token not expired and sender exist in db then valid request
+      const user = await User.findById(decodedToken._id)
+      if (user && Date.now() <= decodedToken.expiry) {
+        console.log('Valid invite!')
+        if (decodedToken.role === 'user') {
+          // TODO: CHANGE THE URL IN PRODUCTION (in env file)
+          return res.redirect(process.env.clientbaseurl)
+        }
+        if (decodedToken.role === 'admin') {
+          // TODO: CHANGE THE URL IN PRODUCTION (in env file)
+          return res.redirect(`${process.env.clientbaseurl}/admin`)
+        }
+      }
+      return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Invalid token!' })
+    } catch (error) {
+      HANDLER.handleError(res, error)
     }
-    return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Invalid token!' })
   },
 
   // ADD TO THE FOLLOWINGS LIST
@@ -245,7 +291,7 @@ module.exports = {
       notification.heading = 'New follower!'
       notification.content = `${req.user.name.firstName} started following you!`
       notification.tag = TAGS.FOLLOWER
-      notificationHelper.addToNotificationForUser(user._id, res, notification, next)
+      await notificationHelper.addToNotificationForUser(user._id, res, notification, next)
       const userData = await User.findById(req.user._id)
         .populate('followings', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
         .populate('followers', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
@@ -344,7 +390,6 @@ module.exports = {
       if (user.isAdmin === true) {
         const blockedIds = user.blocked.map(item => item._id)
         const unblockIndex = blockedIds.indexOf(id)
-        console.log('UnblockIndex ', unblockIndex)
         if (unblockIndex !== -1) {
           user.blocked.splice(unblockIndex, 1)
           await user.save()
@@ -388,6 +433,16 @@ module.exports = {
       return res.status(HttpStatus.OK).json({ user })
     } catch (error) {
       HANDLER.handleError(res, error)
+    }
+  },
+  // DEACTIVATE ACCOUNT (BY USER ITSELF)
+  deactivateAccount: async (req, res, next) => {
+    try {
+      req.user.isActivated = !req.user.isActivated
+      const user = await req.user.save()
+      return res.status(HttpStatus.OK).json({ user })
+    } catch (error) {
+      HANDLER.handleError(error)
     }
   }
 }

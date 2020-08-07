@@ -36,6 +36,24 @@ const PostSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'User'
       }]
+    },
+    heart: {
+      user: [{
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      }]
+    },
+    happy: {
+      user: [{
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      }]
+    },
+    donut: {
+      user: [{
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      }]
     }
   },
   comments: {

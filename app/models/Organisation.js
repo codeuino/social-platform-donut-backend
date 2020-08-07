@@ -110,6 +110,14 @@ const orgSchema = new Schema({
         enum: ['English', 'French', 'German'],
         default: 'English'
       },
+      canEdit: {
+        type: Boolean,
+        default: true
+      },
+      editingLimit: {
+        type: String,
+        default: 'Always'
+      },
       timeFormat: {
         type: String,
         enum: ['24', '12'],

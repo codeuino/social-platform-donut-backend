@@ -131,7 +131,6 @@ module.exports = {
     try {
       const proposalId = req.body.proposalId
 
-      console.log(proposalId)
       const result = await ProposalModel.findByIdAndDelete(proposalId)
       const creator = result.creator
 
@@ -214,7 +213,6 @@ module.exports = {
   },
 
   getAllProposals: async (req, res, next) => {
-    console.log('All proposals called')
     try {
       const proposals = await ProposalModel.find({})
       if (!proposals.length) {

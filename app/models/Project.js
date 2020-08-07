@@ -33,6 +33,7 @@ const projectSchema = new Schema({
       trim: true
     }
   },
+  techStacks: [],
   image: {
     type: Buffer,
     contentType: String

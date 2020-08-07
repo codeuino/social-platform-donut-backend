@@ -4,6 +4,7 @@ const HttpStatus = require('http-status-codes')
 const permission = require('../utils/permission')
 const helper = require('../utils/paginate')
 const notificationHelper = require('../utils/notif-helper')
+const settingsHelper = require('../utils/settingHelpers')
 const notification = {
   heading: '',
   content: '',
@@ -33,10 +34,17 @@ module.exports = {
     try {
       const event = await Event.findById(id)
       if (!event) {
-        return res.status(HttpStatus.BAD_REQUEST).json({ message: 'No post exists' })
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No post exists' })
       }
-      // check for permission (TODO AFTER PREVIOUS PR MERGED)
-      updates.forEach(update => {
+      // check for permission and edit permission
+      if (!permission.check(req, res, event.createdBy) || (!settingsHelper.canEdit())) {
+        return res.status(HttpStatus.FORBIDDEN).json({ msg: 'Bad update request' })
+      }
+      // if edit allowed check allowed limit time
+      if (!settingsHelper.isEditAllowedNow(event.createdAt)) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Edit limit expired!' })
+      }
+      updates.forEach((update) => {
         event[update] = req.body[update]
       })
       await event.save()
@@ -168,7 +176,6 @@ module.exports = {
       const events = await Event.find({ eventDate: { $gt: Date.now() } }, {}, helper.paginate(req))
         .sort({ eventDate: -1 })
         .exec()
-      console.log('Upcoming events ', events)
       return res.status(HttpStatus.OK).json({ events })
     } catch (error) {
       HANDLER.handleError(res, next)
@@ -177,7 +184,8 @@ module.exports = {
 
   getAllEventByUser: async (req, res, next) => {
     try {
-      const events = await Event.find({ createdBy: req.user._id }, {}, helper.paginate(req))
+      const { id } = req.params
+      const events = await Event.find({ createdBy: id }, {}, helper.paginate(req))
         .sort({ eventDate: -1 })
         .populate('createdBy', '_id name.firstName name.lastName')
         .exec()

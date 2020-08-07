@@ -77,7 +77,7 @@ const UserSchema = new mongoose.Schema({
     twitter: {
       type: String
     },
-    instagram: {
+    github: {
       type: String
     },
     linkedin: {
@@ -134,6 +134,10 @@ const UserSchema = new mongoose.Schema({
         trim: true
       }
     }
+  },
+  orgId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization'
   },
   notifications: [
     {
@@ -212,7 +216,8 @@ const UserSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     required: true,
-    default: Date.now()
+    default: Date.now(),
+    select: true
   },
   updatedAt: {
     type: Date,

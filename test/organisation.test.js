@@ -108,14 +108,14 @@ describe('POST /org/', () => {
       .set('Authorization', `Bearer ${token}`)
       .send(testOrg)
       .expect(HttpStatus.CREATED)
-    orgId = response.body.org._id
+    orgId = response.body.orgData._id
     /** DB must be changed **/
-    const org = await Organization.findById(response.body.org._id)
+    const org = await Organization.findById(response.body.orgData._id)
     expect(org).not.toBeNull()
 
     /** Check the response **/
     expect(response.body).toMatchObject({
-      org: {
+      orgData: {
         isArchived: false,
         _id: `${orgId}`,
         name: `${testOrg.name}`,

@@ -3,6 +3,7 @@ const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
 const helper = require('../utils/paginate')
 const permission = require('../utils/permission')
+const settingsHelper = require('../utils/settingHelpers')
 
 module.exports = {
   createProject: async (req, res, next) => {
@@ -64,6 +65,15 @@ module.exports = {
       if (!project) {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such project exits!' })
       }
+      // permission check for admin and creator || is edit allowed
+      if (!permission.check(req, res, project.createdBy) || (!settingsHelper.canEdit())) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Bad Update Request!' })
+      }
+      // if allowed check edit limit
+      if (!settingsHelper.isEditAllowedNow(project.createdAt)) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Edit limit expired!' })
+      }
+      // check if valid edit
       if (!isValidOperation) {
         return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Invalid update!' })
       }
@@ -95,7 +105,7 @@ module.exports = {
   },
   projectCreatedByUser: async (req, res, next) => {
     try {
-      const { id } = req.user
+      const { id } = req.params
       const projects = await Project.find({ createdBy: id }, {}, helper.paginate(req))
         .populate('createdBy', '_id name.firstName name.lastName email')
         .sort({ updatedAt: -1 })

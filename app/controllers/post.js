@@ -5,6 +5,7 @@ const HttpStatus = require('http-status-codes')
 const imgUploadHelper = require('../utils/uploader')
 const permission = require('../utils/permission')
 const helper = require('../utils/paginate')
+const settingsHelper = require('../utils/settingHelpers')
 
 module.exports = {
   // CREATE POST
@@ -67,10 +68,20 @@ module.exports = {
           .status(HttpStatus.BAD_REQUEST)
           .json({ message: 'No post exists' })
       }
-      if (!permission.check(req, res, post.userId)) {
+      // permission check for admin and creator || edit allowed or not
+      if (
+        !permission.check(req, res, post.userId) ||
+        !settingsHelper.canEdit()
+      ) {
         return res
           .status(HttpStatus.FORBIDDEN)
           .json({ message: 'Bad update request' })
+      }
+      // if allowed edit limit check
+      if (!settingsHelper.isEditAllowedNow(post.createdAt)) {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ msg: 'Edit limit expired!' })
       }
       updates.forEach((update) => {
         post[update] = req.body[update]
@@ -137,6 +148,8 @@ module.exports = {
   upvote: async (req, res, next) => {
     const { id } = req.params
     const userId = req.user.id.toString()
+    const reactionType = req.body.reactionType
+
     try {
       const post = await PostModel.findById(id)
       if (!post) {
@@ -152,7 +165,73 @@ module.exports = {
             .json({ error: 'Bad request' })
         }
       })
-      post.votes.upVotes.user.unshift(userId)
+      switch (reactionType) {
+        case 'like':
+          post.votes.upVotes.user.unshift(userId)
+          break
+        case 'heart':
+          post.votes.heart.user.unshift(userId)
+          break
+        case 'happy':
+          post.votes.happy.user.unshift(userId)
+          break
+        case 'donut':
+          post.votes.donut.user.unshift(userId)
+          break
+        default:
+      }
+      await post.save()
+      res.status(HttpStatus.OK).json({ post: post })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+
+  // REMOVE REACTION
+  removeReaction: async (req, res, next) => {
+    const { id } = req.params
+    const userId = req.user.id.toString()
+    const reactionType = req.body.reactionType
+
+    try {
+      const post = await PostModel.findById(id)
+      if (!post) {
+        return res
+          .status(HttpStatus.NOT_FOUND)
+          .json({ error: 'No post found' })
+      }
+      // CHECKS IF THE USER HAS ALREADY UPVOTED THE COMMENT
+      post.votes.upVotes.user.filter((user) => {
+        if (JSON.stringify(user) === JSON.stringify(userId)) {
+          return res
+            .status(HttpStatus.BAD_REQUEST)
+            .json({ error: 'Bad request' })
+        }
+      })
+      switch (reactionType) {
+        case 'like':
+          post.votes.upVotes.user = post.votes.upVotes.user.filter(item =>
+            item !== userId
+          )
+          break
+        case 'heart':
+          post.votes.heart.user = post.votes.heart.user.filter(item =>
+            item !== userId
+          )
+          console.log(post.votes.heart.user)
+          break
+        case 'happy':
+          post.votes.happy.user = post.votes.happy.user.filter(item =>
+            item !== userId
+          )
+          break
+        case 'donut':
+          post.votes.donut.user = post.votes.donut.user.filter(item =>
+            item !== userId
+          )
+          break
+        default:
+      }
       await post.save()
       res.status(HttpStatus.OK).json({ post: post })
     } catch (error) {
@@ -163,7 +242,7 @@ module.exports = {
   getPostByUser: async (req, res, next) => {
     try {
       const posts = await PostModel.find(
-        { userId: req.user._id },
+        { userId: req.params.id },
         {},
         helper.paginate(req)
       )
