@@ -22,6 +22,7 @@
     "dotenv": "^8.2.0",
     "ejs": "~2.6.1",
     "express": "^4.16.4",
+    "googleapis": "^56.0.0",
     "http-status-codes": "^1.4.0",
     "jsonwebtoken": "^8.5.1",
     "moment": "^2.27.0",
