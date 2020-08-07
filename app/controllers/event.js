@@ -184,7 +184,8 @@ module.exports = {
 
   getAllEventByUser: async (req, res, next) => {
     try {
-      const events = await Event.find({ createdBy: req.user._id }, {}, helper.paginate(req))
+      const { id } = req.params
+      const events = await Event.find({ createdBy: id }, {}, helper.paginate(req))
         .sort({ eventDate: -1 })
         .populate('createdBy', '_id name.firstName name.lastName')
         .exec()

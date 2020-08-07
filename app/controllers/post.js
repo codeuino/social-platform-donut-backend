@@ -167,7 +167,7 @@ module.exports = {
   getPostByUser: async (req, res, next) => {
     try {
       const posts = await PostModel.find(
-        { userId: req.user._id },
+        { userId: req.params.id },
         {},
         helper.paginate(req)
       )

@@ -84,4 +84,11 @@ router.patch(
   OrgController.removeAdmin
 )
 
+// GET ORG LOGIN OPTIONS (CALLED JUST BEFORE LOGIN)
+router.get(
+  '/login/options',
+  isUnderMaintenance,
+  OrgController.getOrgLoginOptions
+)
+
 module.exports = router

@@ -46,7 +46,30 @@ module.exports = {
   // GET USER PROFILE
   userProfile: async (req, res, next) => {
     try {
-      const user = req.user
+      const id = req.params.id ? req.params.id : req.user._id 
+      const user = await User.findById({ _id: id })
+      .populate('followings', [
+          'name.firstName',
+          'name.lastName',
+          'info.about.designation',
+          '_id',
+          'isAdmin'
+        ])
+        .populate('followers', [
+          'name.firstName',
+          'name.lastName',
+          'info.about.designation',
+          '_id',
+          'isAdmin'
+        ])
+        .populate('blocked', [
+          'name.firstName',
+          'name.lastName',
+          'info.about.designation',
+          '_id',
+          'isAdmin'
+        ])
+        .exec()
       if (!user) {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exist!' })
       }
@@ -81,11 +104,13 @@ module.exports = {
     }
 
     try {
+      const { id } = req.params
+      const user = await User.findById(id)
       updates.forEach((update) => {
-        req.user[update] = req.body[update]
+        user[update] = req.body[update]
       })
-      await req.user.save()
-      return res.status(HttpStatus.OK).json({ data: req.user })
+      await user.save()
+      return res.status(HttpStatus.OK).json({ data: user })
     } catch (error) {
       return res.status(HttpStatus.BAD_REQUEST).json({ error })
     }

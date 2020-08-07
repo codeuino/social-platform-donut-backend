@@ -46,7 +46,7 @@ router.delete(
 
 // GET PROJECTS CREATED BY A USER
 router.get(
-  '/me/all',
+  '/:id/all',
   isUnderMaintenance,
   auth,
   projectController.projectCreatedByUser

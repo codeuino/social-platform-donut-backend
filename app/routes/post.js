@@ -58,7 +58,7 @@ router.patch(
 
 // GET POST PER USER
 router.get(
-  '/me/all',
+  '/:id/all',
   auth,
   postController.getPostByUser
 )
