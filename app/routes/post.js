@@ -56,6 +56,14 @@ router.patch(
   postController.upvote
 )
 
+// REMOVE REACTION FROM POST
+router.patch(
+  '/removereaction/:id',
+  isUnderMaintenance,
+  auth,
+  postController.removeReaction
+)
+
 // GET POST PER USER
 router.get(
   '/:id/all',
