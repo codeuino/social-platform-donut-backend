@@ -40,9 +40,12 @@
     "testTimeout": 30000
   },
   "devDependencies": {
+    "@babel/plugin-proposal-class-properties": "^7.10.4",
+    "@babel/preset-env": "^7.11.0",
+    "babel-eslint": "^10.1.0",
     "codecov": "^3.6.1",
     "env-cmd": "^10.0.1",
-    "eslint": "^6.7.1",
+    "eslint": "^6.8.0",
     "eslint-config-standard": "^14.1.0",
     "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-node": "^10.0.0",
