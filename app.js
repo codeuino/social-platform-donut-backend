@@ -4,14 +4,12 @@ const morgan = require('morgan')
 const cookieParser = require('cookie-parser')
 const createError = require('http-errors')
 const path = require('path')
-
 const socket = require('socket.io')
 const multer = require('multer')
 const bodyParser = require('body-parser')
 const cors = require('cors')
 var winston = require('./config/winston')
 const fileConstants = require('./config/fileHandlingConstants')
-
 
 const indexRouter = require('./app/routes/index')
 const authRouter = require('./app/routes/auth')
@@ -48,26 +46,6 @@ io.on('connection', (socket) => {
   console.log('socket connected count ', count++)
   io.emit('user connected')
 })
-
-app.use(helmet());
-app.use(hpp());
-
-const csrfMiddleware = csurf({
-  cookie: true
-});
-
-app.use(session({
-  secret: 'codeuino',
-  resave: false,
-  saveUninitialized: true,
-  cookie: {
-      secure: true,
-      httpOnly: true
-  }
-}));
-
-app.use(cookieParser());
-app.use(csrfMiddleware);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'))
