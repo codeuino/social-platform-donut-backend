@@ -8,6 +8,7 @@ mongoose
     useFindAndModify: false
   })
   .then(() => {
+    console.log(`${process.env.DATABASE_URL}`)
     console.log('mongodb connection successful')
   })
   .catch((err) => {

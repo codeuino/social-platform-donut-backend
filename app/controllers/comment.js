@@ -78,10 +78,10 @@ module.exports = {
         .sort({ updatedAt: -1 })
         .lean()
         .exec()
-      if (!comments) {
+      if (comments === undefined || comments.length === 0) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No such post' })
       }
-      res.status(HttpStatus.OK).json({ comments: comments })
+      return res.status(HttpStatus.OK).json({ comments: comments })
     } catch (error) {
       HANDLER.handleError(res, error)
     }

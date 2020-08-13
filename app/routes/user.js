@@ -82,7 +82,7 @@ router.post(
 
 // follow the user
 router.patch(
-  '/follow',
+  '/follow/:id',
   isUnderMaintenance,
   auth,
   userController.addFollowing,
@@ -91,7 +91,7 @@ router.patch(
 
 // unFollow the user
 router.patch(
-  '/unfollow',
+  '/unfollow/:id',
   isUnderMaintenance,
   auth,
   userController.removeFollowing,

@@ -230,7 +230,33 @@ test('Should update the Post data', async (done) => {
 
 test('Should retrieve all posts created by a user', async (done) => {
   await request(app)
-    .get('/post/me/all')
+    .get(`/post/${testUserId}/all`)
+    .set('Authorization', `Bearer ${token}`)
+    .send()
+    .expect(HttpStatus.OK)
+  done()
+})
+
+/**
+ * Testing pin post of by particular user
+ */
+
+test('Should pin the post', async (done) => {
+  await request(app)
+    .patch(`/post/pin/${testPostId}`)
+    .set('Authorization', `Bearer ${token}`)
+    .send()
+    .expect(HttpStatus.OK)
+  done()
+})
+
+/**
+ * Testing get all pinned post
+ */
+
+test('Should retrieve all the pinned post', async (done) => {
+  await request(app)
+    .get('/post/all/pinned?pagination=10&page=1')
     .set('Authorization', `Bearer ${token}`)
     .send()
     .expect(HttpStatus.OK)
