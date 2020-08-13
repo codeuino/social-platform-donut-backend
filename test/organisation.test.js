@@ -39,6 +39,26 @@ const updatedTestOrg = {
   }
 }
 
+const updateSettings = {
+  settings: {
+    enableEmail: true,
+    language: 'German',
+    timeFormat: '24'
+  },
+  permissions: {
+    sendInvite: 'ADMINS',
+    canCreateManage: 'MEMBERS',
+    canChangeEmail: true,
+    canChangeName: true
+  },
+  authentication: {
+    email: true,
+    google: true,
+    github: true,
+    gitlab: true
+  }
+}
+
 const testUser = {
   name: {
     firstName: 'test',
@@ -73,6 +93,7 @@ const testUser = {
       location: 'location'
     }
   },
+  isAdmin: true,
   tokens: [{
     token: jwt.sign({
       _id: `${adminId}`
@@ -153,6 +174,76 @@ describe('PATCH /org/:id', () => {
       .set('Authorization', `Bearer ${token}`)
       .send(updatedTestOrg)
       .expect(HttpStatus.OK)
+    done()
+  })
+})
+
+/** GET ORGANIZATION LOGIN OPTIONS**/
+describe('GET login options', () => {
+  test('Should retrieve the login options', async (done) => {
+    const res = await request(app)
+      .get('/org/login/options')
+      .expect(HttpStatus.OK)
+    expect(res.body).not.toBeNull()
+    done()
+  })
+})
+
+/** UPDATE ORGANIZATION SETTINGS**/
+describe('UPDATE org-settings', () => {
+  test('Should update org-settings', async (done) => {
+    const res = await request(app)
+      .patch(`/org/${orgId}/settings/update`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(updateSettings)
+      .expect(HttpStatus.OK)
+
+    // check res
+    expect(res.body).not.toBeNull()
+    done()
+  })
+})
+
+/** GET ORGANIZATION OVERVIEW**/
+describe('GET org overview', () => {
+  test('Should retrieve the organization overview', async (done) => {
+    const res = await request(app)
+      .get('/org/overview/all')
+      .set('Authorization', `Bearer ${token}`)
+      .send()
+      .expect(HttpStatus.OK)
+
+    // check response
+    expect(res.body).not.toBeNull()
+    done()
+  })
+})
+
+/** GET ALL MEMBERS **/
+describe('GET all members', () => {
+  test('Should retrieve all the members of the org', async (done) => {
+    const res = await request(app)
+      .get('/org/members/all')
+      .set('Authorization', `Bearer ${token}`)
+      .send()
+      .expect(HttpStatus.OK)
+
+    // check res
+    expect(res.body).not.toBeNull()
+    done()
+  })
+})
+
+/** REMOVE ADMIN**/
+describe('PATCH /org/remove/:orgId/:userId', () => {
+  console.log('adminId ', adminId)
+  test('Should remove the user', async (done) => {
+    const res = await request(app)
+      .patch(`/org/remove/${orgId}/${adminId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send()
+      .expect(HttpStatus.BAD_REQUEST)
+    expect(res.body).not.toBeNull()
     done()
   })
 })
