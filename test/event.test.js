@@ -293,7 +293,7 @@ test('Should get all the upcoming event', async (done) => {
 
 test('Should get all the events created by user', async (done) => {
   await request(app)
-    .get('/event/me/all')
+    .get(`/event/${testUserId}/all`)
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send()
     .expect(HttpStatus.OK)

@@ -46,9 +46,9 @@ module.exports = {
   // GET USER PROFILE
   userProfile: async (req, res, next) => {
     try {
-      const id = req.params.id ? req.params.id : req.user._id 
+      const id = req.params.id || req.user._id
       const user = await User.findById({ _id: id })
-      .populate('followings', [
+        .populate('followings', [
           'name.firstName',
           'name.lastName',
           'info.about.designation',
@@ -255,16 +255,16 @@ module.exports = {
 
   // ADD TO THE FOLLOWINGS LIST
   addFollowing: async (req, res, next) => {
-    const { followId } = req.body
+    const { id } = req.params
     try {
-      if (followId === req.user._id) {
+      if (id === req.user._id) {
         return res.status(HttpStatus.OK).json({ msg: 'You can not follow yourself!' })
       }
       const user = await User.findById(req.user.id)
       if (!user) {
         return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user exists!' })
       }
-      user.followings.unshift(followId)
+      user.followings.unshift(id)
       await user.save()
       next()
     } catch (error) {
@@ -274,9 +274,10 @@ module.exports = {
 
   // ADD TO FOLLOWERS LIST
   addFollower: async (req, res, next) => {
-    const { followId } = req.body
+    console.log('follow request!')
+    const { id } = req.params
     try {
-      const user = await User.findById(followId)
+      const user = await User.findById(id)
       if (!user) {
         return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user exists!' })
       }
@@ -305,7 +306,7 @@ module.exports = {
 
   // REMOVE FROM FOLLOWINGS LIST
   removeFollowing: async (req, res, next) => {
-    const { followId } = req.body
+    const { id } = req.params
     try {
       const user = await User.findById(req.user._id)
       if (!user) {
@@ -313,7 +314,7 @@ module.exports = {
       }
       // check if followId is in following list or not
       const followingIdArray = user.followings.map(followingId => followingId._id)
-      const isFollowingIdIndex = followingIdArray.indexOf(followId)
+      const isFollowingIdIndex = followingIdArray.indexOf(id)
       if (isFollowingIdIndex === -1) {
         return res.status(HttpStatus.OK).json({ msg: 'You haven\'t followed the user!' })
       } else {
@@ -329,9 +330,9 @@ module.exports = {
 
   // REMOVE FROM FOLLOWERS LIST
   removeFollower: async (req, res, next) => {
-    const { followId } = req.body
+    const { id } = req.params
     try {
-      const user = await User.findById(followId)
+      const user = await User.findById(id)
       if (!user) {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exists!' })
       }

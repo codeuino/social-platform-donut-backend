@@ -181,7 +181,7 @@ module.exports = {
         default:
       }
       await post.save()
-      res.status(HttpStatus.OK).json({ post: post })
+      return res.status(HttpStatus.OK).json({ post: post })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -233,7 +233,7 @@ module.exports = {
         default:
       }
       await post.save()
-      res.status(HttpStatus.OK).json({ post: post })
+      return res.status(HttpStatus.OK).json({ post: post })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -241,11 +241,8 @@ module.exports = {
 
   getPostByUser: async (req, res, next) => {
     try {
-      const posts = await PostModel.find(
-        { userId: req.params.id },
-        {},
-        helper.paginate(req)
-      )
+      const { id } = req.params
+      const posts = await PostModel.find({ userId: id }, {}, helper.paginate(req))
         .populate('comments', ['content', 'votes'])
         .populate('userId', [
           'name.firstName',
