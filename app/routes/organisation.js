@@ -10,7 +10,6 @@ router.post(
   '/',
   isUnderMaintenance,
   uploader.upload.single('image'),
-  auth,
   OrgController.createOrganization
 )
 

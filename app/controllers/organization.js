@@ -10,6 +10,9 @@ const Event = require('../models/Event')
 const permission = require('../utils/permission')
 const TAGS = require('../utils/notificationTags')
 const Organisation = require('../models/Organisation')
+const activityTracker = require('../utils/activity-helper')
+const collectionTypes = require('../utils/collections')
+
 const notification = {
   heading: '',
   content: '',
@@ -29,6 +32,7 @@ module.exports = {
       notification.content = `${orgData.name} is created!`
       notification.tag = TAGS.NEW
       notificationHelper.addToNotificationForAll(req, res, notification, next)
+      activityTracker.addToRedis(req, res, next, collectionTypes.ORG, org._id)
       return res.status(HttpStatus.CREATED).json({ orgData })
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -71,6 +75,7 @@ module.exports = {
         helper.mapToDb(req, org)
       }
       await org.save()
+      activityTracker.addToRedis(req, res, next, collectionTypes.ORG, org._id)
       return res.status(HttpStatus.OK).json({ organization: org })
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -127,6 +132,7 @@ module.exports = {
       notification.content = `${org.name} is deleted!`
       notification.tag = TAGS.DELETE
       notificationHelper.addToNotificationForAll(req, res, notification, next)
+      activityTracker.addToRedis(req, res, next, collectionTypes.ORG, org._id)
       return res.status(HttpStatus.OK).json({ organization: org })
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -228,6 +234,7 @@ module.exports = {
           .status(HttpStatus.BAD_REQUEST)
           .json({ msg: 'Invalid update' })
       }
+      activityTracker.addToRedis(req, res, next, collectionTypes.ORG, organization._id)
       // else not admin
       return res
         .status(HttpStatus.BAD_REQUEST)
