@@ -126,7 +126,6 @@ describe('POST /org/', () => {
   test('should create a new Organization', async (done) => {
     const response = await request(app)
       .post('/org/')
-      .set('Authorization', `Bearer ${token}`)
       .send(testOrg)
       .expect(HttpStatus.CREATED)
     orgId = response.body.orgData._id

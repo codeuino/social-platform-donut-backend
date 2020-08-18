@@ -10,6 +10,9 @@ const Events = require('../models/Event')
 const Organization = require('../models/Organisation')
 const TAGS = require('../utils/notificationTags')
 const settingHelper = require('../utils/settingHelpers')
+const Activity = require('../models/Activity')
+const activityHelper = require('../utils/activity-helper')
+
 const notification = {
   heading: '',
   content: '',
@@ -38,6 +41,11 @@ module.exports = {
       const token = await user.generateAuthToken()
       // Added fn to send email to activate account with warm message
       await emailController.sendEmail(req, res, next, token)
+
+      // create redis db for activity for the user
+      const activity = new Activity({ userId: data._id })
+      await activity.save()
+
       return res.status(HttpStatus.CREATED).json({ user: user, token: token })
     } catch (error) {
       return res.status(HttpStatus.NOT_ACCEPTABLE).json({ error: error })
@@ -169,6 +177,8 @@ module.exports = {
     try {
       req.user.tokens = []
       await req.user.save()
+      // add all activity to db after successfully logged out
+      activityHelper.addActivityToDb(req, res)
       return res.status(HttpStatus.OK).json({ msg: 'User logged out Successfully!' })
     } catch (error) {
       HANDLER.handleError(res, error)

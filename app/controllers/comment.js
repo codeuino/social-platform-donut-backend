@@ -3,6 +3,8 @@ const HttpStatus = require('http-status-codes')
 const CommentModel = require('../models/Comment')
 const permission = require('../utils/permission')
 const helper = require('../utils/paginate')
+const activityTracker = require('../utils/activity-helper')
+const collectionTypes = require('../utils/collections')
 
 module.exports = {
   // CREATE COMMENT (ISSUE IN CREATE COMMENT )
@@ -14,7 +16,8 @@ module.exports = {
       comment.userId = userId
       comment.postId = id // added postId
       await comment.save()
-      res.status(HttpStatus.CREATED).json({ comment: comment })
+      activityTracker.addToRedis(req, res, next, collectionTypes.COMMENT, comment._id)
+      return res.status(HttpStatus.CREATED).json({ comment: comment })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -63,7 +66,8 @@ module.exports = {
         comment[update] = req.body[update]
       })
       await comment.save()
-      res.status(HttpStatus.OK).json({ comment: comment })
+      activityTracker.addToRedis(req, res, next, collectionTypes.COMMENT, comment._id)
+      return res.status(HttpStatus.OK).json({ comment: comment })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
