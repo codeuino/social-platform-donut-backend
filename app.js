@@ -23,6 +23,7 @@ const projectRouter = require('./app/routes/project')
 const notificationRouter = require('./app/routes/notification')
 const proposalRouter = require('./app/routes/proposal')
 const analyticsRouter = require('./app/routes/analytics')
+const wikisRouter = require('./app/routes/wikis')
 
 const app = express()
 const server = require('http').Server(app)
@@ -83,6 +84,7 @@ app.use('/comment', commentRouter)
 app.use('/project', projectRouter)
 app.use('/proposal', proposalRouter)
 app.use('/analytics', analyticsRouter)
+app.use('/wikis', wikisRouter)
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
