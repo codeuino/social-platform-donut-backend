@@ -1,5 +1,6 @@
 const HttpStatus = require('http-status-codes')
 const HANDLER = require('../utils/response-helper')
+const fetch = require('node-fetch')
 const base64 = require('base-64')
 const axios = require('axios')
 
@@ -10,6 +11,7 @@ const githubAPI = 'https://api.github.com'
 let accessToken = null
 let remoteRepo = null
 let adminUserId = null
+let orgId = null
 
 const sidebarInitialContent = `
 - [$Home$]
@@ -19,47 +21,46 @@ const sidebarInitialContent = `
   `
 
 const getUser = async () => {
-  const opts = {
-    headers: {
-      Authorization: `token ${accessToken}`
-    }
-  }
-  const resp = await axios.get(`${githubAPI}/user`, opts)
-  return (resp.data.login)
+  const opts = { headers: { Authorization: `token ${accessToken}` } }
+  const respUser = await axios.get(`${githubAPI}/user`, opts)
+  return (respUser.data.login)
+}
+
+const getOrg = async () => {
+  const opts = { headers: { Authorization: `token ${accessToken}` } }
+  const respOrg = await axios.get(`${githubAPI}/user/orgs`, opts)
+  return (respOrg.data[0].login)
 }
 
 const getAllRepos = async () => {
-  const opts = {
-    headers: {
-      Authorization: `token ${accessToken}`
-    }
-  }
-  const resp = await axios.get(`${githubAPI}/user/repos`, opts)
-  return (resp.data);
+  const opts = { headers: { Authorization: `token ${accessToken}` } }
+  const resp = await axios.get(`${githubAPI}/orgs/${orgId}/repos`, opts)
+  return (resp.data)
 }
 
 const fileToIssuesMapping = {} // needs to stored in db
 
 const changeFileOnRemote = async (fileName, content, commitMesage, newFile = false) => {
-  let resp = null;
-  const opts = {
-    headers: {
-      Authorization: `token ${accessToken}`
-    }
-  }
+  const opts = { headers: { Authorization: `token ${accessToken}` } }
+  let resp = null
   // base64 the content
   let data = {
     message: commitMesage,
+    // committer: {
+    //   name: 'Donut Backend',
+    //   email: 'codeuino@github.com'
+    // },
     content: base64.encode(content)
   }
   if (!newFile) {
-    resp = await axios.get(`${githubAPI}/repos/${adminUserId}/Donut-wikis-backup/contents/${fileName}.md`, opts)
+    resp = await axios.get(`${githubAPI}/repos/${orgId}/Donut-wikis-backup/contents/${fileName}.md`, opts)
     resp = resp.data
+    console.log(resp.data)
     data.sha = resp.sha
   }
   try {
     // create new file on the repo with the provided content
-    resp = await axios.put(`${githubAPI}/repos/${adminUserId}/Donut-wikis-backup/contents/${fileName}.md`, data, opts)
+    resp = await axios.put(`${githubAPI}/repos/${orgId}/Donut-wikis-backup/contents/${fileName}.md`, data, opts)
     // the sha of the commit
     const commit = resp.data.commit.sha
     console.log(commit)
@@ -70,27 +71,28 @@ const changeFileOnRemote = async (fileName, content, commitMesage, newFile = fal
         title: fileName,
         body: 'A demo issue opened by Donut to keep track of commits which change this file'
       }
-      resp = await axios.post(`${githubAPI}/repos/${adminUserId}/Donut-wikis-backup/issues`, data, opts)
+      resp = await axios.post(`${githubAPI}/repos/${orgId}/Donut-wikis-backup/issues`, data, opts)
       // close the issue
       data = {
         state: 'closed'
       }
       fileToIssuesMapping[fileName] = resp.data.number
-      resp = await axios.patch(`${githubAPI}/repos/${adminUserId}/Donut-wikis-backup/issues/${resp.data.number}`, data, opts)
+      resp = await axios.patch(`${githubAPI}/repos/${orgId}/Donut-wikis-backup/issues/${resp.data.number}`, data, opts)
     }
     // comment the sha of the commit on the issue
     data = {
       body: commit
     }
-    resp = await axios.post(`${githubAPI}/repos/${adminUserId}/Donut-wikis-backup/issues/${fileToIssuesMapping[fileName]}/comments`, data, opts)
+    // this is problemactic we cannot do it like this we should get all the issues for search for one which matches this name get its number
+    resp = await axios.post(`${githubAPI}/repos/${orgId}/Donut-wikis-backup/issues/${fileToIssuesMapping[fileName]}/comments`, data, opts)
   } catch (err) {
     console.log(err)
   }
 }
 
 const fetchPage = async (pageName, ref = 'master') => {
-  const opts = { headers: { Authorization: `token ${accessToken}` }}
-  let resp = await axios.get(`${githubAPI}/repos/${adminUserId}/Donut-wikis-backup/contents/${pageName}.md?ref=${ref}`, opts)
+  const opts = { headers: { Authorization: `token ${accessToken}` } }
+  const resp = await axios.get(`${githubAPI}/repos/${orgId}/Donut-wikis-backup/contents/${pageName}.md?ref=${ref}`, opts)
   return base64.decode(resp.data.content)
 }
 
@@ -98,11 +100,13 @@ const getPagesIndex = async () => { // runs on every request, will give an index
   const opts = { headers: { Authorization: `token ${accessToken}` } }
   const toBeReturned = []
   toBeReturned.push({ title: '_Sidebar' }) // Sidebar should be at index 0
+  toBeReturned.push({ title: 'Home' }) // Home with always be at 1 and Home cannot be deleted
   toBeReturned[0].content = await fetchPage('_Sidebar') // get the latest sidebar
-  let resp = await axios.get(`${githubAPI}/repos/${adminUserId}/Donut-wikis-backup/contents`, opts)
+  // toBeReturned[1].content = await fetchPage('Home')
+  const resp = await axios.get(`${githubAPI}/repos/${orgId}/Donut-wikis-backup/contents`, opts)
   resp.data.forEach(ele => {
     const eleName = ele.name.substring(0, ele.name.indexOf('.'))
-    if (eleName !== '_Sidebar') {
+    if (eleName !== '_Sidebar' && eleName !== 'Home') {
       toBeReturned.push({ title: eleName })
     }
   })
@@ -126,18 +130,14 @@ const createRepo = async () => {
     console.log('Repository of the name Donut-wikis-backup already exists')
     return 'ALREADY_EXISTS'
   } else {
-    const opts = {
-      headers: {
-        Authorization: `token ${accessToken}`
-      }
-    }
-    let data = {
+    const opts = { headers: { Authorization: `token ${accessToken}` } }
+    const data = {
       name: 'Donut-wikis-backup',
       private: true,
       description: 'Super Private Donut repo'
     }
     try {
-      let resp = await axios.post(`${githubAPI}/user/repos`, data, opts) // create repo
+      const resp = await axios.post(`${githubAPI}/orgs/${orgId}/repos`, data, opts) // create repo
       // create files for initial repo
       await changeFileOnRemote('Home', 'This is an awesome Home Page', 'Home Initial Commit', true)
       await changeFileOnRemote('_Sidebar', sidebarInitialContent, '_Sidebar Initial Commit', true)
@@ -188,7 +188,8 @@ module.exports = {
 
   editPage: async (req, res, next) => {
     const { title, content } = req.body
-    console.log(title);
+    console.log('From Edit page')
+    console.log(title)
     console.log(content)
     try {
       await changeFileOnRemote(title, content, `${title} changes`)
@@ -204,19 +205,23 @@ module.exports = {
   },
 
   deletePage: async (req, res, next) => {
-    console.log(req)
-    const { title } = req
+    const { title } = req.body
+    console.log(req.body)
+    console.log(`!!!!!!!~~~~~~~~~~${title}~~~~~~~~~~~!!!!!!!!!!!`)
     const opts = { headers: { Authorization: `token ${accessToken}` } }
     try {
-      let resp = await axios.get(`${githubAPI}/repos/${adminUserId}/Donut-wikis-backup/contents/${title}.md`, opts)
+      let resp = await axios.get(`${githubAPI}/repos/${orgId}/Donut-wikis-backup/contents/${title}.md`, opts)
       resp = resp.data
       console.log(resp.sha)
       const data = {
         message: `${title} deleted`,
         sha: resp.sha
       }
-      resp = await axios.delete(`${githubAPI}/repos/${adminUserId}/Donut-wikis-backup/contents/${title}.md`, data, opts)
-      console.log(resp)
+      resp = await axios.delete(`${githubAPI}/repos/${orgId}/Donut-wikis-backup/contents/${title}.md`, {
+        data: data,
+        headers: opts.headers
+      })
+      // console.log(resp)
       const pagesIndex = await getPagesIndex()
       res.status(HttpStatus.OK).json({ wikis: await addPageToIndex(pagesIndex, pagesIndex[1].title) })
     } catch (err) {
@@ -257,8 +262,13 @@ module.exports = {
     const opts = { headers: { accept: 'application/json' } }
     try {
       const resp = await axios.post('https://github.com/login/oauth/access_token', body, opts)
+      console.log('From OAuth Callback')
+      console.log(resp.data)
       accessToken = resp.data.access_token
       adminUserId = await getUser()
+      orgId = await getOrg()
+      console.log(`accessToken = ${accessToken}`)
+      console.log(`orgId = ${orgId}`)
       await createRepo()
       res.redirect(`${process.env.clientbaseurl}wikis`)
     } catch (err) {
@@ -266,3 +276,15 @@ module.exports = {
     }
   }
 }
+
+/* Stuff yet to do
+  That comments part in the ediotr in the front end should be in the commit message
+  Should give some kind of feedback to the user when we have to make him wait, like a spinner or something
+  Implement chaching to make things work faster
+  Disable title editing everywhere
+  implement histories in backed and frontend both
+  discuss with jaskirat about the desgin aspects which siddhart recomended
+
+  Fixed
+  implement deleting of pages
+*/
