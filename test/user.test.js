@@ -350,6 +350,18 @@ test('Should UnBlock the user', async (done) => {
   done()
 })
 
+/* Get user activity on the platform */
+test('Should fetch all the activities of a user on the platform', async (done) => {
+  const response = await request(app)
+    .patch(`/activity/user/${testUserId}`)
+    .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+    .send()
+    .expect(HttpStatus.OK)
+  // Assert the db changed
+  expect(response.body).not.toBeNull()
+  done()
+})
+
 /**
  * TODO: FIX ERROR
  * This is a temporary fix to issue:

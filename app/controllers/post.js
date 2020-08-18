@@ -6,6 +6,8 @@ const imgUploadHelper = require('../utils/uploader')
 const permission = require('../utils/permission')
 const helper = require('../utils/paginate')
 const settingsHelper = require('../utils/settingHelpers')
+const activityTracker = require('../utils/activity-helper')
+const collectionTypes = require('../utils/collections')
 
 module.exports = {
   // CREATE POST
@@ -19,6 +21,7 @@ module.exports = {
     try {
       await post.save()
       // req.io.emit('new post created', { data: post.content })
+      activityTracker.addToRedis(req, res, next, collectionTypes.POST, post._id)
       return res.status(HttpStatus.CREATED).json({ post })
     } catch (error) {
       HANDLER.handleError(res, error)

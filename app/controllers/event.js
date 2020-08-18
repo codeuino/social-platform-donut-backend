@@ -5,6 +5,9 @@ const permission = require('../utils/permission')
 const helper = require('../utils/paginate')
 const notificationHelper = require('../utils/notif-helper')
 const settingsHelper = require('../utils/settingHelpers')
+const activityTracker = require('../utils/activity-helper')
+const collectionTypes = require('../utils/collections')
+
 const notification = {
   heading: '',
   content: '',
@@ -22,6 +25,7 @@ module.exports = {
       notification.content = `${event.eventName} is added!`
       notification.tag = 'New!'
       notificationHelper.addToNotificationForAll(req, res, notification, next)
+      activityTracker.addToRedis(req, res, next, collectionTypes.EVENT, event._id)
       res.status(HttpStatus.CREATED).json({ event: event })
     } catch (error) {
       res.status(HttpStatus.BAD_REQUEST).json({ error: error })
@@ -53,6 +57,7 @@ module.exports = {
       notification.content = `${event.eventName} is updated!`
       notification.tag = 'Update'
       notificationHelper.addToNotificationForAll(req, res, notification, next)
+      activityTracker.addToRedis(req, res, next, collectionTypes.EVENT, event._id)
       res.status(HttpStatus.OK).json({ event: event })
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -163,7 +168,11 @@ module.exports = {
         notification.content = `Event ${deleteEvent.eventName} is deleted!`
         notification.tag = 'Deleted'
         notificationHelper.addToNotificationForAll(req, res, notification, next)
-        return res.status(HttpStatus.OK).json({ deleteEvent: deleteEvent, message: 'Deleted the event' })
+        activityTracker.addToRedis(req, res, next, collectionTypes.EVENT, deleteEvent._id)
+        return res.status(HttpStatus.OK).json({
+          deleteEvent: deleteEvent,
+          message: 'Deleted the event'
+        })
       }
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Not permitted!' })
     } catch (error) {

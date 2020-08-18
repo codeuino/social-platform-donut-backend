@@ -4,6 +4,8 @@ const HttpStatus = require('http-status-codes')
 const helper = require('../utils/paginate')
 const permission = require('../utils/permission')
 const settingsHelper = require('../utils/settingHelpers')
+const activityTracker = require('../utils/activity-helper')
+const collectionTypes = require('../utils/collections')
 
 module.exports = {
   createProject: async (req, res, next) => {
@@ -11,6 +13,7 @@ module.exports = {
       const project = await new Project(req.body)
       project.createdBy = req.user._id
       await project.save()
+      activityTracker.addToRedis(req, res, next, collectionTypes.PROJECT, project._id)
       return res.status(HttpStatus.CREATED).json({ project })
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -98,6 +101,7 @@ module.exports = {
         await Project.findByIdAndRemove(id)
         return res.status(HttpStatus.OK).json({ msg: 'Project deleted!' })
       }
+      activityTracker.addToRedis(req, res, next, collectionTypes.PROJECT, project._id)
       return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Not permitted!' })
     } catch (error) {
       HANDLER.handleError(res, error)
