@@ -335,11 +335,11 @@ module.exports = {
       const org = await Organisation.find({})
         .lean()
         .exec()
-      if (org.length == 0) {
+      if (org.length === 0) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No such organization exists!' })
       }
       return res.status(HttpStatus.OK).json({ methods: org[0].options.authentication })
-    } catch(error) {
+    } catch (error) {
       HANDLER.handleError(res, error)
     }
   }

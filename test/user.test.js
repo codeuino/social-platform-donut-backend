@@ -171,7 +171,7 @@ test('Should not login non-existing user', async () => {
 /** Fetch authenticated user profile */
 test('Should get profile for user', async () => {
   await request(app)
-    .get('/user/me')
+    .get(`/user/${testUserId}`)
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send()
     .expect(HttpStatus.OK)
@@ -188,7 +188,7 @@ test('Should not get profile for unauthenticated user', async () => {
 /** Should update user profile */
 test('Should update profile or authenticated user', async () => {
   await request(app)
-    .patch('/user/me')
+    .patch(`/user/${testUserId}`)
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send({
       email: 'updated@example.com'
@@ -275,7 +275,7 @@ test('Should activate the account ', async (done) => {
 /* Get invite link */
 test('Should generate an invite link and send', async () => {
   const response = await request(app)
-    .get('/user/invite?role=user')
+    .get('/user/link/invite?role=user')
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send()
     .expect(HttpStatus.OK)
@@ -306,11 +306,8 @@ test('Should logout the user ', async (done) => {
 /* Follow the user */
 test('Should follow the user', async (done) => {
   await request(app)
-    .patch('/user/follow')
+    .patch(`/user/follow/${testFollowUserId}`)
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
-    .send({
-      followId: testFollowUserId
-    })
     .expect(HttpStatus.OK)
     // Assert the db change
   const user = await User.findById(testFollowUserId)
@@ -321,11 +318,8 @@ test('Should follow the user', async (done) => {
 /* unFollow the user */
 test('Should unFollow the user', async (done) => {
   await request(app)
-    .patch('/user/unfollow')
+    .patch(`/user/unfollow/${testUserId}`)
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
-    .send({
-      followId: testFollowUserId
-    })
     .expect(HttpStatus.OK)
   // Assert that db change
   const user = await User.findById(testFollowUserId)

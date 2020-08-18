@@ -184,7 +184,7 @@ test('Should get project by id', async (done) => {
 
 test('Should get all the project created by a user', async (done) => {
   await request(app)
-    .get('/project/me/all')
+    .get(`/project/${testUserId}/all`)
     .set('Authorization', `Bearer ${token}`)
     .send()
     .expect(HttpStatus.OK)
