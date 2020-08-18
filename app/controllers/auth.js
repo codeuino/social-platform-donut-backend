@@ -1,5 +1,7 @@
 const User = require('../models/User')
 const HttpStatus = require('http-status-codes')
+const activityHelper = require('../utils/activity-helper')
+
 module.exports = {
   authenticateUser: async (req, res, next) => {
     const email = req.body.email
@@ -13,9 +15,11 @@ module.exports = {
     }
   },
   logout: (req, res, next) => {
+    activityHelper.addActivityToDb(req, res)
     res.status(HttpStatus.OK).json({ success: 'ok' })
   },
   logoutAll: (req, res, next) => {
+    activityHelper.addActivityToDb(req, res)
     res.status(HttpStatus.OK).json({ success: 'ok' })
   }
 }

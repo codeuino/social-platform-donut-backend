@@ -24,6 +24,7 @@ const notificationRouter = require('./app/routes/notification')
 const proposalRouter = require('./app/routes/proposal')
 const analyticsRouter = require('./app/routes/analytics')
 const wikisRouter = require('./app/routes/wikis')
+const activityRouter = require('./app/routes/activity')
 
 const app = express()
 const server = require('http').Server(app)
@@ -85,6 +86,7 @@ app.use('/project', projectRouter)
 app.use('/proposal', proposalRouter)
 app.use('/analytics', analyticsRouter)
 app.use('/wikis', wikisRouter)
+app.use('/activity', activityRouter)
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
