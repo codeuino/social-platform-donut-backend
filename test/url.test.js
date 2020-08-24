@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const request = require('supertest')
 const UrlModel = require('../app/models/UrlShortner')
 const HttpStatus = require('http-status-codes')
+const redis = require('../config/redis').redisClient
 const testUrl = 'http://codeuino.org/codeofconduct'
 // let shortUrl = ''
 
@@ -12,6 +13,7 @@ let server
  */
 beforeAll(async (done) => {
   await UrlModel.deleteMany()
+  await redis.flushall()
   server = app.listen(4000, () => {
     global.agent = request.agent(server)
     done()
@@ -62,6 +64,8 @@ afterAll(async () => {
   await new Promise((resolve) => setTimeout(() => resolve(), 500))
   // close server
   await server.close()
+  // flush all
+  await redis.flushall()
   // Closing the DB connection allows Jest to exit successfully.
   await mongoose.connection.close()
 })

@@ -1,13 +1,7 @@
 const Activity = require('../models/Activity')
 const redis = require('../../config/redis')
 var redisClient = redis.redisClient
-var activityElement = {
-  route: '',
-  method: '',
-  collectionType: '',
-  id: '',
-  timestamp: ''
-}
+var activityElement = {}
 
 module.exports = {
   addToRedis: async (req, res, next, collection, objectId) => {
@@ -48,7 +42,9 @@ module.exports = {
       data.activity.unshift(activityElement)
     }
 
-    await data.save()
+    if (data !== null || data !== undefined) {
+      await data.save()
+    }
     console.log('Activity saved to db ', data)
 
     // clear data from redis

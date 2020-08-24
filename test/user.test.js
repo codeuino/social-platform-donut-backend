@@ -3,10 +3,12 @@ const mongoose = require('mongoose')
 const jwt = require('jsonwebtoken')
 const request = require('supertest')
 const User = require('../app/models/User')
+const redis = require('../config/redis').redisClient
 const HttpStatus = require('http-status-codes')
 let token = ''
 let passwordToken = ''
 let inviteLink = ''
+let unAuthUserId = ''
 
 const demoUser = {
   name: {
@@ -46,6 +48,8 @@ const demoUser = {
 
 const testUserId = new mongoose.Types.ObjectId()
 const testFollowUserId = new mongoose.Types.ObjectId()
+console.log('testUserID ', testUserId)
+console.log('testFollowUserID ', testFollowUserId)
 const testUser = {
   _id: testUserId,
   ...demoUser,
@@ -88,6 +92,7 @@ let server
 
 beforeAll(async (done) => {
   await User.deleteMany()
+  await redis.flushall()
   server = app.listen(4000, () => {
     global.agent = request.agent(server)
     done()
@@ -102,6 +107,7 @@ beforeEach(async () => {
   await User.deleteMany()
   await new User(testUser).save()
   await new User(testFollowUser).save()
+  await redis.flushall()
 })
 
 /**
@@ -114,6 +120,7 @@ test('Should signup new user', async () => {
     .expect(HttpStatus.CREATED)
 
   // Assert that db was changed
+  unAuthUserId = response.body.user._id
   const user = await User.findById(response.body.user._id)
   expect(user).not.toBeNull()
 
@@ -178,11 +185,12 @@ test('Should get profile for user', async () => {
 })
 
 /** Fail in getting unathenticated user profile */
-test('Should not get profile for unauthenticated user', async () => {
+test('Should not get profile for unauthenticated user', async (done) => {
   await request(app)
-    .get('/user/me')
+    .get(`/user/${unAuthUserId}`)
     .send()
     .expect(HttpStatus.UNAUTHORIZED)
+  done()
 })
 
 /** Should update user profile */
@@ -199,7 +207,7 @@ test('Should update profile or authenticated user', async () => {
 /** Should fail to make updates that are not allowed to user profile */
 test('Should be able to make only allowed updates to authenticated user', async () => {
   await request(app)
-    .patch('/user/me')
+    .patch(`/user/${testUserId}`)
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send({
       gender: 'Male'
@@ -210,7 +218,7 @@ test('Should be able to make only allowed updates to authenticated user', async 
 /** Should Fail updating profile of unauthenticate user */
 test('Should not update profile or unauthenticated user', async () => {
   await request(app)
-    .patch('/user/me')
+    .patch(`/user/${unAuthUserId}`)
     .send({
       email: 'updated@example.com'
     })
@@ -293,16 +301,6 @@ test('Should validate the invite link token ', async () => {
     .expect(HttpStatus.MOVED_TEMPORARILY)
 })
 
-/* Logout the user */
-test('Should logout the user ', async (done) => {
-  await request(app)
-    .post('/user/logout')
-    .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
-    .send()
-    .expect(HttpStatus.OK)
-  done()
-})
-
 /* Follow the user */
 test('Should follow the user', async (done) => {
   await request(app)
@@ -318,7 +316,7 @@ test('Should follow the user', async (done) => {
 /* unFollow the user */
 test('Should unFollow the user', async (done) => {
   await request(app)
-    .patch(`/user/unfollow/${testUserId}`)
+    .patch(`/user/unfollow/${testFollowUserId}`)
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .expect(HttpStatus.OK)
   // Assert that db change
@@ -353,12 +351,22 @@ test('Should UnBlock the user', async (done) => {
 /* Get user activity on the platform */
 test('Should fetch all the activities of a user on the platform', async (done) => {
   const response = await request(app)
-    .patch(`/activity/user/${testUserId}`)
+    .get(`/activity/user/${testUserId}`)
     .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
     .send()
     .expect(HttpStatus.OK)
   // Assert the db changed
   expect(response.body).not.toBeNull()
+  done()
+})
+
+/* Logout the user */
+test('Should logout the user ', async (done) => {
+  await request(app)
+    .post('/user/logout')
+    .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+    .send()
+    .expect(HttpStatus.OK)
   done()
 })
 
@@ -374,6 +382,8 @@ afterAll(async () => {
   await server.close()
   // delete all the users post testing
   await User.deleteMany()
+  // flush redis
+  await redis.flushall()
   // Closing the DB connection allows Jest to exit successfully.
   await mongoose.connection.close()
 })

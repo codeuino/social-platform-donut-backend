@@ -243,6 +243,7 @@ module.exports = {
       const inviteLink = `${req.protocol}://${req.get('host')}/user/invite/${token}`
       return res.status(HttpStatus.OK).json({ inviteLink: inviteLink })
     } catch (error) {
+      console.log('error in req', error)
       HANDLER.handleError(res, error)
     }
   },
