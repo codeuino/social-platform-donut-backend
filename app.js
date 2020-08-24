@@ -8,7 +8,11 @@ const socket = require('socket.io')
 const multer = require('multer')
 const bodyParser = require('body-parser')
 const cors = require('cors')
+const helmet = require('helmet')
+const hpp = require('hpp')
 var winston = require('./config/winston')
+const rateLimiter = require('./app/middleware/rateLimiter')
+const sanitizer = require('./app/middleware/sanitise')
 const fileConstants = require('./config/fileHandlingConstants')
 
 const indexRouter = require('./app/routes/index')
@@ -31,6 +35,7 @@ const server = require('http').Server(app)
 app.use(cors())
 
 app.use(bodyParser.json({ limit: '200mb' }))
+app.use(cookieParser())
 app.use(bodyParser.urlencoded(fileConstants.fileParameters))
 
 const memoryStorage = multer.memoryStorage()
@@ -71,6 +76,23 @@ app.use((req, res, next) => {
   req.io = io
   next()
 })
+
+// TO PREVENT DOS ATTACK AND RATE LIMITER
+app.use(rateLimiter.customRateLimiter)
+
+// TO PREVENT XSS ATTACK
+app.use(sanitizer.cleanBody)
+app.use(helmet())
+
+// TO PREVENT CLICK JACKING
+app.use((req, res, next) => {
+  res.append('X-Frame-Options', 'Deny')
+  res.set('Content-Security-Policy', "frame-ancestors 'none';")
+  next()
+})
+
+// TO PREVENT THE QUERY PARAMETER POLLUTION
+app.use(hpp())
 
 app.use('/notification', notificationRouter)
 app.use('/', indexRouter)

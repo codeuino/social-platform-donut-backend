@@ -45,7 +45,8 @@ module.exports = {
       // create redis db for activity for the user
       const activity = new Activity({ userId: data._id })
       await activity.save()
-
+      // hide password
+      user.password = undefined
       return res.status(HttpStatus.CREATED).json({ user: user, token: token })
     } catch (error) {
       return res.status(HttpStatus.NOT_ACCEPTABLE).json({ error: error })
@@ -81,6 +82,9 @@ module.exports = {
       if (!user) {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exist!' })
       }
+      // hide password and tokens
+      user.password = undefined
+      user.tokens = []
       return res.status(HttpStatus.OK).json({ user })
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -94,6 +98,7 @@ module.exports = {
       'phone',
       'info',
       'about',
+      'socialMedia',
       'isDeactivated'
     ]
     // added control as per org settings
@@ -118,6 +123,9 @@ module.exports = {
         user[update] = req.body[update]
       })
       await user.save()
+      // hide password and tokens
+      user.password = undefined
+      user.tokens = []
       return res.status(HttpStatus.OK).json({ data: user })
     } catch (error) {
       return res.status(HttpStatus.BAD_REQUEST).json({ error })
@@ -235,6 +243,7 @@ module.exports = {
       const inviteLink = `${req.protocol}://${req.get('host')}/user/invite/${token}`
       return res.status(HttpStatus.OK).json({ inviteLink: inviteLink })
     } catch (error) {
+      console.log('error in req', error)
       HANDLER.handleError(res, error)
     }
   },
@@ -308,6 +317,9 @@ module.exports = {
         .populate('followers', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
         .populate('blocked', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
         .exec()
+      // hide password and tokens
+      userData.password = undefined
+      userData.tokens = []
       return res.status(HttpStatus.OK).json({ user: userData })
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -358,6 +370,9 @@ module.exports = {
         .populate('followers', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
         .populate('blocked', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
         .exec()
+      // hide password and tokens
+      userData.password = undefined
+      userData.tokens = []
       return res.status(HttpStatus.OK).json({ user: userData })
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -404,6 +419,9 @@ module.exports = {
         if (unblockIndex !== -1) {
           user.blocked.splice(unblockIndex, 1)
           await user.save()
+          // hide password and tokens
+          user.password = undefined
+          user.tokens = []
           return res.status(HttpStatus.OK).json({ user })
         }
         return res.status(HttpStatus.NOT_FOUND).json({ user })
@@ -441,6 +459,9 @@ module.exports = {
       }
       user.isRemoved = true
       await user.save()
+      // hide password and tokens
+      user.password = undefined
+      user.tokens = []
       return res.status(HttpStatus.OK).json({ user })
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -451,6 +472,9 @@ module.exports = {
     try {
       req.user.isActivated = !req.user.isActivated
       const user = await req.user.save()
+      // hide password and tokens
+      user.password = undefined
+      user.tokens = []
       return res.status(HttpStatus.OK).json({ user })
     } catch (error) {
       HANDLER.handleError(error)

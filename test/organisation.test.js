@@ -270,6 +270,8 @@ afterAll(async () => {
   await server.close()
   // delete all the organization post testing
   await Organization.deleteMany()
+  // delete all the user created
+  await User.deleteMany()
   // Closing the DB connection allows Jest to exit successfully.
   await mongoose.connection.close()
 })

@@ -4,8 +4,8 @@ const activityHelper = require('../utils/activity-helper')
 
 module.exports = {
   authenticateUser: async (req, res, next) => {
-    const email = req.body.email
-    const password = req.body.password
+    const email = escape(req.body.email)
+    const password = escape(req.body.password)
     try {
       const user = await User.findByCredentials(email, password)
       const token = await user.generateAuthToken()

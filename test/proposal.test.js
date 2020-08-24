@@ -6,6 +6,7 @@ const request = require('supertest')
 const User = require('../app/models/User')
 const Organization = require('../app/models/Organisation')
 const Proposal = require('../app/models/Proposal')
+const redis = require('../config/redis').redisClient
 const randomDigit = Math.floor(Math.random() * 90 + 10)
 
 const testUserId = new mongoose.Types.ObjectId()
@@ -106,6 +107,7 @@ let server
 
 beforeAll(async (done) => {
   await Proposal.deleteMany()
+  await redis.flushall()
   await new User(testUser).save()
   await new Organization(testOrganization).save()
   server = app.listen(4000, () => {
@@ -201,6 +203,12 @@ afterAll(async () => {
   await new Promise((resolve) => setTimeout(() => resolve(), 500))
   // close server
   await server.close()
+  // delete proposal
+  await Proposal.deleteMany()
+  // delete all the user created
+  await User.deleteMany()
+  // flush redis
+  await redis.flushall()
   // Closing the DB connection allows Jest to exit successfully.
   await mongoose.connection.close()
 })

@@ -32,7 +32,7 @@ module.exports = {
       notification.content = `${orgData.name} is created!`
       notification.tag = TAGS.NEW
       notificationHelper.addToNotificationForAll(req, res, notification, next)
-      activityTracker.addToRedis(req, res, next, collectionTypes.ORG, org._id)
+      // activityTracker.addToRedis(req, res, next, collectionTypes.ORG, org._id)
       return res.status(HttpStatus.CREATED).json({ orgData })
     } catch (error) {
       HANDLER.handleError(res, error)
