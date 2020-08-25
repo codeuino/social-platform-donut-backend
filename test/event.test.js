@@ -5,6 +5,7 @@ const HttpStatus = require('http-status-codes')
 const request = require('supertest')
 const Event = require('../app/models/Event')
 const User = require('../app/models/User')
+const redis = require('../config/redis').redisClient
 const randomDigit = Math.floor(Math.random() * 90 + 10)
 
 const testUserId = new mongoose.Types.ObjectId()
@@ -98,6 +99,7 @@ let server
 beforeAll(async (done) => {
   await Event.deleteMany()
   await User.deleteMany()
+  await redis.flushall()
   server = app.listen(4000, () => {
     global.agent = request.agent(server)
     done()
@@ -312,6 +314,10 @@ afterAll(async () => {
   await server.close()
   // delete all the events post testing
   await Event.deleteMany()
+  // delete all the user created
+  await User.deleteMany()
+  // flush redis
+  await redis.flushall()
   // Closing the DB connection allows Jest to exit successfully.
   await mongoose.connection.close()
 })
