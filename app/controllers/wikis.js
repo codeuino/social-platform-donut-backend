@@ -17,7 +17,6 @@ module.exports = {
     try {
       if (!accessToken) {
         const Org = await Organization.find({}).lean().exec()
-        console.log(Org[0])
         if (Org[0].wikis.accessToken) {
           accessToken = Org[0].wikis.accessToken
         }
@@ -38,7 +37,6 @@ module.exports = {
       if (!ref) {
         ref = 'master'
       }
-      console.log(title)
       res.status(HttpStatus.OK).json({ wikis: await addPageToIndex(await fetchPagesIndex(), title, ref) })
     } catch (err) {
       res.status(HttpStatus.BAD_REQUEST).json({ Error: err.message })
@@ -61,7 +59,6 @@ module.exports = {
   },
 
   deletePage: async (req, res, next) => {
-    console.log(getOrgId())
     const { title } = req.body
     try {
       const data = {
@@ -95,7 +92,6 @@ module.exports = {
   },
 
   oauthCheck: async (req, res, next) => {
-    console.log(accessToken)
     if (!accessToken) {
       console.log('redirected to github auth')
       res.status(HttpStatus.OK).json({

@@ -23,7 +23,6 @@ module.exports = {
   fetchPage: async (pageName, ref = 'master') => {
     try {
       const isPresentInCache = await redisClient.exists(`${pageName}-${ref}`)
-      console.log(`key exsits in redis = ${!!isPresentInCache}`)
       if (isPresentInCache) {
         return base64.decode(await redisClient.get(`${pageName}-${ref}`))
       }
@@ -39,7 +38,6 @@ module.exports = {
     const pageKeys = await redisClient.keys('*')
     pageKeys.forEach(async (key) => {
       if (key.substring(0, key.indexOf('-')) === pageName) {
-        console.log(key)
         await redisClient.del(key)
       }
     })
@@ -62,7 +60,7 @@ module.exports = {
     return JSON.parse(await redisClient.get(`${pageName}-history`))
   },
 
-  updatePagesIndex: async () => { // will run when page is deleted, new page is created
+  updatePagesIndex: async () => {
     const newIndex = [{ title: '_Sidebar', content: await module.exports.fetchPage('_Sidebar') }, { title: 'Home' }]
     const pages = (await axios.get(`${githubAPI}/repos/${orgId}/Donut-wikis-backup/contents`, opts)).data
     pages.forEach(ele => {
@@ -113,7 +111,6 @@ module.exports = {
     }
     try {
       const commit = (await axios.put(`${githubAPI}/repos/${orgId}/Donut-wikis-backup/contents/${fileName}.md`, data, opts)).data.commit.sha
-      console.log(commit)
       if (newFile) {
         // open an issue
         data = { title: fileName, body: 'Issue opened by Donut to keep track of commits affecting this file.' }
@@ -139,7 +136,6 @@ module.exports = {
 - [$Home$]
   `
     if ((await module.exports.getAllRepos()).filter(repo => repo.name === 'Donut-wikis-backup').length) {
-      console.log('Repository of the name Donut-wikis-backup already exists')
       return 'ALREADY_EXISTS'
     } else {
       const data = { name: 'Donut-wikis-backup', private: false, description: 'Super Private Donut repo' }
