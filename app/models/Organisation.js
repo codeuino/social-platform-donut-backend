@@ -194,6 +194,9 @@ const orgSchema = new Schema({
     type: Date,
     required: true,
     default: Date.now()
+  },
+  wikis: {
+    accessToken: { type: String, default: null }
   }
 })
 module.exports = mongoose.model('Organization', orgSchema)

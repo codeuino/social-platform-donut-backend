@@ -2,6 +2,7 @@ const axios = require('axios')
 const HttpStatus = require('http-status-codes')
 const WikiHelper = require('../utils/wikis-helper')
 const HANDLER = require('../utils/response-helper')
+const Organization = require('../models/Organisation')
 const { changeFileOnRemote, addPageToIndex, fetchPagesIndex, updatePagesIndex, getOpts, getOrgId } = WikiHelper
 
 const clientId = process.env.GITHUB_OAUTH_APP_CLIENTID
@@ -14,6 +15,13 @@ module.exports = {
 
   getWikis: async (req, res, next) => {
     try {
+      if (!accessToken) {
+        const Org = await Organization.find({}).lean().exec()
+        console.log(Org[0])
+        if (Org[0].wikis.accessToken) {
+          accessToken = Org[0].wikis.accessToken
+        }
+      }
       if (!accessToken) {
         res.status(HttpStatus.OK).json({ wikis: 'NO_ACCESS_TOKEN' })
       } else {
@@ -95,7 +103,9 @@ module.exports = {
         redirect_url: `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=repo`
       })
     } else {
-      res.redirect(`${process.env.clientbaseurl}/wikis`)
+      res.status(HttpStatus.OK).json({
+        redirect: false
+      })
     }
   },
 
@@ -110,6 +120,9 @@ module.exports = {
       const resp = await axios.post('https://github.com/login/oauth/access_token', body, opts)
       accessToken = resp.data.access_token
       WikiHelper.setOpts(accessToken)
+      const Org = await Organization.find({}).exec()
+      Org[0].wikis.accessToken = accessToken
+      await Org[0].save()
       await WikiHelper.getOrg()
       await WikiHelper.createRepo()
       await updatePagesIndex()
