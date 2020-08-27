@@ -52,6 +52,33 @@ const ticketSchema = new Schema({
       }
     }
   ],
+  history: [
+    {
+      title: {
+        type: String,
+        trim: true
+      },
+      content: {
+        shortDescription: {
+          type: String,
+          trim: true
+        },
+        longDescription: {
+          type: String,
+          trim: true
+        }
+      },
+      editedAt: {
+        type: Date,
+        required: true,
+        default: Date.now()
+      },
+      editedBy: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      }
+    }
+  ],
   comments: [
     {
       content: {

@@ -9,6 +9,7 @@ module.exports = {
     try {
       const ticket = new TicketModel(req.body)
       ticket.createdBy = userId
+      ticket.history.push({ ...req.body, editedBy: userId })
       await ticket.save()
       res.status(HttpStatus.CREATED).json({
         ticket: ticket
@@ -51,13 +52,16 @@ module.exports = {
         // Only user who created the ticket and admin can edit the ticket
         return res.status(HttpStatus.FORBIDDEN).json({ error: 'Edit Forbidden by user' })
       }
+      if (ticket.title === title &&
+        ticket.content.shortDescription === content.shortDescription &&
+        ticket.content.longDescription === content.longDescription) {
+        return res.status(HttpStatus.NOT_MODIFIED).json({ error: 'No changes to ticket' })
+      }
       ticket.title = title
-      if (content.shortDescription) {
-        ticket.content.shortDescription = content.shortDescription
-      }
-      if (content.longDescription) {
-        ticket.content.longDescription = content.longDescription
-      }
+      ticket.content.shortDescription = content.shortDescription
+      ticket.content.longDescription = content.longDescription
+      ticket.history.push({ title, content, editedBy: userId, editedAt: Date.now() })
+      ticket.updatedAt = Date.now()
       await ticket.save()
       res.status(HttpStatus.OK).json({
         ticket: ticket
