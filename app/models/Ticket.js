@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 const validator = require('validator')
 const Schema = mongoose.Schema
+const commentSchema = require('./Comment').schema
 
 const ticketSchema = new Schema({
   title: {
@@ -79,32 +80,7 @@ const ticketSchema = new Schema({
       }
     }
   ],
-  comments: [
-    {
-      content: {
-        type: String,
-        trim: true,
-        minlength: 10,
-        validate (content) {
-          if (validator.isEmpty(content)) {
-            throw new Error('Comment cannot be empty')
-          }
-          if (!validator.isLength(content, { min: 10 })) {
-            throw new Error('Comment should be alteast 10 characters long!')
-          }
-        }
-      },
-      createdBy: {
-        type: Schema.Types.ObjectId,
-        ref: 'User'
-      },
-      createdAt: {
-        type: Date,
-        required: true,
-        default: Date.now()
-      }
-    }
-  ],
+  comments: [commentSchema], // mongoose subdocument
   createdAt: {
     type: Date,
     required: true,

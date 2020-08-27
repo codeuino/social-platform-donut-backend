@@ -30,13 +30,22 @@ router.post('/:id/tag/:tag', isUnderMaintenance, auth, isValidObjectId, ticketCo
 router.delete('/:id/tag/:tag', isUnderMaintenance, auth, isValidObjectId, ticketController.deleteTag)
 
 // COMMENT ON A TICKET
-// router.post('/:id/comment')
+router.post('/:id/comment', isUnderMaintenance, auth, isValidObjectId, ticketController.createComment)
 
 // GET TICKET COMMENTS BY TICKET ID
-// router.get('/:id/comment')
+router.get('/:id/comments', isUnderMaintenance, auth, isValidObjectId, ticketController.getComments)
 
 // EDIT TICKET COMMENT BY ID
-// router.put('/:ticketID/comment/:commentID')
+router.put('/:id/comment/:commentID', isUnderMaintenance, auth, isValidObjectId, ticketController.editComment)
+
+// UPVOTE TICKET COMMENT
+router.put(':id/comment/:commentID/upvote', isUnderMaintenance, auth, isValidObjectId, ticketController.upVoteComment)
+
+// DOWNVOTE TICKET COMMENT
+router.put(':id/comment/:commentID/downvote', isUnderMaintenance, auth, isValidObjectId, ticketController.downVoteComment)
+
+// DELETE TICKET COMMENT BY ID
+router.delete('/:id/comment/:commentID', isUnderMaintenance, auth, isValidObjectId, ticketController.deleteComment)
 
 // DELETE TICKET BY ID
 router.delete('/:id', isUnderMaintenance, auth, isValidObjectId, ticketController.deleteTicket)

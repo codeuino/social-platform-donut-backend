@@ -1,9 +1,9 @@
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
 const TicketModel = require('../models/Ticket')
-const Ticket = require('../models/Ticket')
 
 module.exports = {
+
   create: async (req, res, next) => {
     const userId = req.user.id.toString()
     try {
@@ -21,6 +21,7 @@ module.exports = {
       })
     }
   },
+
   getTicket: async (req, res, next) => {
     const { user } = req.query
     try {
@@ -39,6 +40,7 @@ module.exports = {
       })
     }
   },
+
   editTicket: async (req, res, next) => {
     const { id } = req.params
     const { title, content } = req.body
@@ -73,6 +75,7 @@ module.exports = {
       })
     }
   },
+
   deleteTicket: async (req, res, next) => {
     const { id } = req.params
     const userId = req.user.id.toString()
@@ -94,6 +97,7 @@ module.exports = {
       })
     }
   },
+
   editTag: async (req, res, next) => {
     const { id } = req.params
     const { tags } = req.body // tags is the array of tags to add
@@ -118,6 +122,7 @@ module.exports = {
       })
     }
   },
+
   addTag: async (req, res, next) => {
     const { id, tag } = req.params
     const userId = req.user.id.toString()
@@ -141,6 +146,114 @@ module.exports = {
       })
     }
   },
+
+  // Create Comment of a Ticket
+  createComment: async (req, res, next) => {
+    const { id } = req.params
+    const userId = req.user.id.toString()
+    try {
+      const ticket = await TicketModel.findById(id)
+      if (!ticket) {
+        return res.status(HttpStatus.NOT_FOUND).json({ error: 'No ticket exist' })
+      }
+      ticket.comments.push({
+        ...req.body,
+        userId,
+        postId: id
+      })
+      await ticket.save()
+      res.status(HttpStatus.OK).json({ ticket: ticket })
+    } catch (error) {
+      console.log(error)
+      HANDLER.handleError(res, {
+        code: error.code || HttpStatus.BAD_REQUEST,
+        ...error
+      })
+    }
+  },
+
+  // Get Comments on a Ticket
+  getComments: async (req, res, next) => {
+    const { id } = req.params
+    try {
+      const ticket = await TicketModel.findById(id)
+      if (!ticket) {
+        return res.status(HttpStatus.NOT_FOUND).json({ error: 'No ticket exist' })
+      }
+      res.status(HttpStatus.OK).json({ comments: ticket.comments })
+    } catch (error) {
+      console.log(error)
+      HANDLER.handleError(res, {
+        code: error.code || HttpStatus.BAD_REQUEST,
+        ...error
+      })
+    }
+  },
+
+  editComment: async (req, res, next) => {
+    const { id, commentID } = req.params
+    const { content } = req.body
+    const userId = req.user.id.toString()
+    try {
+      const ticket = await TicketModel.findById(id)
+      if (!ticket) {
+        return res.status(HttpStatus.NOT_FOUND).json({ error: 'No ticket exist' })
+      }
+      const comment = ticket.comments.id(commentID)
+      if (userId !== comment.createdBy && !req.user.isAdmin) {
+        // Only user who created the comment and admin can edit the comment
+        return res.status(HttpStatus.FORBIDDEN).json({ error: 'Edit Forbidden by user' })
+      }
+      comment.content = content
+      comment.updatedAt = Date.now()
+      await ticket.save()
+      res.status(HttpStatus.OK).json({ comment: comment })
+    } catch (error) {
+      console.log(error)
+      HANDLER.handleError(res, {
+        code: error.code || HttpStatus.BAD_REQUEST,
+        ...error
+      })
+    }
+  },
+
+  upVoteComment: async (req, res, next) => {
+    res.status(HttpStatus.OK).json({
+      error: 'under development'
+    })
+  },
+
+  downVoteComment: async (req, res, next) => {
+    res.status(HttpStatus.OK).json({
+      error: 'under development'
+    })
+  },
+
+  deleteComment: async (req, res, next) => {
+    const { id, commentID } = req.params
+    const userId = req.user.id.toString()
+    try {
+      const ticket = await TicketModel.findById(id)
+      if (!ticket) {
+        return res.status(HttpStatus.NOT_FOUND).json({ error: 'No ticket exist' })
+      }
+      const comment = ticket.comments.id(commentID)
+      if (userId !== comment.createdBy && !req.user.isAdmin) {
+        // Only user who created the comment and admin can edit the comment
+        return res.status(HttpStatus.FORBIDDEN).json({ error: 'Edit Forbidden by user' })
+      }
+      comment.remove()
+      await ticket.save()
+      res.status(HttpStatus.OK).json({ comment: comment })
+    } catch (error) {
+      console.log(error)
+      HANDLER.handleError(res, {
+        code: error.code || HttpStatus.BAD_REQUEST,
+        ...error
+      })
+    }
+  },
+
   deleteTag: async (req, res, next) => {
     const { id, tag } = req.params
     const userId = req.user.id.toString()
