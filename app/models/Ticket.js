@@ -41,17 +41,28 @@ const ticketSchema = new Schema({
       }
     }
   },
+  tags: [
+    {
+      type: String,
+      trim: true,
+      validate: (value) => {
+        if (!validator.isLength(value, { min: 0, max: 20 })) {
+          throw new Error('Tags should have between 0 to 20 characters')
+        }
+      }
+    }
+  ],
   comments: [
     {
       content: {
         type: String,
         trim: true,
         minlength: 10,
-        validate (shortDescription) {
-          if (validator.isEmpty(shortDescription)) {
+        validate (content) {
+          if (validator.isEmpty(content)) {
             throw new Error('Comment cannot be empty')
           }
-          if (!validator.isLength(shortDescription, { min: 10 })) {
+          if (!validator.isLength(content, { min: 10 })) {
             throw new Error('Comment should be alteast 10 characters long!')
           }
         }
