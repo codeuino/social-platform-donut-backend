@@ -46,7 +46,7 @@
     "testTimeout": 30000
   },
   "devDependencies": {
-    "codecov": "^3.6.1",
+    "codecov": "^3.7.1",
     "env-cmd": "^10.0.1",
     "eslint": "^6.7.1",
     "eslint-config-standard": "^14.1.0",
