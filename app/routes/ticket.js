@@ -39,10 +39,10 @@ router.get('/:id/comments', isUnderMaintenance, auth, isValidObjectId, ticketCon
 router.put('/:id/comment/:commentID', isUnderMaintenance, auth, isValidObjectId, ticketController.editComment)
 
 // UPVOTE TICKET COMMENT
-router.put(':id/comment/:commentID/upvote', isUnderMaintenance, auth, isValidObjectId, ticketController.upVoteComment)
+router.put('/:id/comment/:commentID/upvote', isUnderMaintenance, auth, isValidObjectId, ticketController.upVoteComment)
 
 // DOWNVOTE TICKET COMMENT
-router.put(':id/comment/:commentID/downvote', isUnderMaintenance, auth, isValidObjectId, ticketController.downVoteComment)
+router.put('/:id/comment/:commentID/downvote', isUnderMaintenance, auth, isValidObjectId, ticketController.downVoteComment)
 
 // DELETE TICKET COMMENT BY ID
 router.delete('/:id/comment/:commentID', isUnderMaintenance, auth, isValidObjectId, ticketController.deleteComment)

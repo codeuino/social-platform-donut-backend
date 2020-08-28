@@ -56,7 +56,8 @@ module.exports = {
       }
       if (ticket.title === title &&
         ticket.content.shortDescription === content.shortDescription &&
-        ticket.content.longDescription === content.longDescription) {
+        ticket.content.longDescription === content.longDescription &&
+        ticket.status === content.status) {
         return res.status(HttpStatus.NOT_MODIFIED).json({ error: 'No changes to ticket' })
       }
       ticket.title = title
@@ -64,6 +65,9 @@ module.exports = {
       ticket.content.longDescription = content.longDescription
       ticket.history.push({ title, content, editedBy: userId, editedAt: Date.now() })
       ticket.updatedAt = Date.now()
+      if (content.status) {
+        ticket.status = content.status
+      }
       await ticket.save()
       res.status(HttpStatus.OK).json({
         ticket: ticket
@@ -218,15 +222,81 @@ module.exports = {
   },
 
   upVoteComment: async (req, res, next) => {
-    res.status(HttpStatus.OK).json({
-      error: 'under development'
-    })
+    const { id, commentID } = req.params
+    const userId = req.user.id.toString()
+    try {
+      const ticket = await TicketModel.findById(id)
+      if (!ticket) {
+        return res.status(HttpStatus.NOT_FOUND).json({ error: 'No ticket exist' })
+      }
+      const comment = ticket.comments.id(commentID)
+      if (!comment) {
+        return res.status(HttpStatus.NOT_FOUND).json({ error: 'No comment exist' })
+      }
+      // CHECKS IF THE USER HAS ALREADY UPVOTED THE COMMENT
+      comment.votes.upVotes.user.filter(user => {
+        if (JSON.stringify(user) === JSON.stringify(userId)) {
+          const error = new Error()
+          error.message = 'Bad request - User has already upvoted'
+          error.code = HttpStatus.BAD_REQUEST
+          throw error
+        }
+      })
+      // CHECKS IF THE USER HAS ALREADY DOWNVOTED THE COMMENT
+      comment.votes.downVotes.user.filter(user => {
+        if (JSON.stringify(user) === JSON.stringify(userId)) {
+          comment.votes.downVotes.user.remove(user)
+        }
+      })
+      comment.votes.upVotes.user.unshift(userId)
+      await ticket.save()
+      res.status(HttpStatus.OK).json({ comment: comment })
+    } catch (error) {
+      console.log(error)
+      HANDLER.handleError(res, {
+        code: error.code || HttpStatus.BAD_REQUEST,
+        ...error
+      })
+    }
   },
 
   downVoteComment: async (req, res, next) => {
-    res.status(HttpStatus.OK).json({
-      error: 'under development'
-    })
+    const { id, commentID } = req.params
+    const userId = req.user.id.toString()
+    try {
+      const ticket = await TicketModel.findById(id)
+      if (!ticket) {
+        return res.status(HttpStatus.NOT_FOUND).json({ error: 'No ticket exist' })
+      }
+      const comment = ticket.comments.id(commentID)
+      if (!comment) {
+        return res.status(HttpStatus.NOT_FOUND).json({ error: 'No comment exist' })
+      }
+      // CHECKS IF THE USER HAS ALREADY DOWNVOTED THE COMMENT
+      comment.votes.downVotes.user.filter(user => {
+        if (JSON.stringify(user) === JSON.stringify(userId)) {
+          const error = new Error()
+          error.message = 'Bad request - User has already downvoted'
+          error.code = HttpStatus.BAD_REQUEST
+          throw error
+        }
+      })
+      // CHECKS IF THE USER HAS ALREADY UPVOTED THE COMMENT
+      comment.votes.upVotes.user.filter(user => {
+        if (JSON.stringify(user) === JSON.stringify(userId)) {
+          comment.votes.upVotes.user.remove(user)
+        }
+      })
+      comment.votes.downVotes.user.unshift(userId)
+      await ticket.save()
+      res.status(HttpStatus.OK).json({ comment: comment })
+    } catch (error) {
+      console.log(error)
+      HANDLER.handleError(res, {
+        code: error.code || HttpStatus.BAD_REQUEST,
+        ...error
+      })
+    }
   },
 
   deleteComment: async (req, res, next) => {

@@ -13,6 +13,12 @@ const ticketSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'User'
   },
+  status: {
+    type: String,
+    enum: ['Open', 'Closed', 'Pending', 'Closed'],
+    default: 'Open',
+    required: true
+  },
   content: {
     shortDescription: {
       type: String,
