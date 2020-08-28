@@ -9,5 +9,15 @@ module.exports = {
     } catch (error) {
       console.log(error)
     }
+  },
+  addToNotificationForUser: async (userId, res, obj, next) => {
+    try {
+      console.log('adding to user\'s notifications')
+      const user = await User.findById(userId)
+      user.ticketNotifications.unshift(obj)
+      await user.save()
+    } catch (error) {
+      console.log(error)
+    }
   }
 }

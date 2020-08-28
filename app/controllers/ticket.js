@@ -177,6 +177,10 @@ module.exports = {
         userId,
         postId: id
       })
+      notification.heading = 'New Comment on Ticket!'
+      notification.content = `${req.user.name.firstName} ${req.user.name.lastName} commented on your Ticket!`
+      notification.tag = TAGS.NEW
+      await ticketNotificationHelper.addToNotificationForUser(ticket.createdBy, res, notification, next)
       await ticket.save()
       res.status(HttpStatus.OK).json({ ticket: ticket })
     } catch (error) {
