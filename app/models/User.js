@@ -170,6 +170,24 @@ const UserSchema = new mongoose.Schema({
       }
     }
   ],
+  ticketNotifications: [
+    {
+      heading: {
+        type: String
+      },
+      content: {
+        type: String
+      },
+      tag: {
+        type: String
+      },
+      createdAt: {
+        type: Date,
+        required: true,
+        default: Date.now()
+      }
+    }
+  ],
   followers: [
     {
       type: mongoose.Schema.Types.ObjectId,

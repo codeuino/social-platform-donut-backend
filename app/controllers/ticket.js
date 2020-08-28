@@ -1,6 +1,14 @@
-const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
 const TicketModel = require('../models/Ticket')
+const TAGS = require('../utils/notificationTags')
+const HANDLER = require('../utils/response-helper')
+const ticketNotificationHelper = require('../utils/ticket-notif-helper')
+
+const notification = {
+  heading: '',
+  content: '',
+  tag: ''
+}
 
 module.exports = {
 
@@ -10,6 +18,10 @@ module.exports = {
       const ticket = new TicketModel(req.body)
       ticket.createdBy = userId
       ticket.history.push({ ...req.body, editedBy: userId })
+      notification.heading = 'New Support Ticket!'
+      notification.content = `${req.user.name.firstName} ${req.user.name.lastName} Creted a new Support Ticket!`
+      notification.tag = TAGS.NEW
+      await ticketNotificationHelper.addToNotificationForAdmin(req, res, notification, next)
       await ticket.save()
       res.status(HttpStatus.CREATED).json({
         ticket: ticket

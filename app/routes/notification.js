@@ -23,4 +23,7 @@ router.get(
 // GET NOTICATIONS FOR PROPOSALS
 router.get('/proposal/all', notificationController.getProposalNotifications)
 
+// GET TICKET NOTIFICATIONS FOR LOGGED IN USER
+router.get('/ticket/user/all', isUnderMaintenance, auth, notificationController.getTicketNotifications)
+
 module.exports = router
