@@ -10,6 +10,14 @@ module.exports = {
       console.log(error)
     }
   },
+  addToNotificationForModerator: async (req, res, obj, next) => {
+    try {
+      console.log('adding to admin\'s notifications')
+      await User.updateMany({ isTicketsModerator: true }, { $push: { ticketNotifications: { $each: [obj], $position: 0 } } })
+    } catch (error) {
+      console.log(error)
+    }
+  },
   addToNotificationForUser: async (userId, res, obj, next) => {
     try {
       console.log('adding to user\'s notifications')

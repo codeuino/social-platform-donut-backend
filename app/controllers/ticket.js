@@ -1,3 +1,4 @@
+const UserModel = require('../models/User')
 const HttpStatus = require('http-status-codes')
 const TicketModel = require('../models/Ticket')
 const TAGS = require('../utils/notificationTags')
@@ -21,7 +22,7 @@ module.exports = {
       notification.heading = 'New Support Ticket!'
       notification.content = `${req.user.name.firstName} ${req.user.name.lastName} Creted a new Support Ticket!`
       notification.tag = TAGS.NEW
-      await ticketNotificationHelper.addToNotificationForAdmin(req, res, notification, next)
+      await ticketNotificationHelper.addToNotificationForModerator(req, res, notification, next)
       await ticket.save()
       res.status(HttpStatus.CREATED).json({
         ticket: ticket
@@ -62,7 +63,7 @@ module.exports = {
       if (!ticket) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No ticket exist' })
       }
-      if (userId !== ticket.createdBy && !req.user.isAdmin) {
+      if (userId !== ticket.createdBy && !req.user.isAdmin && !req.user.isTicketsModerator) {
         // Only user who created the ticket and admin can edit the ticket
         return res.status(HttpStatus.FORBIDDEN).json({ error: 'Edit Forbidden by user' })
       }
@@ -100,7 +101,7 @@ module.exports = {
       if (!ticket) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No ticket exist' })
       }
-      if (userId !== ticket.createdBy && !req.user.isAdmin) {
+      if (userId !== ticket.createdBy && !req.user.isAdmin && !req.user.isTicketsModerator) {
         // Only user who created the ticket and admin can delete the ticket
         return res.status(HttpStatus.FORBIDDEN).json({ error: 'Bad delete request' })
       }
@@ -123,7 +124,7 @@ module.exports = {
       if (!ticket) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No ticket exist' })
       }
-      if (userId !== ticket.createdBy && !req.user.isAdmin) {
+      if (userId !== ticket.createdBy && !req.user.isAdmin && !req.user.isTicketsModerator) {
         // Only user who created the ticket and admin can edit ticket tags
         return res.status(HttpStatus.FORBIDDEN).json({ error: 'Edit Forbidden by user' })
       }
@@ -147,7 +148,7 @@ module.exports = {
       if (!ticket) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No ticket exist' })
       }
-      if (userId !== ticket.createdBy && !req.user.isAdmin) {
+      if (userId !== ticket.createdBy && !req.user.isAdmin && !req.user.isTicketsModerator) {
         // Only user who created the ticket and admin can add tag to the ticket
         return res.status(HttpStatus.FORBIDDEN).json({ error: 'Edit Forbidden by user' })
       }
@@ -220,7 +221,7 @@ module.exports = {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No ticket exist' })
       }
       const comment = ticket.comments.id(commentID)
-      if (userId !== comment.createdBy && !req.user.isAdmin) {
+      if (userId !== comment.createdBy && !req.user.isAdmin && !req.user.isTicketsModerator) {
         // Only user who created the comment and admin can edit the comment
         return res.status(HttpStatus.FORBIDDEN).json({ error: 'Edit Forbidden by user' })
       }
@@ -324,13 +325,72 @@ module.exports = {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No ticket exist' })
       }
       const comment = ticket.comments.id(commentID)
-      if (userId !== comment.createdBy && !req.user.isAdmin) {
+      if (userId !== comment.createdBy && !req.user.isAdmin && !req.user.isTicketsModerator) {
         // Only user who created the comment and admin can edit the comment
         return res.status(HttpStatus.FORBIDDEN).json({ error: 'Edit Forbidden by user' })
       }
       comment.remove()
       await ticket.save()
       res.status(HttpStatus.OK).json({ comment: comment })
+    } catch (error) {
+      console.log(error)
+      HANDLER.handleError(res, {
+        code: error.code || HttpStatus.BAD_REQUEST,
+        ...error
+      })
+    }
+  },
+
+  getModerators: async (req, res, next) => {
+    try {
+      const moderators = await UserModel.find({ isTicketsModerator: true })
+      return res.status(HttpStatus.OK).json({ moderators: moderators })
+    } catch (error) {
+      console.log(error)
+      HANDLER.handleError(res, {
+        code: error.code || HttpStatus.BAD_REQUEST,
+        ...error
+      })
+    }
+  },
+
+  addModerator: async (req, res, next) => {
+    // id of User to add as moderator
+    const { id } = req.params
+    try {
+      if (!req.user.isAdmin) {
+        return res.status(HttpStatus.FORBIDDEN).json({ error: 'Only Admin user can add moderator' })
+      }
+      const user = await UserModel.findById(id)
+      if (!user) {
+        return res.status(HttpStatus.NOT_FOUND).json({ error: 'No user exist' })
+      }
+      user.isTicketsModerator = true
+      await user.save()
+      return res.status(HttpStatus.OK).json({ success: 'Add moderator successful' })
+    } catch (error) {
+      console.log(error)
+      HANDLER.handleError(res, {
+        code: error.code || HttpStatus.BAD_REQUEST,
+        ...error
+      })
+    }
+  },
+
+  removeModerator: async (req, res, next) => {
+    // id of User to add as moderator
+    const { id } = req.params
+    try {
+      if (!req.user.isAdmin) {
+        return res.status(HttpStatus.FORBIDDEN).json({ error: 'Only Admin user can remove moderator' })
+      }
+      const user = await UserModel.findById(id)
+      if (!user) {
+        return res.status(HttpStatus.NOT_FOUND).json({ error: 'No user exist' })
+      }
+      user.isTicketsModerator = false
+      await user.save()
+      return res.status(HttpStatus.OK).json({ success: 'Remove moderator successful' })
     } catch (error) {
       console.log(error)
       HANDLER.handleError(res, {
@@ -348,7 +408,7 @@ module.exports = {
       if (!ticket) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No ticket exist' })
       }
-      if (userId !== ticket.createdBy && !req.user.isAdmin) {
+      if (userId !== ticket.createdBy && !req.user.isAdmin && !req.user.isTicketsModerator) {
         // Only user who created the ticket and admin can delete tag from a ticket
         return res.status(HttpStatus.FORBIDDEN).json({ error: 'Edit Forbidden by user' })
       }

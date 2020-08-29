@@ -223,6 +223,10 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isTicketsModerator: {
+    type: Boolean,
+    default: false
+  },
   isActivated: {
     type: Boolean,
     default: false
