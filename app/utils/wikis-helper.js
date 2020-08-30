@@ -4,6 +4,7 @@ const base64 = require('base-64')
 const axios = require('axios')
 
 const githubAPI = 'https://api.github.com'
+let githubAPIrepos = null
 let opts = { headers: {} }
 let orgId = null
 
@@ -14,6 +15,8 @@ module.exports = {
   getOrg: async () => {
     const respOrg = await axios.get(`${githubAPI}/user/orgs`, opts)
     orgId = respOrg.data[0].login
+    githubAPIrepos = `${githubAPI}/repos/${orgId}/Donut-wikis-backup`
+    return orgId
   },
 
   getOrgId: () => orgId,
@@ -26,7 +29,7 @@ module.exports = {
       if (isPresentInCache) {
         return base64.decode(await redisClient.get(`${pageName}-${ref}`))
       }
-      const page = (await axios.get(`${githubAPI}/repos/${orgId}/Donut-wikis-backup/contents/${pageName}.md?ref=${ref}`, opts)).data.content
+      const page = (await axios.get(`${githubAPIrepos}/${pageName}.md?ref=${ref}`, opts)).data.content
       await redisClient.set(`${pageName}-${ref}`, page)
       return base64.decode(page)
     } catch (err) {
@@ -45,7 +48,8 @@ module.exports = {
 
   updatePageHistory: async (pageName) => {
     try {
-      let history = (await axios.get(`${githubAPI}/repos/${orgId}/Donut-wikis-backup/issues/${await module.exports.getFileIssueNumber(pageName)}/comments`, opts)).data
+      const issueNumber = await module.exports.getFileIssueNumber(pageName)
+      let history = (await axios.get(`${githubAPIrepos}/issues/${issueNumber}/comments`, opts)).data
       history = history.reverse()
       await redisClient.set(`${pageName}-history`, JSON.stringify(history))
     } catch (err) {
@@ -61,8 +65,9 @@ module.exports = {
   },
 
   updatePagesIndex: async () => {
-    const newIndex = [{ title: '_Sidebar', content: await module.exports.fetchPage('_Sidebar') }, { title: 'Home' }]
-    const pages = (await axios.get(`${githubAPI}/repos/${orgId}/Donut-wikis-backup/contents`, opts)).data
+    const pageCotent = await module.exports.fetchPage('_Sidebar')
+    const newIndex = [{ title: '_Sidebar', content: pageCotent }, { title: 'Home' }]
+    const pages = (await axios.get(`${githubAPIrepos}/contents`, opts)).data
     pages.forEach(ele => {
       const eleName = ele.name.substring(0, ele.name.indexOf('.'))
       if (eleName !== '_Sidebar' && eleName !== 'Home') { newIndex.push({ title: eleName }) }
@@ -97,7 +102,7 @@ module.exports = {
     if (await redisClient.exists(`${fileName}-IssueNumber`)) {
       issueNumber = await redisClient.get(`${fileName}-IssueNumber`)
     } else {
-      const allIssues = (await axios.get(`${githubAPI}/repos/${orgId}/Donut-wikis-backup/issues?state=closed`, opts)).data
+      const allIssues = (await axios.get(`${githubAPIrepos}/issues?state=closed`, opts)).data
       issueNumber = (allIssues.filter(issue => issue.title === fileName))[0].number
       await redisClient.set(`${fileName}-IssueNumber`, issueNumber)
     }
@@ -107,16 +112,16 @@ module.exports = {
   changeFileOnRemote: async (fileName, content, commitMesage, newFile = false) => {
     let data = { message: commitMesage, content: base64.encode(content) }
     if (!newFile) {
-      data.sha = (await axios.get(`${githubAPI}/repos/${orgId}/Donut-wikis-backup/contents/${fileName}.md`, opts)).data.sha
+      data.sha = (await axios.get(`${githubAPIrepos}/contents/${fileName}.md`, opts)).data.sha
     }
     try {
-      const commit = (await axios.put(`${githubAPI}/repos/${orgId}/Donut-wikis-backup/contents/${fileName}.md`, data, opts)).data.commit.sha
+      const commit = (await axios.put(`${githubAPIrepos}/contents/${fileName}.md`, data, opts)).data.commit.sha
       if (newFile) {
         // open an issue
         data = { title: fileName, body: 'Issue opened by Donut to keep track of commits affecting this file.' }
-        const issueNumber = (await axios.post(`${githubAPI}/repos/${orgId}/Donut-wikis-backup/issues`, data, opts)).data.number
+        const issueNumber = (await axios.post(`${githubAPIrepos}/issues`, data, opts)).data.number
         redisClient.set(`${fileName}-IssueNumber`, issueNumber)
-        await axios.patch(`${githubAPI}/repos/${orgId}/Donut-wikis-backup/issues/${issueNumber}`, { state: 'closed' }, opts)
+        await axios.patch(`${githubAPIrepos}/issues/${issueNumber}`, { state: 'closed' }, opts)
       }
       await redisClient.set(`${fileName}-master`, base64.encode(content))
       // comment the sha of the commit and comments on the issue
@@ -124,7 +129,8 @@ module.exports = {
         commit: commit,
         comment: commitMesage
       }
-      await axios.post(`${githubAPI}/repos/${orgId}/Donut-wikis-backup/issues/${await module.exports.getFileIssueNumber(fileName)}/comments`, { body: JSON.stringify(commentBody) }, opts)
+      const issueNumber = await module.exports.getFileIssueNumber(fileName)
+      await axios.post(`${githubAPIrepos}/issues/${issueNumber}/comments`, { body: JSON.stringify(commentBody) }, opts)
       await module.exports.updatePageHistory(fileName)
     } catch (err) {
       console.log(err)
@@ -149,7 +155,10 @@ module.exports = {
       }
     }
   },
-  setOrgId: (id) => { orgId = id },
+  setOrgId: (id) => {
+    orgId = id
+    githubAPIrepos = `${githubAPI}/repos/${orgId}/Donut-wikis-backup`
+  },
   setOpts: (token) => { opts.headers.Authorization = `token ${token}` },
   getUser: async () => (await axios.get(`${githubAPI}/user`, opts)).data.login
 }

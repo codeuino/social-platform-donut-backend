@@ -10,21 +10,26 @@ const clientSecret = process.env.GITHUB_OAUTH_APP_CLIENTSECRET
 
 const githubAPI = 'https://api.github.com'
 let accessToken = null
+let orgId = null
 
 module.exports = {
 
   getWikis: async (req, res, next) => {
     try {
-      if (!accessToken) {
+      if (!accessToken || !orgId) {
         const Org = await Organization.find({}).lean().exec()
-        if (Org[0].wikis.accessToken) {
+        if (Org[0].wikis.accessToken && Org[0].wikis.orgId) {
           accessToken = Org[0].wikis.accessToken
+          orgId = Org[0].wikis.orgId
+          WikiHelper.setOrgId(orgId)
+          WikiHelper.setOpts(accessToken)
         }
       }
-      if (!accessToken) {
+      if (!accessToken || !orgId) {
         res.status(HttpStatus.OK).json({ wikis: 'NO_ACCESS_TOKEN' })
       } else {
-        res.status(HttpStatus.OK).json({ wikis: await addPageToIndex(await fetchPagesIndex(), 'Home') })
+        const data = await addPageToIndex(await fetchPagesIndex(), 'Home')
+        res.status(HttpStatus.OK).json({ wikis: data })
       }
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -37,7 +42,8 @@ module.exports = {
       if (!ref) {
         ref = 'master'
       }
-      res.status(HttpStatus.OK).json({ wikis: await addPageToIndex(await fetchPagesIndex(), title, ref) })
+      const data = await addPageToIndex(await fetchPagesIndex(), title, ref)
+      res.status(HttpStatus.OK).json({ wikis: data })
     } catch (err) {
       res.status(HttpStatus.BAD_REQUEST).json({ Error: err.message })
     }
@@ -48,10 +54,12 @@ module.exports = {
     try {
       await changeFileOnRemote(title, content, `${title} changes - ${comments}`)
       if (title !== '_Sidebar') {
-        res.status(HttpStatus.OK).json({ wikis: await addPageToIndex(await fetchPagesIndex(), title) })
+        const data = await addPageToIndex(await fetchPagesIndex(), title)
+        res.status(HttpStatus.OK).json({ wikis: data })
       } else {
         await updatePagesIndex()
-        res.status(HttpStatus.OK).json({ wikis: await addPageToIndex(await fetchPagesIndex(), 'Home') })
+        const data = await addPageToIndex(await fetchPagesIndex(), 'Home')
+        res.status(HttpStatus.OK).json({ wikis: data })
       }
     } catch (err) {
       res.status(HttpStatus.BAD_REQUEST).json({ Error: err.message })
@@ -61,17 +69,19 @@ module.exports = {
   deletePage: async (req, res, next) => {
     const { title } = req.body
     try {
+      const baseUrl = `${githubAPI}/repos/${getOrgId()}/Donut-wikis-backup`
       const data = {
         message: `${title} deleted`,
-        sha: (await axios.get(`${githubAPI}/repos/${getOrgId()}/Donut-wikis-backup/contents/${title}.md`, getOpts())).data.sha
+        sha: (await axios.get(`${baseUrl}/contents/${title}.md`, getOpts())).data.sha
       }
-      const deleteCommit = (await axios.delete(`${githubAPI}/repos/${getOrgId()}/Donut-wikis-backup/contents/${title}.md`, {
+      const deleteCommit = (await axios.delete(`${baseUrl}/contents/${title}.md`, {
         data: data,
         headers: getOpts().headers
       })).data.commit.sha
       const issueNumber = await WikiHelper.getFileIssueNumber(title)
-      await axios.post(`${githubAPI}/repos/${getOrgId()}/Donut-wikis-backup/issues/${issueNumber}/comments`, { body: deleteCommit }, getOpts())
-      await axios.patch(`${githubAPI}/repos/${getOrgId()}/Donut-wikis-backup/issues/${issueNumber}`, { title: `${title}-deleted-${deleteCommit.substring(0, 8)}` }, getOpts())
+      await axios.post(`${baseUrl}/issues/${issueNumber}/comments`, { body: deleteCommit }, getOpts())
+      const newIssueTitle = `${title}-deleted-${deleteCommit.substring(0, 8)}`
+      await axios.patch(`${baseUrl}/issues/${issueNumber}`, { title: newIssueTitle }, getOpts())
       await updatePagesIndex()
       await WikiHelper.clearPageFromCache(title)
       res.status(HttpStatus.OK).json({ wikis: await addPageToIndex(await fetchPagesIndex(), 'Home') })
@@ -85,7 +95,8 @@ module.exports = {
     try {
       await changeFileOnRemote(title, content, `${title} initial commit - ${comments}`, true)
       await updatePagesIndex()
-      res.status(HttpStatus.OK).json({ wikis: await addPageToIndex(await fetchPagesIndex(), title) })
+      const data = await addPageToIndex(await fetchPagesIndex(), title)
+      res.status(HttpStatus.OK).json({ wikis: data })
     } catch (err) {
       res.status(HttpStatus.BAD_REQUEST).json({ Error: err.message })
     }
@@ -117,9 +128,10 @@ module.exports = {
       accessToken = resp.data.access_token
       WikiHelper.setOpts(accessToken)
       const Org = await Organization.find({}).exec()
+      orgId = await WikiHelper.getOrg()
       Org[0].wikis.accessToken = accessToken
+      Org[0].wikis.orgId = orgId
       await Org[0].save()
-      await WikiHelper.getOrg()
       await WikiHelper.createRepo()
       await updatePagesIndex()
       res.redirect(`${process.env.clientbaseurl}/wikis`)
