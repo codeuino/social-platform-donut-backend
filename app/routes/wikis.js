@@ -37,7 +37,7 @@ router.post(
   wikisController.newPage
 )
 
-router.put(
+router.patch(
   '/pages',
   isUnderMaintenance,
   auth,
