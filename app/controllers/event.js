@@ -146,7 +146,7 @@ module.exports = {
     try {
       const EventData = await Event.find({}, {}, helper.paginate(req))
         .populate('createdBy', ['name.firstName', 'name.lastName', '_id', 'isAdmin'])
-        .sort({ eventDate: -1 })
+        .sort({ eventDate: 1 })
         .lean()
       return res.status(HttpStatus.OK).json({ events: EventData })
     } catch (error) {
@@ -183,7 +183,7 @@ module.exports = {
   UpComingEvents: async (req, res, next) => {
     try {
       const events = await Event.find({ eventDate: { $gt: Date.now() } }, {}, helper.paginate(req))
-        .sort({ eventDate: -1 })
+        .sort({ eventDate: 1 })
         .exec()
       return res.status(HttpStatus.OK).json({ events })
     } catch (error) {
@@ -195,7 +195,7 @@ module.exports = {
     try {
       const { id } = req.params
       const events = await Event.find({ createdBy: id }, {}, helper.paginate(req))
-        .sort({ eventDate: -1 })
+        .sort({ eventDate: 1 })
         .populate('createdBy', '_id name.firstName name.lastName')
         .exec()
       return res.status(HttpStatus.OK).json({ events })
