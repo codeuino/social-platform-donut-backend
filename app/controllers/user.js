@@ -10,6 +10,9 @@ const Events = require('../models/Event')
 const Organization = require('../models/Organisation')
 const TAGS = require('../utils/notificationTags')
 const settingHelper = require('../utils/settingHelpers')
+const Activity = require('../models/Activity')
+const activityHelper = require('../utils/activity-helper')
+
 const notification = {
   heading: '',
   content: '',
@@ -38,6 +41,12 @@ module.exports = {
       const token = await user.generateAuthToken()
       // Added fn to send email to activate account with warm message
       await emailController.sendEmail(req, res, next, token)
+
+      // create redis db for activity for the user
+      const activity = new Activity({ userId: data._id })
+      await activity.save()
+      // hide password
+      user.password = undefined
       return res.status(HttpStatus.CREATED).json({ user: user, token: token })
     } catch (error) {
       return res.status(HttpStatus.NOT_ACCEPTABLE).json({ error: error })
@@ -46,9 +55,9 @@ module.exports = {
   // GET USER PROFILE
   userProfile: async (req, res, next) => {
     try {
-      const id = req.params.id ? req.params.id : req.user._id 
+      const id = req.params.id || req.user._id
       const user = await User.findById({ _id: id })
-      .populate('followings', [
+        .populate('followings', [
           'name.firstName',
           'name.lastName',
           'info.about.designation',
@@ -73,6 +82,9 @@ module.exports = {
       if (!user) {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exist!' })
       }
+      // hide password and tokens
+      user.password = undefined
+      user.tokens = []
       return res.status(HttpStatus.OK).json({ user })
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -86,6 +98,7 @@ module.exports = {
       'phone',
       'info',
       'about',
+      'socialMedia',
       'isDeactivated'
     ]
     // added control as per org settings
@@ -110,6 +123,9 @@ module.exports = {
         user[update] = req.body[update]
       })
       await user.save()
+      // hide password and tokens
+      user.password = undefined
+      user.tokens = []
       return res.status(HttpStatus.OK).json({ data: user })
     } catch (error) {
       return res.status(HttpStatus.BAD_REQUEST).json({ error })
@@ -169,6 +185,8 @@ module.exports = {
     try {
       req.user.tokens = []
       await req.user.save()
+      // add all activity to db after successfully logged out
+      activityHelper.addActivityToDb(req, res)
       return res.status(HttpStatus.OK).json({ msg: 'User logged out Successfully!' })
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -225,6 +243,7 @@ module.exports = {
       const inviteLink = `${req.protocol}://${req.get('host')}/user/invite/${token}`
       return res.status(HttpStatus.OK).json({ inviteLink: inviteLink })
     } catch (error) {
+      console.log('error in req', error)
       HANDLER.handleError(res, error)
     }
   },
@@ -255,16 +274,16 @@ module.exports = {
 
   // ADD TO THE FOLLOWINGS LIST
   addFollowing: async (req, res, next) => {
-    const { followId } = req.body
+    const { id } = req.params
     try {
-      if (followId === req.user._id) {
+      if (id === req.user._id) {
         return res.status(HttpStatus.OK).json({ msg: 'You can not follow yourself!' })
       }
       const user = await User.findById(req.user.id)
       if (!user) {
         return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user exists!' })
       }
-      user.followings.unshift(followId)
+      user.followings.unshift(id)
       await user.save()
       next()
     } catch (error) {
@@ -274,9 +293,10 @@ module.exports = {
 
   // ADD TO FOLLOWERS LIST
   addFollower: async (req, res, next) => {
-    const { followId } = req.body
+    console.log('follow request!')
+    const { id } = req.params
     try {
-      const user = await User.findById(followId)
+      const user = await User.findById(id)
       if (!user) {
         return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user exists!' })
       }
@@ -297,6 +317,9 @@ module.exports = {
         .populate('followers', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
         .populate('blocked', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
         .exec()
+      // hide password and tokens
+      userData.password = undefined
+      userData.tokens = []
       return res.status(HttpStatus.OK).json({ user: userData })
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -305,7 +328,7 @@ module.exports = {
 
   // REMOVE FROM FOLLOWINGS LIST
   removeFollowing: async (req, res, next) => {
-    const { followId } = req.body
+    const { id } = req.params
     try {
       const user = await User.findById(req.user._id)
       if (!user) {
@@ -313,7 +336,7 @@ module.exports = {
       }
       // check if followId is in following list or not
       const followingIdArray = user.followings.map(followingId => followingId._id)
-      const isFollowingIdIndex = followingIdArray.indexOf(followId)
+      const isFollowingIdIndex = followingIdArray.indexOf(id)
       if (isFollowingIdIndex === -1) {
         return res.status(HttpStatus.OK).json({ msg: 'You haven\'t followed the user!' })
       } else {
@@ -329,9 +352,9 @@ module.exports = {
 
   // REMOVE FROM FOLLOWERS LIST
   removeFollower: async (req, res, next) => {
-    const { followId } = req.body
+    const { id } = req.params
     try {
-      const user = await User.findById(followId)
+      const user = await User.findById(id)
       if (!user) {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exists!' })
       }
@@ -347,6 +370,9 @@ module.exports = {
         .populate('followers', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
         .populate('blocked', ['name.firstName', 'name.lastName', 'info.about.designation', '_id', 'isAdmin'])
         .exec()
+      // hide password and tokens
+      userData.password = undefined
+      userData.tokens = []
       return res.status(HttpStatus.OK).json({ user: userData })
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -393,6 +419,9 @@ module.exports = {
         if (unblockIndex !== -1) {
           user.blocked.splice(unblockIndex, 1)
           await user.save()
+          // hide password and tokens
+          user.password = undefined
+          user.tokens = []
           return res.status(HttpStatus.OK).json({ user })
         }
         return res.status(HttpStatus.NOT_FOUND).json({ user })
@@ -430,6 +459,9 @@ module.exports = {
       }
       user.isRemoved = true
       await user.save()
+      // hide password and tokens
+      user.password = undefined
+      user.tokens = []
       return res.status(HttpStatus.OK).json({ user })
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -440,6 +472,9 @@ module.exports = {
     try {
       req.user.isActivated = !req.user.isActivated
       const user = await req.user.save()
+      // hide password and tokens
+      user.password = undefined
+      user.tokens = []
       return res.status(HttpStatus.OK).json({ user })
     } catch (error) {
       HANDLER.handleError(error)

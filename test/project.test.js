@@ -5,6 +5,7 @@ const HttpStatus = require('http-status-codes')
 const request = require('supertest')
 const Project = require('../app/models/Project')
 const User = require('../app/models/User')
+const redis = require('../config/redis').redisClient
 const randomDigit = Math.floor(Math.random() * 90 + 10)
 const pagination = 10
 const page = 1
@@ -96,6 +97,7 @@ let server
  */
 beforeAll(async (done) => {
   await Project.deleteMany()
+  await redis.flushall()
   await new User(testUser).save()
   server = app.listen(4000, () => {
     global.agent = request.agent(server)
@@ -184,7 +186,7 @@ test('Should get project by id', async (done) => {
 
 test('Should get all the project created by a user', async (done) => {
   await request(app)
-    .get('/project/me/all')
+    .get(`/project/${testUserId}/all`)
     .set('Authorization', `Bearer ${token}`)
     .send()
     .expect(HttpStatus.OK)
@@ -215,6 +217,10 @@ afterAll(async () => {
   await server.close()
   // delete all the projects project testing
   await Project.deleteMany()
+  // delete all the user created
+  await User.deleteMany()
+  // flush redis
+  await redis.flushall()
   // Closing the DB connection allows Jest to exit successfully.
   await mongoose.connection.close()
 })

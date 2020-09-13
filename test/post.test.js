@@ -5,6 +5,7 @@ const HttpStatus = require('http-status-codes')
 const request = require('supertest')
 const Post = require('../app/models/Post')
 const User = require('../app/models/User')
+const redis = require('../config/redis').redisClient
 const randomDigit = Math.floor(Math.random() * 90 + 10)
 
 const testUserId = new mongoose.Types.ObjectId()
@@ -100,6 +101,7 @@ let server
  */
 beforeAll(async (done) => {
   await Post.deleteMany()
+  await redis.flushall()
   await new User(testUser).save()
   server = app.listen(4000, () => {
     global.agent = request.agent(server)
@@ -230,7 +232,33 @@ test('Should update the Post data', async (done) => {
 
 test('Should retrieve all posts created by a user', async (done) => {
   await request(app)
-    .get('/post/me/all')
+    .get(`/post/${testUserId}/all`)
+    .set('Authorization', `Bearer ${token}`)
+    .send()
+    .expect(HttpStatus.OK)
+  done()
+})
+
+/**
+ * Testing pin post of by particular user
+ */
+
+test('Should pin the post', async (done) => {
+  await request(app)
+    .patch(`/post/pin/${testPostId}`)
+    .set('Authorization', `Bearer ${token}`)
+    .send()
+    .expect(HttpStatus.OK)
+  done()
+})
+
+/**
+ * Testing get all pinned post
+ */
+
+test('Should retrieve all the pinned post', async (done) => {
+  await request(app)
+    .get('/post/all/pinned?pagination=10&page=1')
     .set('Authorization', `Bearer ${token}`)
     .send()
     .expect(HttpStatus.OK)
@@ -249,6 +277,10 @@ afterAll(async () => {
   await server.close()
   // delete all the posts post testing
   await Post.deleteMany()
+  // delete all the user created
+  await User.deleteMany()
+  // flush redis
+  await redis.flushall()
   // Closing the DB connection allows Jest to exit successfully.
   await mongoose.connection.close()
 })

@@ -4,14 +4,16 @@ const morgan = require('morgan')
 const cookieParser = require('cookie-parser')
 const createError = require('http-errors')
 const path = require('path')
-
 const socket = require('socket.io')
 const multer = require('multer')
 const bodyParser = require('body-parser')
 const cors = require('cors')
+const helmet = require('helmet')
+const hpp = require('hpp')
 var winston = require('./config/winston')
+const rateLimiter = require('./app/middleware/rateLimiter')
+const sanitizer = require('./app/middleware/sanitise')
 const fileConstants = require('./config/fileHandlingConstants')
-
 
 const indexRouter = require('./app/routes/index')
 const authRouter = require('./app/routes/auth')
@@ -25,6 +27,7 @@ const projectRouter = require('./app/routes/project')
 const notificationRouter = require('./app/routes/notification')
 const proposalRouter = require('./app/routes/proposal')
 const analyticsRouter = require('./app/routes/analytics')
+const activityRouter = require('./app/routes/activity')
 
 const app = express()
 const server = require('http').Server(app)
@@ -32,6 +35,7 @@ const server = require('http').Server(app)
 app.use(cors())
 
 app.use(bodyParser.json({ limit: '200mb' }))
+app.use(cookieParser())
 app.use(bodyParser.urlencoded(fileConstants.fileParameters))
 
 const memoryStorage = multer.memoryStorage()
@@ -48,26 +52,6 @@ io.on('connection', (socket) => {
   console.log('socket connected count ', count++)
   io.emit('user connected')
 })
-
-app.use(helmet());
-app.use(hpp());
-
-const csrfMiddleware = csurf({
-  cookie: true
-});
-
-app.use(session({
-  secret: 'codeuino',
-  resave: false,
-  saveUninitialized: true,
-  cookie: {
-      secure: true,
-      httpOnly: true
-  }
-}));
-
-app.use(cookieParser());
-app.use(csrfMiddleware);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'))
@@ -93,6 +77,23 @@ app.use((req, res, next) => {
   next()
 })
 
+// TO PREVENT DOS ATTACK AND RATE LIMITER
+app.use(rateLimiter.customRateLimiter)
+
+// TO PREVENT XSS ATTACK
+app.use(sanitizer.cleanBody)
+app.use(helmet())
+
+// TO PREVENT CLICK JACKING
+app.use((req, res, next) => {
+  res.append('X-Frame-Options', 'Deny')
+  res.set('Content-Security-Policy', "frame-ancestors 'none';")
+  next()
+})
+
+// TO PREVENT THE QUERY PARAMETER POLLUTION
+app.use(hpp())
+
 app.use('/notification', notificationRouter)
 app.use('/', indexRouter)
 app.use('/auth', authRouter)
@@ -105,6 +106,7 @@ app.use('/comment', commentRouter)
 app.use('/project', projectRouter)
 app.use('/proposal', proposalRouter)
 app.use('/analytics', analyticsRouter)
+app.use('/activity', activityRouter)
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

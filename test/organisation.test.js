@@ -5,6 +5,7 @@ const HttpStatus = require('http-status-codes')
 const Organization = require('../app/models/Organisation')
 const User = require('../app/models/User')
 const jwt = require('jsonwebtoken')
+const redis = require('../config/redis').redisClient
 const adminId = new mongoose.Types.ObjectId()
 const moderatorId = new mongoose.Types.ObjectId()
 const randomDigit = Math.floor(Math.random() * 90 + 10)
@@ -36,6 +37,26 @@ const updatedTestOrg = {
     website: 'www.codeuino.org',
     adminInfo: `${adminId}`,
     moderatorInfo: `${moderatorId}`
+  }
+}
+
+const updateSettings = {
+  settings: {
+    enableEmail: true,
+    language: 'German',
+    timeFormat: '24'
+  },
+  permissions: {
+    sendInvite: 'ADMINS',
+    canCreateManage: 'MEMBERS',
+    canChangeEmail: true,
+    canChangeName: true
+  },
+  authentication: {
+    email: true,
+    google: true,
+    github: true,
+    gitlab: true
   }
 }
 
@@ -73,6 +94,7 @@ const testUser = {
       location: 'location'
     }
   },
+  isAdmin: true,
   tokens: [{
     token: jwt.sign({
       _id: `${adminId}`
@@ -86,6 +108,7 @@ let server
  */
 beforeAll(async (done) => {
   await Organization.deleteMany()
+  await redis.flushall()
   await new User(testUser).save()
   server = app.listen(4000, () => {
     global.agent = request.agent(server)
@@ -105,7 +128,6 @@ describe('POST /org/', () => {
   test('should create a new Organization', async (done) => {
     const response = await request(app)
       .post('/org/')
-      .set('Authorization', `Bearer ${token}`)
       .send(testOrg)
       .expect(HttpStatus.CREATED)
     orgId = response.body.orgData._id
@@ -157,6 +179,76 @@ describe('PATCH /org/:id', () => {
   })
 })
 
+/** GET ORGANIZATION LOGIN OPTIONS**/
+describe('GET login options', () => {
+  test('Should retrieve the login options', async (done) => {
+    const res = await request(app)
+      .get('/org/login/options')
+      .expect(HttpStatus.OK)
+    expect(res.body).not.toBeNull()
+    done()
+  })
+})
+
+/** UPDATE ORGANIZATION SETTINGS**/
+describe('UPDATE org-settings', () => {
+  test('Should update org-settings', async (done) => {
+    const res = await request(app)
+      .patch(`/org/${orgId}/settings/update`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(updateSettings)
+      .expect(HttpStatus.OK)
+
+    // check res
+    expect(res.body).not.toBeNull()
+    done()
+  })
+})
+
+/** GET ORGANIZATION OVERVIEW**/
+describe('GET org overview', () => {
+  test('Should retrieve the organization overview', async (done) => {
+    const res = await request(app)
+      .get('/org/overview/all')
+      .set('Authorization', `Bearer ${token}`)
+      .send()
+      .expect(HttpStatus.OK)
+
+    // check response
+    expect(res.body).not.toBeNull()
+    done()
+  })
+})
+
+/** GET ALL MEMBERS **/
+describe('GET all members', () => {
+  test('Should retrieve all the members of the org', async (done) => {
+    const res = await request(app)
+      .get('/org/members/all')
+      .set('Authorization', `Bearer ${token}`)
+      .send()
+      .expect(HttpStatus.OK)
+
+    // check res
+    expect(res.body).not.toBeNull()
+    done()
+  })
+})
+
+/** REMOVE ADMIN**/
+describe('PATCH /org/remove/:orgId/:userId', () => {
+  console.log('adminId ', adminId)
+  test('Should remove the user', async (done) => {
+    const res = await request(app)
+      .patch(`/org/remove/${orgId}/${adminId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send()
+      .expect(HttpStatus.BAD_REQUEST)
+    expect(res.body).not.toBeNull()
+    done()
+  })
+})
+
 /** DELETE ORGANIZATION**/
 describe('DELETE /org/:id', () => {
   test('Should delete the organization', async (done) => {
@@ -180,6 +272,10 @@ afterAll(async () => {
   await server.close()
   // delete all the organization post testing
   await Organization.deleteMany()
+  // delete all the user created
+  await User.deleteMany()
+  // flush redis
+  await redis.flushall()
   // Closing the DB connection allows Jest to exit successfully.
   await mongoose.connection.close()
 })
