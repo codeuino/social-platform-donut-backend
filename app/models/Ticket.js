@@ -1,7 +1,69 @@
 const mongoose = require('mongoose')
 const validator = require('validator')
 const Schema = mongoose.Schema
-const commentSchema = require('./Comment').schema
+
+const ticketCommentSchema = new Schema({
+  createdBy: {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    name: {
+      type: String,
+      trim: true
+    },
+    email: {
+      type: String,
+      trim: true
+    },
+    shortDescription: {
+      type: String,
+      trim: true
+    },
+    designation: {
+      type: String,
+      trim: true
+    },
+    location: {
+      type: String,
+      trim: true
+    }
+  },
+  content: {
+    type: String,
+    trim: true,
+    required: true,
+    validate (content) {
+      if (validator.isEmpty(content)) {
+        throw new Error('Comment can not be empty!')
+      }
+    }
+  },
+  votes: {
+    upVotes: {
+      user: [{
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      }]
+    },
+    downVotes: {
+      user: [{
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      }]
+    }
+  },
+  createdAt: {
+    type: Date,
+    required: true,
+    default: Date.now()
+  },
+  updatedAt: {
+    type: Date,
+    required: true,
+    default: Date.now()
+  }
+})
 
 const ticketSchema = new Schema({
   title: {
@@ -9,42 +71,66 @@ const ticketSchema = new Schema({
     trim: true,
     required: true
   },
+  number: {
+    type: Number,
+    required: true
+  },
   createdBy: {
-    type: Schema.Types.ObjectId,
-    ref: 'User'
+    id: {
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    name: {
+      type: String,
+      trim: true
+    },
+    email: {
+      type: String,
+      trim: true
+    },
+    shortDescription: {
+      type: String,
+      trim: true
+    },
+    designation: {
+      type: String,
+      trim: true
+    },
+    location: {
+      type: String,
+      trim: true
+    }
   },
   status: {
     type: String,
-    enum: ['Open', 'Closed', 'Pending', 'Closed'],
-    default: 'Open',
+    enum: ['OPEN', 'CLOSED', 'PENDING', 'SOLVED', 'ON_HOLD'],
+    default: 'OPEN',
     required: true
   },
-  content: {
-    shortDescription: {
-      type: String,
-      required: true,
-      trim: true,
-      minlength: 5,
-      validate (shortDescription) {
-        if (validator.isEmpty(shortDescription)) {
-          throw new Error('Short description is required!')
-        }
-        if (!validator.isLength(shortDescription, { min: 10 })) {
-          throw new Error('Short description should be min 5 characters long!')
-        }
+  shortDescription: {
+    type: String,
+    required: true,
+    trim: true,
+    minlength: 5,
+    validate (shortDescription) {
+      if (validator.isEmpty(shortDescription)) {
+        throw new Error('Short description is required!')
       }
-    },
-    longDescription: {
-      type: String,
-      trim: true,
-      minlength: 10,
-      validate (longDescription) {
-        if (validator.isEmpty(longDescription)) {
-          throw new Error('Long description is required!')
-        }
-        if (!validator.isLength(longDescription, { min: 10 })) {
-          throw new Error('Long description should be min 10 characters long!')
-        }
+      if (!validator.isLength(shortDescription, { min: 10 })) {
+        throw new Error('Short description should be min 5 characters long!')
+      }
+    }
+  },
+  content: {
+    type: String,
+    trim: true,
+    minlength: 10,
+    validate (longDescription) {
+      if (validator.isEmpty(longDescription)) {
+        throw new Error('Long description is required!')
+      }
+      if (!validator.isLength(longDescription, { min: 10 })) {
+        throw new Error('Long description should be min 10 characters long!')
       }
     }
   },
@@ -61,32 +147,54 @@ const ticketSchema = new Schema({
   ],
   history: [
     {
-      title: {
+      type: {
         type: String,
         trim: true
       },
-      content: {
-        shortDescription: {
+      title: {
+        old: {
           type: String,
           trim: true
         },
-        longDescription: {
+        new: {
           type: String,
           trim: true
         }
       },
-      editedAt: {
+      status: {
+        type: String,
+        trim: true
+      },
+      shortDescription: {
+        type: String,
+        trim: true
+      },
+      content: {
+        type: String,
+        trim: true
+      },
+      tag: {
+        type: String,
+        trim: true
+      },
+      updatedAt: {
         type: Date,
         required: true,
         default: Date.now()
       },
-      editedBy: {
-        type: Schema.Types.ObjectId,
-        ref: 'User'
+      updatedBy: {
+        userId: {
+          type: Schema.Types.ObjectId,
+          ref: 'User'
+        },
+        name: {
+          type: String,
+          trim: true
+        }
       }
     }
   ],
-  comments: [commentSchema], // mongoose subdocument
+  comments: [ticketCommentSchema], // mongoose subdocument
   createdAt: {
     type: Date,
     required: true,
