@@ -1,0 +1,15 @@
+---
+- name: create organization document
+  template:
+    src: "organization.j2"
+    dest: /root/organization.json
+    mode: 0644
+  tags:
+    - database
+    - create-org
+
+- name: Adding first organization to 
+  shell: "mongoimport --db {{ db_name }} --collection organizations --file organization.json"
+  tags:
+    - database
+    - create-org

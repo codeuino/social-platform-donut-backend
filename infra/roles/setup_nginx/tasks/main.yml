@@ -1,0 +1,55 @@
+---
+- name: ensure nginx is at the latest version
+  apt: name=nginx state=latest
+  tags:
+    - environment-setup
+    - nginx
+
+- name: delete nginx default config file
+  file:
+    path: /etc/nginx/sites-available/default
+    state: absent
+  tags:
+    - environment-setup
+    - nginx
+
+- name: start nginx
+  service:
+    name: nginx
+    state: started
+  tags:
+    - nginx
+
+- name: copy the nginx config file
+  template:
+    src: "nginx_conf.j2"
+    dest: /etc/nginx/sites-available/default
+    mode: 0644
+  become: yes
+  tags:
+    - environment-setup
+    - nginx
+
+- name: delete etc nginx config file
+  file:
+    path: /etc/nginx/nginx.conf
+    state: absent
+  become: yes
+  tags:
+    - environment-setup
+    - nginx
+
+- name: copy the etc nginx config file
+  template:
+    src: "etc_config.j2"
+    dest: /etc/nginx/nginx.conf
+    mode: 0644
+  become: yes
+  tags:
+    - environment-setup
+    - nginx
+
+- name: restart nginx  
+  service: name=nginx state=restarted
+  become: yes
+  become_method: sudo

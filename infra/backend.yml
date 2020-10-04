@@ -1,0 +1,8 @@
+---
+# file: backend.yml
+- name: Setup Donut Backend
+  hosts: all
+  become: true
+  roles:
+    - setup_dbs
+    - setup_server

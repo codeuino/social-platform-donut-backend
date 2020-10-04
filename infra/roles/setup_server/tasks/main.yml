@@ -1,0 +1,60 @@
+---
+
+- name: Update and upgrade apt packages
+  become: true
+  apt:
+    upgrade: yes
+    update_cache: yes
+  tags:
+    - environment-setup
+    - backend
+
+- name: Clone Donut Backend Repository
+  git:
+    repo: "{{ donut_backend_repo }}"
+    dest: /root/donut_backend
+    version: "{{ donut_backend_repo_branch }}"
+    force: "yes"
+  tags:
+    - clone-repo
+    - rebuild
+    - backend
+
+- name: Installing dependencies
+  shell: npm install
+  args:
+    chdir: donut_backend/
+  tags:
+    - install-dependencies
+    - rebuild
+    - backend
+  
+- name: Install pm2
+  npm:
+    name: pm2
+    global: yes
+    state: present
+  tags:
+    - environment-setup
+    - pm2-setup
+    - backend
+
+- name: copy pm2 ecosystem config
+  template:
+    src: "ecosystem.config.j2"
+    dest: /root/donut_backend/ecosystem.config.js
+    mode: 0644
+  become: yes
+  tags:
+    - environment-setup
+    - pm2-setup
+    - rebuild
+    - backend
+
+- name: start backend server
+  shell: pm2 start
+  args:
+    chdir: donut_backend/
+  tags:
+    - backend
+    - start

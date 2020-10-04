@@ -1,0 +1,4 @@
+---
+- include_tasks: redis.yml
+- include_tasks: mongo.yml
+- include_tasks: create_org.yml
