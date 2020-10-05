@@ -1,2 +1,4 @@
-donut_backend_repo: "https://github.com/ksraj123/social-platform-donut-backend.git"
-donut_backend_repo_branch: "feature-ansible"
+donut_backend_repo: "https://github.com/codeuino/social-platform-donut-backend.git"
+donut_backend_repo_branch: "master"
+
+SENDGRID_API_KEY: "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"

@@ -3,5 +3,5 @@
 # Version numbers from Nodesource: https://github.com/nodesource/distributions
 nodejs_version: "12.x"
 
-donut_frontend_repo: "https://github.com/ksraj123/social-platform-donut-frontend.git"
-donut_frontend_repo_branch: "feature-ansible"
+donut_frontend_repo: "https://github.com/codeuino/social-platform-donut-frontend.git"
+donut_frontend_repo_branch: "master"
