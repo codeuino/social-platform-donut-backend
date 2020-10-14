@@ -3,7 +3,8 @@ const HttpStatus = require('http-status-codes')
 const TicketModel = require('../models/Ticket')
 const TAGS = require('../utils/notificationTags')
 const HANDLER = require('../utils/response-helper')
-const ticketNotificationHelper = require('../utils/ticket-notif-helper')
+const { isValidObjectId } = require('../utils/ticket-helper')
+const ticketNotificationHelper = require('../utils/ticket-helper')
 
 const notification = {
   heading: '',
@@ -14,7 +15,6 @@ const notification = {
 module.exports = {
 
   create: async (req, res, next) => {
-    await (new Promise(resolve => setTimeout(resolve, 2000)))
     const userId = req.user.id.toString()
     try {
       const allTickets = (await TicketModel.find({}))
@@ -49,17 +49,8 @@ module.exports = {
   },
 
   getTicket: async (req, res, next) => {
-    const { user } = req.query
     try {
-      let tickets
-      if (user === 'me') {
-        const userId = req.user.id.toString()
-        console.log(userId)
-        console.log(`${req.user.name.firstName} ${req.user.name.lastName}`)
-        tickets = await TicketModel.find({ 'createdBy.id': userId }).lean().select('shortDescription number createdAt createdBy status title shortDescription comments tags').exec()
-      } else {
-        tickets = await TicketModel.find({}).lean().select('shortDescription number createdAt createdBy status title comments tags').exec()
-      }
+      const tickets = await TicketModel.find({}).lean().select('shortDescription number createdAt createdBy status title comments tags').exec()
       tickets.forEach(ticket => {
         ticket.comments = ticket.comments.length
         ticket.createdBy = {
@@ -77,8 +68,10 @@ module.exports = {
   },
 
   getTicketFull: async (req, res, next) => {
-    await (new Promise(resolve => setTimeout(resolve, 2000)))
     const { id } = req.params
+    if (!isValidObjectId(id)) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid ticket id' })
+    }
     try {
       const ticket = await TicketModel.findById(id)
       if (!ticket) {
@@ -98,10 +91,10 @@ module.exports = {
   editTicket: async (req, res, next) => {
     const { id } = req.params
     const { type } = req.body
-    await (new Promise(resolve => setTimeout(resolve, 2000)))
-    // const allowedUpdates = ['title', 'shortDescription', 'content', 'status']
-    // const updates = Object.keys(req.body)
     const userId = req.user.id.toString()
+    if (!isValidObjectId(id)) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid ticket id' })
+    }
     try {
       const ticket = await TicketModel.findById(id)
       if (!ticket) {
@@ -146,9 +139,11 @@ module.exports = {
   },
 
   deleteTicket: async (req, res, next) => {
-    await (new Promise(resolve => setTimeout(resolve, 2000)))
     const { id } = req.params
     const userId = req.user.id.toString()
+    if (!isValidObjectId(id)) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid ticket id' })
+    }
     try {
       const ticket = await TicketModel.findById(id)
       if (!ticket) {
@@ -172,6 +167,9 @@ module.exports = {
     const { id } = req.params
     const { tags } = req.body // tags is the array of tags to add
     const userId = req.user.id.toString()
+    if (!isValidObjectId(id)) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid ticket id' })
+    }
     try {
       const ticket = await TicketModel.findById(id)
       if (!ticket) {
@@ -194,9 +192,11 @@ module.exports = {
   },
 
   addTag: async (req, res, next) => {
-    await (new Promise(resolve => setTimeout(resolve, 2000)))
     const { id, tag } = req.params
     const userId = req.user.id.toString()
+    if (!isValidObjectId(id)) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid ticket id' })
+    }
     try {
       const ticket = await TicketModel.findById(id)
       if (!ticket) {
@@ -225,9 +225,11 @@ module.exports = {
 
   // Create Comment of a Ticket
   createComment: async (req, res, next) => {
-    await (new Promise(resolve => setTimeout(resolve, 2000)))
     const { id } = req.params
     const userId = req.user.id.toString()
+    if (!isValidObjectId(id)) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid ticket id' })
+    }
     try {
       const ticket = await TicketModel.findById(id)
       if (!ticket) {
@@ -264,6 +266,9 @@ module.exports = {
   // Get Comments on a Ticket
   getComments: async (req, res, next) => {
     const { id } = req.params
+    if (!isValidObjectId(id)) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid ticket id' })
+    }
     try {
       const ticket = await TicketModel.findById(id)
       if (!ticket) {
@@ -283,6 +288,9 @@ module.exports = {
     const { id, commentID } = req.params
     const { content } = req.body
     const userId = req.user.id.toString()
+    if (!isValidObjectId(id)) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid comment id' })
+    }
     try {
       const ticket = await TicketModel.findById(id)
       if (!ticket) {
@@ -307,9 +315,11 @@ module.exports = {
   },
 
   upVoteComment: async (req, res, next) => {
-    await (new Promise(resolve => setTimeout(resolve, 2000)))
     const { id, commentID } = req.params
     const userId = req.user.id.toString()
+    if (!isValidObjectId(id)) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid ticket id' })
+    }
     try {
       const ticket = await TicketModel.findById(id)
       if (!ticket) {
@@ -346,9 +356,11 @@ module.exports = {
   },
 
   downVoteComment: async (req, res, next) => {
-    await (new Promise(resolve => setTimeout(resolve, 2000)))
     const { id, commentID } = req.params
     const userId = req.user.id.toString()
+    if (!isValidObjectId(id)) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid ticket id' })
+    }
     try {
       const ticket = await TicketModel.findById(id)
       if (!ticket) {
@@ -385,8 +397,10 @@ module.exports = {
   },
 
   deleteComment: async (req, res, next) => {
-    await (new Promise(resolve => setTimeout(resolve, 2000)))
     const { id, commentID } = req.params
+    if (!isValidObjectId(id)) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid ticket id' })
+    }
     const userId = req.user.id.toString()
     try {
       const ticket = await TicketModel.findById(id)
@@ -411,7 +425,6 @@ module.exports = {
   },
 
   getUsers: async (req, res, next) => {
-    await (new Promise(resolve => setTimeout(resolve, 2000)))
     try {
       const users = await UserModel.find({isAdmin: false}).lean().select('name email info isTicketsModerator').exec()
       return res.status(HttpStatus.OK).json({ users: users })
@@ -438,10 +451,10 @@ module.exports = {
   },
 
   addModerator: async (req, res, next) => {
-    await (new Promise(resolve => setTimeout(resolve, 2000)))
-    // return res.status(HttpStatus.BAD_REQUEST).json({ error: 'No ticket exist' })
-    // id of User to add as moderator
     const { id } = req.params
+    if (!isValidObjectId(id)) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid ticket id' })
+    }
     try {
       if (!req.user.isAdmin) {
         return res.status(HttpStatus.FORBIDDEN).json({ error: 'Only Admin user can add moderator' })
@@ -464,10 +477,10 @@ module.exports = {
   },
 
   removeModerator: async (req, res, next) => {
-    await (new Promise(resolve => setTimeout(resolve, 2000)))
-    // return res.status(HttpStatus.BAD_REQUEST).json({ error: 'No ticket exist' })
-    // id of User to add as moderator
     const { id } = req.params
+    if (!isValidObjectId(id)) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid user id' })
+    }
     try {
       if (!req.user.isAdmin) {
         return res.status(HttpStatus.FORBIDDEN).json({ error: 'Only Admin user can remove moderator' })
@@ -490,9 +503,11 @@ module.exports = {
   },
 
   deleteTag: async (req, res, next) => {
-    await (new Promise(resolve => setTimeout(resolve, 2000)))
     const { id, tag } = req.params
     const userId = req.user.id.toString()
+    if (!isValidObjectId(id)) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid ticket id' })
+    }
     try {
       const ticket = await TicketModel.findById(id)
       if (!ticket) {

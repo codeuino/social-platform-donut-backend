@@ -1,6 +1,6 @@
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
-const CommentModel = require('../models/Comment').model
+const CommentModel = require('../models/Comment')
 const permission = require('../utils/permission')
 const helper = require('../utils/paginate')
 const activityTracker = require('../utils/activity-helper')

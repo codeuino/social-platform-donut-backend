@@ -1,6 +1,9 @@
 const User = require('../models/User')
 
 module.exports = {
+  isValidObjectId: (id, res) => {
+    return id.match(/^[0-9a-fA-F]{24}$/)
+  },
   // Notification for Admins
   addToNotificationForAdmin: async (req, res, obj, next) => {
     try {
