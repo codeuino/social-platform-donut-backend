@@ -225,6 +225,38 @@ test('Should not update profile or unauthenticated user', async () => {
     .expect(HttpStatus.UNAUTHORIZED)
 })
 
+/** Should update user profile */
+test('Should update profile or authenticated user', async () => {
+  await request(app)
+    .patch('/user/me')
+    .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+    .send({
+      email: 'updated@example.com'
+    })
+    .expect(HttpStatus.OK)
+})
+
+/** Should fail to make updates that are not allowed to user profile */
+test('Should be able to make only allowed updates to authenticated user', async () => {
+  await request(app)
+    .patch('/user/me')
+    .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+    .send({
+      gender: 'Male'
+    })
+    .expect(HttpStatus.BAD_REQUEST)
+})
+
+/** Should Fail updating profile of unauthenticate user */
+test('Should not update profile or unauthenticated user', async () => {
+  await request(app)
+    .patch('/user/me')
+    .send({
+      email: 'updated@example.com'
+    })
+    .expect(HttpStatus.UNAUTHORIZED)
+})
+
 /** Delete authenticated user profile */
 test('Should delete profile of authenticated user', async () => {
   await request(app)

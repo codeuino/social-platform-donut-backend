@@ -21,47 +21,91 @@
     </a>
 </p>
 
-### STEPS
 
-```.sh
-npm install
+## Prerequisite: 
+
+These are the requirement that should be installed locally on your machine.
+
+- Node.js
+- MongoDB
+- Redis
+
+
+## How to setup node.js on your machine?
+
+- Move to: [link](https://nodejs.org/en/download/) choose the operating system as per your machine and start downloading and setup by clicking recommended settings in the installation wizard.
+
+## How to setup MongoDB on your machine?
+
+- Move to: [link](https://docs.mongodb.com/manual/administration/install-community/) look at the left sidebar and choose the operating system according to your machine. Then follow the steps recommended in the official docs.
+
+```
+Note: You can also use the MongoDB servers like Mlab or MongoDB Cluster server
 ```
 
-#### Package descriptions
+## How to setup redis on your machine?
 
-- bcrypt :- hash your plain password and store hashed password in database.
-- body-parser :- Parse incoming request bodies in a middleware before your handlers, available under the req.bodyproperty.
-- express :- Express is a minimal and flexible Node.js web application framework that provides a robust set of features for web and mobile applications.
-- jsonwebtoken :- JSON Web Token (JWT) is an open standard (RFC 7519) that defines a compact and self-contained way for securely transmitting information between parties as a JSON object.
-- mongoose :- Mongoose is a MongoDB object modeling tool designed to work in an asynchronous environment.
-- morgan :- HTTP request logger middleware for node.js.
-- nodemon :- nodemon will watch the files in the directory in which nodemon was started, and if any files change, nodemon will automatically restart your node application.
+- Follow the steps provided in the [link](https://auth0.com/blog/introduction-to-redis-install-cli-commands-and-data-types/) to install redis on your operating system
+
+## How to set up this project locally?
+
+- Move to: https://github.com/codeuino/social-platform-donut-backend
+- Fork the repo 
+- Clone the repo using: 
+```sh
+    git clone https://github.com/codeuino/social-platform-donut-backend.git
+```
+- Now move to the project directory on your machine.
+```
+    cd social-platform-donut-backend
+```
+- Now use ```git checkout development``` to move to the development branch.
+- Install all the dependencies using:
+```sh
+npm install 
+```
+- Run the development server using:
+```sh
+npm run dev
+```
+- Now the server is running on PORT 5000 or the PORT mentioned in the environment **.env.dev** variables
+
+```
+Note: Setup the environment variables as mentioned below
+```
 
 
-These are the Donut APIs
+## Run unit test
+Use the given below command to run all the unit test cases.
+```
+npm run test
+```
 
-## API Response Format
-The response body for all the APIs will use the following format and it will contain one of them ( data | errors ).
-<pre>
-{
-    data: {
-        /../
-    },
-    errors: {
-        /../
-    }
-}
-</pre>
-    
-## Error Objects
-Error objects provide additional information about problems encountered while performing an operation. Error objects MUST be returned as an array keyed by errors in the top level of a JSON:API document.
 
-### An error object MAY have the following members:
+## What are the environment variables required to run the project locally on a machine?
+- Follow these steps to set the environment variable for development:
+- Move to the root directory of the project and open **.env.dev** (for development) or **.env.test** (for testing)
+- PORT = 5000
+- NODE_ENV = "development"
+- JWT_SECRET="<YOUR SECRET KEY>"
+- DATABASE_URL="<YOUR DB URL>"
+- SENDGRID_API_KEY = '<YOUR SENDGRID API KEY>'
+- SOCKET_PORT = 8810
 
-- `status` : the HTTP status code applicable to this problem, expressed as a string value.
-- `code` : an application-specific error code, expressed as a string value.
-- `title` : a short, human-readable summary of the problem that SHOULD NOT change from occurrence to occurrence of the problem, except for purposes of localization.
-- `detail` : a human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.
+Note: To get **SENDGRID_API_KEY** follow the Sendgrid official [docs](https://sendgrid.com/docs/ui/account-and-settings/api-keys/#creating-an-api-key)
+
+## Workflow (After setup)
+
+Must follow the steps to use the platform:
+1. Create an organization -  [API](https://docs.codeuino.org/donut-social-networking-platform/rest-apis/organization-api#create-an-organization)
+2. Register as an admin - [API](https://docs.codeuino.org/donut-social-networking-platform/rest-apis/post-api#create-a-user)
+3. Now login and use the features implemented - [API](https://docs.codeuino.org/donut-social-networking-platform/rest-apis/post-api#login-user)
+4. To know more about features please go through the docs - [Docs](https://docs.codeuino.org/donut-social-networking-platform/rest-apis/post-api)
+
+```
+NOTE: Please make sure when you setup for the first time your database is empty.
+```
+
 
 ## Allowed HTTPs requests:
 <pre>
@@ -122,5 +166,21 @@ DELETE  : To delete resource
         <td><code>409</code></td>
         <td><code>Conflict</code></td>
         <td>resourse with given id already exist.</td>
+    </tr>  
+    <tr>
+        <td><code>429</code></td>
+        <td><code>Too many requests</code></td>
+        <td>sent too many requests to the server in short span of time</td>
     </tr>    
 </table>
+<br></br>
+
+## Contributing 💻
+We are happy to see you here and we welcome your contributions towards Donut-Platform.
+Contributions are not limited to coding only, you can help in many other ways which includes leaving constructive feedback to people's Pull Request threads also.
+
+Donut platform also provides an extensive list of issues, some of them includes labels like good-first-issue, help-wanted. You can take a look at good-first-issue issues if you are new here but you are free to choose any issue you would like to work on.
+
+If there's no issue available currently, you can setup the project locally and find out the bugs/new features and open issues for that and discuss the bugs or features with the project maintainers or admins.
+
+After choosing an issue and doing changes in the code regarding that, you can open up a Pull Request (PR) to development branch to get your work reviewed and merged!

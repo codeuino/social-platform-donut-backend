@@ -5,6 +5,7 @@ const HttpStatus = require('http-status-codes')
 const Organization = require('../app/models/Organisation')
 const User = require('../app/models/User')
 const jwt = require('jsonwebtoken')
+const redis = require('../config/redis').redisClient
 const adminId = new mongoose.Types.ObjectId()
 const moderatorId = new mongoose.Types.ObjectId()
 const randomDigit = Math.floor(Math.random() * 90 + 10)
@@ -107,6 +108,7 @@ let server
  */
 beforeAll(async (done) => {
   await Organization.deleteMany()
+  await redis.flushall()
   await new User(testUser).save()
   server = app.listen(4000, () => {
     global.agent = request.agent(server)
@@ -272,6 +274,8 @@ afterAll(async () => {
   await Organization.deleteMany()
   // delete all the user created
   await User.deleteMany()
+  // flush redis
+  await redis.flushall()
   // Closing the DB connection allows Jest to exit successfully.
   await mongoose.connection.close()
 })

@@ -2,7 +2,7 @@ const redis = require('../../config/redis')
 const redisClient = redis.redisClient
 const moment = require('moment')
 const WINDOW_SIZE_IN_HOURS = 24
-const MAX_WINDOW_REQUEST_COUNT = process.env.NODE_ENV === 'testing' ? 20000 : 1000000
+const MAX_WINDOW_REQUEST_COUNT = process.env.NODE_ENV === 'testing' ? 20 : 500
 const WINDOW_LOG_INTERVAL_IN_HOURS = 1
 
 module.exports = {
