@@ -3,8 +3,12 @@ const HttpStatus = require('http-status-codes')
 const TicketModel = require('../models/Ticket')
 const TAGS = require('../utils/notificationTags')
 const HANDLER = require('../utils/response-helper')
-const { isValidObjectId } = require('../utils/ticket-helper')
-const ticketNotificationHelper = require('../utils/ticket-helper')
+const {
+  isValidObjectId,
+  isCreatorModeratorAdmin,
+  addToNotificationForUser,
+  addToNotificationForModerator
+} = require('../utils/ticket-helper')
 
 const notification = {
   heading: '',
@@ -22,21 +26,19 @@ module.exports = {
       ticket.createdBy = {
         id: userId,
         name: `${req.user.name.firstName} ${req.user.name.lastName}`,
-        eaill: req.user.email,
         shortDescription: req.user.info.about.shortDescription,
         designation: req.user.info.about.designation,
-        location: req.user.info.about.location
+        location: req.user.info.about.location,
+        email: req.user.email
       }
-      ticket.number = allTickets.length ? (allTickets[allTickets.length - 1].number + 1) : 1
       ticket.createdAt = Date.now()
       ticket.updatedAt = Date.now()
+      ticket.number = allTickets.length ? (allTickets[allTickets.length - 1].number + 1) : 1
+      notification.tag = TAGS.NEW
       notification.heading = 'New Support Ticket!'
       notification.content = `${req.user.name.firstName} ${req.user.name.lastName} Creted a new Support Ticket!`
-      notification.tag = TAGS.NEW
-      notification.createdAt = Date.now()
-      await ticketNotificationHelper.addToNotificationForModerator(req, res, notification, next)
       await ticket.save()
-      req.io.emit('New Ticket Notification', { ...notification, for: 'moderator' })
+      await addToNotificationForModerator(req, notification, next)
       res.status(HttpStatus.CREATED).json({
         ticket: ticket
       })
@@ -50,7 +52,8 @@ module.exports = {
 
   getTicket: async (req, res, next) => {
     try {
-      const tickets = await TicketModel.find({}).lean().select('shortDescription number createdAt createdBy status title comments tags').exec()
+      const filteredProperties = 'shortDescription number createdAt createdBy status title comments tags'
+      const tickets = await TicketModel.find({}).lean(filteredProperties).select().exec()
       tickets.forEach(ticket => {
         ticket.comments = ticket.comments.length
         ticket.createdBy = {
@@ -100,8 +103,7 @@ module.exports = {
       if (!ticket) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No ticket exist' })
       }
-      if (userId !== ticket.createdBy.id.toString() && !req.user.isAdmin && !req.user.isTicketsModerator) {
-        // Only user who created the ticket and admin can edit the ticket
+      if (isCreatorModeratorAdmin(ticket, req.user)) {
         return res.status(HttpStatus.FORBIDDEN).json({ error: 'Edit Forbidden by user' })
       }
       const historyItem = {}
@@ -140,7 +142,6 @@ module.exports = {
 
   deleteTicket: async (req, res, next) => {
     const { id } = req.params
-    const userId = req.user.id.toString()
     if (!isValidObjectId(id)) {
       return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid ticket id' })
     }
@@ -149,8 +150,7 @@ module.exports = {
       if (!ticket) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No ticket exist' })
       }
-      if (userId !== ticket.createdBy.id.toString() && !req.user.isAdmin && !req.user.isTicketsModerator) {
-        // Only user who created the ticket and admin can delete the ticket
+      if (isCreatorModeratorAdmin(ticket, req.user)) {
         return res.status(HttpStatus.FORBIDDEN).json({ error: 'Bad delete request' })
       }
       await TicketModel.findByIdAndRemove(id)
@@ -165,8 +165,7 @@ module.exports = {
 
   editTag: async (req, res, next) => {
     const { id } = req.params
-    const { tags } = req.body // tags is the array of tags to add
-    const userId = req.user.id.toString()
+    const { tags } = req.body
     if (!isValidObjectId(id)) {
       return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid ticket id' })
     }
@@ -175,8 +174,7 @@ module.exports = {
       if (!ticket) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No ticket exist' })
       }
-      if (userId !== ticket.createdBy.id.toString() && !req.user.isAdmin && !req.user.isTicketsModerator) {
-        // Only user who created the ticket and admin can edit ticket tags
+      if (!isCreatorModeratorAdmin(ticket, req.user)) {
         return res.status(HttpStatus.FORBIDDEN).json({ error: 'Edit Forbidden by user' })
       }
       ticket.tags = [...new Set(tags)]
@@ -202,8 +200,7 @@ module.exports = {
       if (!ticket) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No ticket exist' })
       }
-      if (userId !== ticket.createdBy.id.toString() && !req.user.isAdmin && !req.user.isTicketsModerator) {
-        // Only user who created the ticket and admin can add tag to the ticket
+      if (isCreatorModeratorAdmin(ticket, req.user)) {
         return res.status(HttpStatus.FORBIDDEN).json({ error: 'Edit Forbidden by user' })
       }
       ticket.tags.addToSet(tag)
@@ -238,21 +235,19 @@ module.exports = {
       ticket.comments.push({
         ...req.body,
         createdBy: {
-          userId,
-          eaill: req.user.email,
           name: `${req.user.name.firstName} ${req.user.name.lastName}`,
           shortDescription: req.user.info.about.shortDescription,
           designation: req.user.info.about.designation,
-          location: req.user.info.about.location
+          location: req.user.info.about.location,
+          eaill: req.user.email,
+          userId
         }
       })
+      notification.tag = TAGS.NEW
       notification.heading = 'New Comment on Ticket!'
       notification.content = `${req.user.name.firstName} ${req.user.name.lastName} commented on your Ticket!`
-      notification.tag = TAGS.NEW
-      notification.createdAt = Date.now()
-      await ticketNotificationHelper.addToNotificationForUser(ticket.createdBy.id, res, notification, next)
       await ticket.save()
-      req.io.emit('New Ticket Notification', { ...notification, for: ticket.createdBy.id })
+      await addToNotificationForUser(ticket.createdBy.id, req, notification)
       res.status(HttpStatus.OK).json({ ticket: ticket })
     } catch (error) {
       console.log(error)
@@ -298,7 +293,6 @@ module.exports = {
       }
       const comment = ticket.comments.id(commentID)
       if (userId !== comment.createdBy.userId && !req.user.isAdmin && !req.user.isTicketsModerator) {
-        // Only user who created the comment and admin can edit the comment
         return res.status(HttpStatus.FORBIDDEN).json({ error: 'Edit Forbidden by user' })
       }
       comment.content = content
@@ -409,7 +403,6 @@ module.exports = {
       }
       const comment = ticket.comments.id(commentID)
       if (userId !== comment.createdBy.userId && !req.user.isAdmin && !req.user.isTicketsModerator) {
-        // Only user who created the comment and admin can edit the comment
         return res.status(HttpStatus.FORBIDDEN).json({ error: 'Edit Forbidden by user' })
       }
       comment.remove()
@@ -513,8 +506,7 @@ module.exports = {
       if (!ticket) {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No ticket exist' })
       }
-      if (userId !== ticket.createdBy.id.toString() && !req.user.isAdmin && !req.user.isTicketsModerator) {
-        // Only user who created the ticket and admin can delete tag from a ticket
+      if (isCreatorModeratorAdmin(ticket, req.user)) {
         return res.status(HttpStatus.FORBIDDEN).json({ error: 'Edit Forbidden by user' })
       }
       if (ticket.tags.indexOf(tag) === -1) {
