@@ -50,5 +50,26 @@ module.exports = {
     } catch (error) {
       HANDLER.handleError(res, error)
     }
+  },
+
+  // GET LOGGED IN USER TICKET NOTIFICATIONS
+  getTicketNotifications: async (req, res, next) => {
+    const userId = req.user._id
+    try {
+      const user = await User.findById(userId)
+      if (!user) {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ msg: 'No such user exists!' })
+      }
+      // get ticket notifications of existing user
+      const notifications = user.ticketNotifications
+      if (notifications.length === 0) {
+        return res.status(HttpStatus.OK).json({ msg: 'No ticket notifications!' })
+      }
+      return res.status(HttpStatus.OK).json({ notifications })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
   }
 }

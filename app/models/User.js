@@ -170,6 +170,23 @@ const UserSchema = new mongoose.Schema({
       }
     }
   ],
+  ticketNotifications: [
+    {
+      heading: {
+        type: String
+      },
+      content: {
+        type: String
+      },
+      tag: {
+        type: String
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now()
+      }
+    }
+  ],
   followers: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -202,6 +219,10 @@ const UserSchema = new mongoose.Schema({
     default: false
   },
   isAdmin: {
+    type: Boolean,
+    default: false
+  },
+  isTicketsModerator: {
     type: Boolean,
     default: false
   },
