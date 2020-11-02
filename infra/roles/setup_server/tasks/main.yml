@@ -6,7 +6,7 @@
     upgrade: yes
     update_cache: yes
   tags:
-    - environment-setup
+    - setup
     - backend
 
 - name: Clone Donut Backend Repository
@@ -16,8 +16,7 @@
     version: "{{ donut_backend_repo_branch }}"
     force: "yes"
   tags:
-    - clone-repo
-    - rebuild
+    - deploy
     - backend
 
 - name: Installing dependencies
@@ -25,8 +24,7 @@
   args:
     chdir: donut_backend/
   tags:
-    - install-dependencies
-    - rebuild
+    - deploy
     - backend
   
 - name: Install pm2
@@ -35,8 +33,7 @@
     global: yes
     state: present
   tags:
-    - environment-setup
-    - pm2-setup
+    - setup
     - backend
 
 - name: copy pm2 ecosystem config
@@ -46,9 +43,8 @@
     mode: 0644
   become: yes
   tags:
-    - environment-setup
-    - pm2-setup
-    - rebuild
+    - setup
+    - deploy
     - backend
 
 - name: start backend server
@@ -57,4 +53,4 @@
     chdir: donut_backend/
   tags:
     - backend
-    - start
+    - deploy

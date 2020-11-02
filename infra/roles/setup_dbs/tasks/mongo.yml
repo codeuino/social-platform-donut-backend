@@ -3,7 +3,7 @@
 - name: Import the public key used by the package management system
   apt_key: keyserver=hkp://keyserver.ubuntu.com:80 id=7F0CEB10 state=present
   tags:
-    - environment-setup
+    - setup
     - database
     - mongo
 
@@ -14,7 +14,7 @@
   notify:
     - start mongodb
   tags:
-    - environment-setup
+    - setup
     - database
     - mongo
 
@@ -28,7 +28,7 @@
   notify:
     - restart mongodb
   tags:
-    - environment-setup
+    - setup
     - database
     - mongo
 
@@ -38,6 +38,6 @@
     enabled: yes
     state: started
   tags:
-    - environment-setup
+    - setup
     - database
     - mongo

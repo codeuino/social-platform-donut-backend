@@ -6,12 +6,12 @@
     upgrade: yes
     update_cache: yes
   tags:
-    - environment-setup
+    - setup
     - frontend
 
 - import_tasks: nodejs.yml
   tags:
-    - environment-setup
+    - setup
 
 - name: Clone Donut Frontend Repository
   git:
@@ -20,8 +20,7 @@
     version: "{{ donut_frontend_repo_branch }}"
     force: "yes"
   tags:
-    - clone-repo
-    - rebuild
+    - deploy
     - frontend
 
 - name: Install Frontend Dependencies
@@ -29,8 +28,7 @@
   args:
     chdir: donut_frontend/
   tags:
-    - install-dependencies
-    - rebuild
+    - deploy
     - frontend
 
 - name: delete env production file
@@ -38,7 +36,7 @@
     path: /root/donut_frontend/.env.production
     state: absent
   tags:
-    - rebuild
+    - deploy
     - frontend
 
 - name: Create new env file
@@ -48,7 +46,7 @@
     mode: 0644
   become: yes
   tags:
-    - rebuild
+    - deploy
     - frontend
 
 - name: Contructing Frontend Production Build
@@ -56,6 +54,5 @@
   args:
     chdir: donut_frontend/
   tags:
-    - build
-    - rebuild
+    - deploy
     - frontend

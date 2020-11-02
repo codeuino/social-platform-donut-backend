@@ -7,9 +7,11 @@
   tags:
     - database
     - create-org
+    - setup
 
 - name: Adding first organization to 
   shell: "mongoimport --db {{ db_name }} --collection organizations --file organization.json"
   tags:
     - database
     - create-org
+    - setup

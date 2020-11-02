@@ -5,7 +5,7 @@
     redis_package: "{{ __redis_package }}"
   when: redis_package is not defined
   tags:
-    - environment-setup
+    - setup
     - database
     - redis
 
@@ -14,13 +14,13 @@
     name: "{{ redis_package }}"
     state: present
   tags:
-    - environment-setup
+    - setup
     - database
     - redis
   
 - name: Ensure Redis is running and enabled on boot.
   service: "name={{ redis_daemon }} state=started enabled=yes"
   tags:
-    - environment-setup
+    - setup
     - database
     - redis
