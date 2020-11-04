@@ -12,6 +12,7 @@ const TAGS = require('../utils/notificationTags')
 const settingHelper = require('../utils/settingHelpers')
 const Activity = require('../models/Activity')
 const activityHelper = require('../utils/activity-helper')
+const formatUser = require('../utils/format-user')
 
 const notification = {
   heading: '',
@@ -47,7 +48,7 @@ module.exports = {
       await activity.save()
       // hide password
       user.password = undefined
-      return res.status(HttpStatus.CREATED).json({ user: user, token: token })
+      res.cookie("token", token, { httpOnly: true }).status(HttpStatus.CREATED).send({ user: user })
     } catch (error) {
       return res.status(HttpStatus.NOT_ACCEPTABLE).json({ error: error })
     }
@@ -86,6 +87,22 @@ module.exports = {
       user.password = undefined
       user.tokens = []
       return res.status(HttpStatus.OK).json({ user })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+  // Load User
+  loadUser: async (req, res, next) => {
+    try {
+      const id = req.params.id || req.user._id
+      const user = await User.findById({ _id: id })
+      if (!user) {
+        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exist!' })
+      }
+      // hide password and tokens
+      user.password = undefined
+      user.tokens = []
+      return res.status(HttpStatus.OK).json({ user: user })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -478,6 +495,48 @@ module.exports = {
       return res.status(HttpStatus.OK).json({ user })
     } catch (error) {
       HANDLER.handleError(error)
+    }
+  },
+  // Find User and Create if doesn't exist
+  findOrCreateForOAuth: async(profile, provider) => {
+    let user;
+    if(provider==='google'){
+      user = formatUser.formatUser(profile, provider)
+    }
+    try {
+      const existingUser = await User.findOne({
+        email: user.email
+      })
+      if (existingUser) {
+        const token = await existingUser.generateAuthToken()
+        return  {token, user: existingUser};
+      } else {
+        const newUser = new User(user)
+        const isRegisteredUserExists = await User.findOne({ firstRegister: true })
+        const Org = await Organization.find({}).lean().exec()
+        // for the first user who will be setting up the platform for their community
+        if (!isRegisteredUserExists) {
+          newUser.isAdmin = true
+          newUser.firstRegister = true
+        }
+        if (Org.length > 0) {
+          newUser.orgId = Org[0]._id
+        }
+        const data = await newUser.save()
+        if (!isRegisteredUserExists) {
+          settingHelper.addAdmin(data._id)
+        }
+        const token = await newUser.generateAuthToken()
+
+        // create redis db for activity for the user
+        const activity = new Activity({ userId: data._id })
+        await activity.save()
+        // hide password
+        data.password = undefined
+        return {token: token, user: data}
+      }
+    } catch(e) {
+      throw e;
     }
   }
 }

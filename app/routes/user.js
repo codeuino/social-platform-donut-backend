@@ -3,14 +3,23 @@ const router = express.Router()
 const userController = require('../controllers/user')
 const auth = require('../middleware/auth')
 const isUnderMaintenance = require('../middleware/maintenance')
+const passport = require('passport');
 // const email = require('../middleware/email')
-
+const afterAuthRedirect = (process.env.clientbaseurl + '/login') ||  'http://localhost:3000/login'
 // create a user
 router.post(
   '/',
   isUnderMaintenance,
   // email,
   userController.createUser
+)
+
+// load user (endpoint used to call when someone opens app)
+router.get(
+  '/load_user',
+  isUnderMaintenance,
+  auth,
+  userController.loadUser
 )
 
 // get user profile
@@ -136,6 +145,26 @@ router.patch(
   isUnderMaintenance,
   auth,
   userController.deactivateAccount
+)
+
+router.get(
+  '/auth/google',
+  isUnderMaintenance,
+  passport.authenticate('google', { scope: ['profile','email'], session: false })
+)
+
+router.get(
+  '/auth/google/callback',
+  isUnderMaintenance,
+  (req, res, next) => {
+    passport.authenticate('google', (err, details) => {
+      if(details.token===undefined || !details.token) {
+        res.redirect(afterAuthRedirect)
+      }else {
+        res.cookie("token", details.token, { httpOnly: true }).redirect(afterAuthRedirect);
+      }
+    })(req, res, next)
+  }
 )
 
 module.exports = router

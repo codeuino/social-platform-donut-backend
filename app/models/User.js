@@ -56,7 +56,6 @@ const UserSchema = new mongoose.Schema({
   password: {
     type: String,
     trim: true,
-    required: true,
     minlength: 6,
     validate (password) {
       if (!validator.isLength(password, { min: 6 })) {
@@ -66,6 +65,11 @@ const UserSchema = new mongoose.Schema({
         throw new Error('Password is required!')
       }
     }
+  },
+  provider: {
+    type: String,
+    enum: ['google', 'github', 'email'],
+    default: 'email'
   },
   socialMedia: {
     youtube: {

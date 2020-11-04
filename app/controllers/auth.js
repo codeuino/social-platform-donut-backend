@@ -9,13 +9,14 @@ module.exports = {
     try {
       const user = await User.findByCredentials(email, password)
       const token = await user.generateAuthToken()
-      res.send({ user: user, token: token })
+      res.cookie("token", token, { httpOnly: true }).send({ user: user })
     } catch (error) {
       res.status(HttpStatus.BAD_REQUEST).json({ error: error.message })
     }
   },
   logout: (req, res, next) => {
     activityHelper.addActivityToDb(req, res)
+    res.clearCookie("token");
     res.status(HttpStatus.OK).json({ success: 'ok' })
   },
   logoutAll: (req, res, next) => {
