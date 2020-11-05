@@ -147,16 +147,31 @@ router.patch(
   userController.deactivateAccount
 )
 
+// Redirect user to Google Accounts
 router.get(
   '/auth/google',
   isUnderMaintenance,
   OAuthMiddlewares.passportGoogleAuthenticate
 )
 
+// Receive Callback from Google Accounts after successful Auth
 router.get(
   '/auth/google/callback',
   isUnderMaintenance,
   OAuthMiddlewares.passportGoogleAuthenticateCallback
+)
+
+// Redirect user to GitHub Accounts
+router.get(
+  '/auth/github',
+  isUnderMaintenance,
+  OAuthMiddlewares.passportGitHubAuthenticate
+)
+// Receive Callback from GitHub Accounts after successful Auth
+router.get(
+  '/auth/github/callback',
+  isUnderMaintenance,
+  OAuthMiddlewares.passportGitHubAuthenticateCallback
 )
 
 module.exports = router

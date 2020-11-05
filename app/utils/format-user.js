@@ -14,6 +14,17 @@ module.exports = {
         isActivated: profile._json.email_verified
       }
     }
+    if(provider==='github') {
+      formattedUser = {
+        name: {
+          firstName: profile._json.name.split(' ')[0],
+          lastName: profile._json.name.split(' ').slice(1).join(' '),
+        },
+        email: profile.emails[0].value,
+        provider: provider,
+        isActivated: true
+      }
+    }
     return formattedUser;
   },
 }

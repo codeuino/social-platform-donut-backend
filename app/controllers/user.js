@@ -499,10 +499,7 @@ module.exports = {
   },
   // Find User and Create if doesn't exist
   findOrCreateForOAuth: async(profile, provider) => {
-    let user;
-    if(provider==='google'){
-      user = formatUser.formatUser(profile, provider)
-    }
+    let user = formatUser.formatUser(profile, provider)
     try {
       const existingUser = await User.findOne({
         email: user.email

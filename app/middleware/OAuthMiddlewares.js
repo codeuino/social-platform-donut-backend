@@ -19,4 +19,24 @@ const passportGoogleAuthenticateCallback = async (req, res, next) => {
     }
   })(req, res, next)
 }
-module.exports = {passportGoogleAuthenticate, passportGoogleAuthenticateCallback}
+
+const passportGitHubAuthenticate = async (req, res, next) => {
+  passport.authenticate('github',  {scope: ['user:email']  , session: false})(req, res, next)
+}
+const passportGitHubAuthenticateCallback = async (req, res, next) => {
+  passport.authenticate('github', (err, details) => {
+    if(err) {
+      console.log(err)
+      return res.status(HttpStatus.UNAUTHORIZED).json({
+        msg: 'Something went wrong while authenticating!'
+      })
+    }
+    if(details.token===undefined || !details.token) {
+      res.redirect(afterAuthRedirect)
+    }else {
+      res.cookie("token", details.token, { httpOnly: true }).redirect(afterAuthRedirect);
+    }
+  })(req, res, next)
+}
+
+module.exports = {passportGoogleAuthenticate, passportGoogleAuthenticateCallback, passportGitHubAuthenticate, passportGitHubAuthenticateCallback}
