@@ -227,7 +227,7 @@ module.exports = {
   activateAccount: async (req, res, next) => {
     try {
       const { token } = req.params
-      const decodedToken = jwt.verify(token, 'process.env.JWT_SECRET')
+      const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
       const expiryTime = decodedToken.iat + 24 * 3600 * 1000 // 24 hrs
       if (expiryTime <= Date.now()) {
         const user = await User.findById(decodedToken._id)

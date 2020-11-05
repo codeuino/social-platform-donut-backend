@@ -62,7 +62,7 @@ const testUser = {
   tokens: [{
     token: jwt.sign({
       _id: testUserId
-    }, 'process.env.JWT_SECRET')
+    }, process.env.JWT_SECRET)
   }]
 }
 
@@ -80,7 +80,7 @@ const testFollowUser = {
   tokens: [{
     token: jwt.sign({
       _id: testFollowUserId
-    }, 'process.env.JWT_SECRET')
+    }, process.env.JWT_SECRET)
   }]
 }
 

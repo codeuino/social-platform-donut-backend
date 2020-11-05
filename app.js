@@ -34,6 +34,7 @@ const passport = require('passport');
 const app = express()
 const server = require('http').Server(app)
 const clientbaseurl = process.env.clientbaseurl ||  'http://localhost:3000'
+const passportOAuth = require('./app/middleware/passportOAuth')
 
 app.use(cors({origin: clientbaseurl, credentials: true}))
 
@@ -43,7 +44,7 @@ app.use(bodyParser.urlencoded(fileConstants.fileParameters))
 
 // PassportJS for OAuth
 app.use(passport.initialize());
-require('./app/middleware/passport');
+passportOAuth.initGoogleAuth();
 
 const memoryStorage = multer.memoryStorage()
 app.use(multer({ storage: memoryStorage }).single('file'))
