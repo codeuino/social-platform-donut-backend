@@ -3,9 +3,9 @@ const router = express.Router()
 const userController = require('../controllers/user')
 const auth = require('../middleware/auth')
 const isUnderMaintenance = require('../middleware/maintenance')
-const passport = require('passport');
+const OAuthMiddlewares = require('../middleware/OAuthMiddlewares')
+
 // const email = require('../middleware/email')
-const afterAuthRedirect = (process.env.clientbaseurl + '/login') ||  'http://localhost:3000/login'
 // create a user
 router.post(
   '/',
@@ -150,21 +150,13 @@ router.patch(
 router.get(
   '/auth/google',
   isUnderMaintenance,
-  passport.authenticate('google', { scope: ['profile','email'], session: false })
+  OAuthMiddlewares.passportGoogleAuthenticate
 )
 
 router.get(
   '/auth/google/callback',
   isUnderMaintenance,
-  (req, res, next) => {
-    passport.authenticate('google', (err, details) => {
-      if(details.token===undefined || !details.token) {
-        res.redirect(afterAuthRedirect)
-      }else {
-        res.cookie("token", details.token, { httpOnly: true }).redirect(afterAuthRedirect);
-      }
-    })(req, res, next)
-  }
+  OAuthMiddlewares.passportGoogleAuthenticateCallback
 )
 
 module.exports = router
