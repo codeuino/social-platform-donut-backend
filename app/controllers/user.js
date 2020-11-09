@@ -57,7 +57,7 @@ module.exports = {
   userProfile: async (req, res, next) => {
     try {
       const id = req.params.id || req.user._id
-      const user = await User.findById({ _id: id })
+      const user = await User.findById(id)
         .populate('followings', [
           'name.firstName',
           'name.lastName',
@@ -95,7 +95,7 @@ module.exports = {
   loadUser: async (req, res, next) => {
     try {
       const id = req.params.id || req.user._id
-      const user = await User.findById({ _id: id })
+      const user = await User.findById(id)
       if (!user) {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exist!' })
       }
@@ -172,9 +172,7 @@ module.exports = {
       const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
 
       if (Date.now() <= decodedToken.expiry) {
-        const user = await User.findById({
-          _id: id
-        })
+        const user = await User.findById(id)
         if (!user) {
           return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user' })
         }
