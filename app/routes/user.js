@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const userController = require('../controllers/user')
 const auth = require('../middleware/auth')
+const isOAuthAllowed = require('../middleware/isOAuthAllowed')
 const isUnderMaintenance = require('../middleware/maintenance')
 const OAuthMiddlewares = require('../middleware/OAuthMiddlewares')
 
@@ -151,6 +152,7 @@ router.patch(
 router.get(
   '/auth/google',
   isUnderMaintenance,
+  isOAuthAllowed,
   OAuthMiddlewares.passportGoogleAuthenticate
 )
 
@@ -158,6 +160,7 @@ router.get(
 router.get(
   '/auth/google/callback',
   isUnderMaintenance,
+  isOAuthAllowed,
   OAuthMiddlewares.passportGoogleAuthenticateCallback
 )
 
@@ -165,12 +168,14 @@ router.get(
 router.get(
   '/auth/github',
   isUnderMaintenance,
+  isOAuthAllowed,
   OAuthMiddlewares.passportGitHubAuthenticate
 )
 // Receive Callback from GitHub Accounts after successful Auth
 router.get(
   '/auth/github/callback',
   isUnderMaintenance,
+  isOAuthAllowed,
   OAuthMiddlewares.passportGitHubAuthenticateCallback
 )
 
