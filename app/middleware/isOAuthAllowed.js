@@ -10,11 +10,9 @@ const isOAuthAllowed = async (req, res, next) => {
         error: 'Organization does not exist!'
       })
     }
-    console.log('req._parsedUrl.path.slice(6, 12): ', req._parsedUrl.path.slice(6, 12))
     switch (req._parsedUrl.path.slice(6, 12)) {
       case 'google': {
         if(org[0].options.authentication.google) {
-          console.log("Google Next")
           next()
         }else {
           throw new Error('Google OAuth Not Allowed')
@@ -23,7 +21,6 @@ const isOAuthAllowed = async (req, res, next) => {
       }
       case 'github': {
         if(org[0].options.authentication.github) {
-          console.log("GitHub Next")
           next()
         }else {
           throw new Error('GitHub OAuth Not Allowed')
@@ -32,7 +29,6 @@ const isOAuthAllowed = async (req, res, next) => {
       }
       default: {
         if(org[0].options.authentication.email) {
-          console.log("Email Next")
           next()
         }else {
           throw new Error('Email Auth has beed turned off!')
