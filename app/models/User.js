@@ -282,6 +282,8 @@ UserSchema.statics.findByCredentials = async (email, password) => {
 
   if (!user) {
     throw new Error('No such user')
+  } else if(!user.hasOwnProperty('password') && user.provider!=='email'){
+    throw new Error(`Please use ${user.provider} to login!`)
   } else {
     const isMatch = await bcrypt.compare(password, user.password)
     if (!isMatch) {

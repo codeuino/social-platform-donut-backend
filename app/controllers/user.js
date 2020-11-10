@@ -23,8 +23,11 @@ const notification = {
 module.exports = {
   // CREATE USER
   createUser: async (req, res, next) => {
-    const user = new User(req.body)
     try {
+      const { password } = req.body;
+      if(!password) throw new Error("Password is required!")
+
+      const user = new User(req.body)
       const isRegisteredUserExists = await User.findOne({ firstRegister: true })
       const Org = await Organization.find({}).lean().exec()
       // for the first user who will be setting up the platform for their community
@@ -202,6 +205,7 @@ module.exports = {
       await req.user.save()
       // add all activity to db after successfully logged out
       activityHelper.addActivityToDb(req, res)
+      res.clearCookie("token")
       return res.status(HttpStatus.OK).json({ msg: 'User logged out Successfully!' })
     } catch (error) {
       HANDLER.handleError(res, error)
