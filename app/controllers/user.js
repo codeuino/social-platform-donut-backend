@@ -24,8 +24,8 @@ module.exports = {
   // CREATE USER
   createUser: async (req, res, next) => {
     try {
-      const { password } = req.body;
-      if(!password) throw new Error("Password is required!")
+      const { password } = req.body
+      if(!password) throw new Error('Password is required!')
 
       const user = new User(req.body)
       const isRegisteredUserExists = await User.findOne({ firstRegister: true })
@@ -51,7 +51,7 @@ module.exports = {
       await activity.save()
       // hide password
       user.password = undefined
-      res.cookie("token", token, { httpOnly: true }).status(HttpStatus.CREATED).send({ user: user })
+      res.cookie('token', token, { httpOnly: true }).status(HttpStatus.CREATED).send({ user: user })
     } catch (error) {
       return res.status(HttpStatus.NOT_ACCEPTABLE).json({ error: error })
     }
@@ -205,7 +205,7 @@ module.exports = {
       await req.user.save()
       // add all activity to db after successfully logged out
       activityHelper.addActivityToDb(req, res)
-      res.clearCookie("token")
+      res.clearCookie('token')
       return res.status(HttpStatus.OK).json({ msg: 'User logged out Successfully!' })
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -508,7 +508,7 @@ module.exports = {
       })
       if (existingUser) {
         const token = await existingUser.generateAuthToken()
-        return  {token, user: existingUser};
+        return  {token, user: existingUser}
       } else {
         const newUser = new User(user)
         const isRegisteredUserExists = await User.findOne({ firstRegister: true })
@@ -535,7 +535,7 @@ module.exports = {
         return {token: token, user: data}
       }
     } catch(e) {
-      throw e;
+      throw e
     }
   }
 }
