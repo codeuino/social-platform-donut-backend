@@ -63,49 +63,25 @@ module.exports = {
   },
 
   // attaches a file to the given proposal
-  attachFile: (req, res, next) => {
-    const { proposalId } = req.params
-    const file = req.file
-    const s3FileURL = process.env.AWS_UPLOADED_FILE_URL_LINK
+  attachFile: async (req, res, next) => {
+    try {
+      const { proposalId } = req.params
+      const file = req.file
 
-    const s3bucket = new AWS.S3({
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      region: process.env.AWS_REGION
-    })
-
-    var params = {
-      Bucket: process.env.AWS_BUCKET_NAME,
-      Key: file.originalname,
-      Body: file.buffer,
-      ContentType: file.mimetype,
-      ACL: 'public-read'
-    }
-
-    s3bucket.upload(params, function (err, data) {
-      if (err) {
-        res.status(500).json({ error: true, Message: err })
-      } else {
-        var newFileUploaded = {
-          fileLink: s3FileURL + file.originalname,
-          s3_key: params.Key
-        }
-
-        ProposalModel.findOneAndUpdate(
-          { _id: proposalId },
-          { $push: { attachments: newFileUploaded } },
-          function (error, success) {
-            if (error) {
-              console.log(error)
-            } else {
-              console.log(success)
-            }
-          }
-        )
-
-        res.send({ data })
+      let newFileUploaded = {
+        fileLink: file.location,
+        s3_key: file.key
       }
-    })
+
+      const updateProposal = await ProposalModel.findOneAndUpdate(
+        { _id: proposalId },
+        { $push: { attachments: newFileUploaded } })
+      if(!updateProposal) throw new Error("Error While Updating!")
+
+      res.send({ file })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
   },
 
   // Get proposals by userId

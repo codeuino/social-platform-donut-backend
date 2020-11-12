@@ -47,9 +47,6 @@ app.use(passport.initialize());
 passportOAuth.initGoogleAuth();
 passportOAuth.initGitHubAuth();
 
-const memoryStorage = multer.memoryStorage()
-app.use(multer({ storage: memoryStorage }).single('file'))
-
 if (process.env.NODE_ENV !== 'testing') {
   server.listen(process.env.SOCKET_PORT || 8810)
 }
