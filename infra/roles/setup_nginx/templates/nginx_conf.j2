@@ -1,0 +1,18 @@
+server {
+   listen 80 default_server;
+   root /root/donut_frontend/build;
+   server_name [{{ansible_default_ipv4.address}}];
+   index index.html index.htm;
+   location / {
+   }
+   location /api {
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-NginX-Proxy true;
+    proxy_pass http://localhost:5000/; 
+    proxy_ssl_session_reuse off;
+    proxy_set_header Host $http_host;
+    proxy_cache_bypass $http_upgrade;
+    proxy_redirect off;
+   }
+}

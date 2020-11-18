@@ -1,0 +1,13 @@
+---
+db_name: "donut-development"
+
+__redis_package: redis-server
+redis_daemon: redis-server
+redis_conf_path: /etc/redis/redis.conf
+
+# details about organization
+organization_name: Codeuino
+organization_shortDescription: "This is short description"
+organization_longDescription: "This is long description"
+organization_email: "kumarsaurabhraj.sr@gmail.com"
+organization_website: "https://codeuino.org"
