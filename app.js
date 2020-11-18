@@ -30,15 +30,22 @@ const analyticsRouter = require('./app/routes/analytics')
 const wikisRouter = require('./app/routes/wikis')
 const activityRouter = require('./app/routes/activity')
 const ticketRouter = require('./app/routes/ticket')
-
+const passport = require('passport')
 const app = express()
 const server = require('http').Server(app)
+const clientbaseurl = process.env.clientbaseurl ||  'http://localhost:3000'
+const passportOAuth = require('./app/middleware/passportOAuth')
 
-app.use(cors())
+app.use(cors({origin: clientbaseurl, credentials: true}))
 
 app.use(bodyParser.json({ limit: '200mb' }))
 app.use(cookieParser())
 app.use(bodyParser.urlencoded(fileConstants.fileParameters))
+
+// PassportJS for OAuth
+app.use(passport.initialize())
+passportOAuth.initGoogleAuth()
+passportOAuth.initGitHubAuth()
 
 const memoryStorage = multer.memoryStorage()
 app.use(multer({ storage: memoryStorage }).single('file'))

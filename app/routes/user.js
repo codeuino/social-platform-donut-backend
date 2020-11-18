@@ -2,15 +2,25 @@ const express = require('express')
 const router = express.Router()
 const userController = require('../controllers/user')
 const auth = require('../middleware/auth')
+const isOAuthAllowed = require('../middleware/isOAuthAllowed')
 const isUnderMaintenance = require('../middleware/maintenance')
-// const email = require('../middleware/email')
+const OAuthMiddlewares = require('../middleware/OAuthMiddlewares')
 
+// const email = require('../middleware/email')
 // create a user
 router.post(
   '/',
   isUnderMaintenance,
   // email,
   userController.createUser
+)
+
+// load user (endpoint used to call when someone opens app)
+router.get(
+  '/load_user',
+  isUnderMaintenance,
+  auth,
+  userController.loadUser
 )
 
 // get user profile
@@ -136,6 +146,37 @@ router.patch(
   isUnderMaintenance,
   auth,
   userController.deactivateAccount
+)
+
+// Redirect user to Google Accounts
+router.get(
+  '/auth/google',
+  isUnderMaintenance,
+  isOAuthAllowed,
+  OAuthMiddlewares.passportGoogleAuthenticate
+)
+
+// Receive Callback from Google Accounts after successful Auth
+router.get(
+  '/auth/google/callback',
+  isUnderMaintenance,
+  isOAuthAllowed,
+  OAuthMiddlewares.passportGoogleAuthenticateCallback
+)
+
+// Redirect user to GitHub Accounts
+router.get(
+  '/auth/github',
+  isUnderMaintenance,
+  isOAuthAllowed,
+  OAuthMiddlewares.passportGitHubAuthenticate
+)
+// Receive Callback from GitHub Accounts after successful Auth
+router.get(
+  '/auth/github/callback',
+  isUnderMaintenance,
+  isOAuthAllowed,
+  OAuthMiddlewares.passportGitHubAuthenticateCallback
 )
 
 module.exports = router

@@ -2,7 +2,7 @@ const sendgridMail = require('@sendgrid/mail')
 const ejs = require('ejs')
 const path = require('path')
 const sendGridApi = process.env.SENDGRID_API_KEY || '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'
-
+const SENDGRID_FROM_EMAIL_ADDRESS = process.env.SENDGRID_FROM_EMAIL_ADDRESS || 'services@codeuino.com'
 sendgridMail.setApiKey(sendGridApi)
 
 module.exports = {
@@ -14,7 +14,7 @@ module.exports = {
       } else {
         const message = {
           to: req.body.email,
-          from: 'services@codeuino.com',
+          from: SENDGRID_FROM_EMAIL_ADDRESS,
           subject: `Welcome to Donut ${req.body.name.firstName}`,
           html: data
         }

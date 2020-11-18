@@ -12,6 +12,7 @@ const TAGS = require('../utils/notificationTags')
 const settingHelper = require('../utils/settingHelpers')
 const Activity = require('../models/Activity')
 const activityHelper = require('../utils/activity-helper')
+const formatUser = require('../utils/format-user')
 
 const notification = {
   heading: '',
@@ -22,8 +23,11 @@ const notification = {
 module.exports = {
   // CREATE USER
   createUser: async (req, res, next) => {
-    const user = new User(req.body)
     try {
+      const { password } = req.body
+      if(!password) throw new Error('Password is required!')
+
+      const user = new User(req.body)
       const isRegisteredUserExists = await User.findOne({ firstRegister: true })
       const Org = await Organization.find({}).lean().exec()
       // for the first user who will be setting up the platform for their community
@@ -47,7 +51,7 @@ module.exports = {
       await activity.save()
       // hide password
       user.password = undefined
-      return res.status(HttpStatus.CREATED).json({ user: user, token: token })
+      res.cookie('token', token, { httpOnly: true }).status(HttpStatus.CREATED).send({ user: user })
     } catch (error) {
       return res.status(HttpStatus.NOT_ACCEPTABLE).json({ error: error })
     }
@@ -56,7 +60,7 @@ module.exports = {
   userProfile: async (req, res, next) => {
     try {
       const id = req.params.id || req.user._id
-      const user = await User.findById({ _id: id })
+      const user = await User.findById(id)
         .populate('followings', [
           'name.firstName',
           'name.lastName',
@@ -86,6 +90,22 @@ module.exports = {
       user.password = undefined
       user.tokens = []
       return res.status(HttpStatus.OK).json({ user })
+    } catch (error) {
+      HANDLER.handleError(res, error)
+    }
+  },
+  // Load User
+  loadUser: async (req, res, next) => {
+    try {
+      const id = req.params.id || req.user._id
+      const user = await User.findById(id)
+      if (!user) {
+        return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such user exist!' })
+      }
+      // hide password and tokens
+      user.password = undefined
+      user.tokens = []
+      return res.status(HttpStatus.OK).json({ user: user })
     } catch (error) {
       HANDLER.handleError(res, error)
     }
@@ -155,9 +175,7 @@ module.exports = {
       const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
 
       if (Date.now() <= decodedToken.expiry) {
-        const user = await User.findById({
-          _id: id
-        })
+        const user = await User.findById(id)
         if (!user) {
           return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user' })
         }
@@ -187,6 +205,7 @@ module.exports = {
       await req.user.save()
       // add all activity to db after successfully logged out
       activityHelper.addActivityToDb(req, res)
+      res.clearCookie('token')
       return res.status(HttpStatus.OK).json({ msg: 'User logged out Successfully!' })
     } catch (error) {
       HANDLER.handleError(res, error)
@@ -210,7 +229,7 @@ module.exports = {
   activateAccount: async (req, res, next) => {
     try {
       const { token } = req.params
-      const decodedToken = jwt.verify(token, 'process.env.JWT_SECRET')
+      const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
       const expiryTime = decodedToken.iat + 24 * 3600 * 1000 // 24 hrs
       if (expiryTime <= Date.now()) {
         const user = await User.findById(decodedToken._id)
@@ -478,6 +497,45 @@ module.exports = {
       return res.status(HttpStatus.OK).json({ user })
     } catch (error) {
       HANDLER.handleError(error)
+    }
+  },
+  // Find User and Create if doesn't exist
+  findOrCreateForOAuth: async(profile, provider) => {
+    let user = formatUser.formatUser(profile, provider)
+    try {
+      const existingUser = await User.findOne({
+        email: user.email
+      })
+      if (existingUser) {
+        const token = await existingUser.generateAuthToken()
+        return  {token, user: existingUser}
+      } else {
+        const newUser = new User(user)
+        const isRegisteredUserExists = await User.findOne({ firstRegister: true })
+        const Org = await Organization.find({}).lean().exec()
+        // for the first user who will be setting up the platform for their community
+        if (!isRegisteredUserExists) {
+          newUser.isAdmin = true
+          newUser.firstRegister = true
+        }
+        if (Org.length > 0) {
+          newUser.orgId = Org[0]._id
+        }
+        const data = await newUser.save()
+        if (!isRegisteredUserExists) {
+          settingHelper.addAdmin(data._id)
+        }
+        const token = await newUser.generateAuthToken()
+
+        // create redis db for activity for the user
+        const activity = new Activity({ userId: data._id })
+        await activity.save()
+        // hide password
+        data.password = undefined
+        return {token: token, user: data}
+      }
+    } catch(e) {
+      throw e
     }
   }
 }
