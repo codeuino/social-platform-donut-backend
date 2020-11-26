@@ -15,7 +15,7 @@ const passportGoogleAuthenticateCallback = async (req, res, next) => {
     if(details.token===undefined || !details.token) {
       res.redirect(afterAuthRedirect)
     }else {
-      res.cookie("token", details.token, { httpOnly: true }).redirect(afterAuthRedirect);
+      res.cookie('token', details.token, { httpOnly: true }).redirect(afterAuthRedirect)
     }
   })(req, res, next)
 }
@@ -34,7 +34,7 @@ const passportGitHubAuthenticateCallback = async (req, res, next) => {
     if(details.token===undefined || !details.token) {
       res.redirect(afterAuthRedirect)
     }else {
-      res.cookie("token", details.token, { httpOnly: true }).redirect(afterAuthRedirect);
+      res.cookie('token', details.token, { httpOnly: true }).redirect(afterAuthRedirect)
     }
   })(req, res, next)
 }

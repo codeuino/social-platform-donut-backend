@@ -25,6 +25,6 @@ module.exports = {
         isActivated: true
       }
     }
-    return formattedUser;
+    return formattedUser
   },
 }

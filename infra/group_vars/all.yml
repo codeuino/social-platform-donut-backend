@@ -1,0 +1,21 @@
+---
+# Backend
+# Set the version of Node.js to install (8.x", "10.x", "12.x", "13.x", etc.).
+nodejs_version: "12.x"
+donut_backend_repo: "https://github.com/codeuino/social-platform-donut-backend.git"
+donut_backend_repo_branch: "master"
+db_name: "donut-development"
+
+# details about organization
+organization_name: Codeuino
+organization_shortDescription: "This is short description"
+organization_longDescription: "This is long description"
+organization_email: "kumarsaurabhraj.sr@gmail.com"
+organization_website: "https://codeuino.org"
+
+# Frontend
+donut_frontend_repo: "https://github.com/codeuino/social-platform-donut-frontend.git"
+donut_frontend_repo_branch: "master"
+
+# APIs
+SENDGRID_API_KEY: "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"

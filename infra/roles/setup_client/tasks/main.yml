@@ -1,0 +1,58 @@
+---
+
+- name: Update and upgrade apt packages
+  become: true
+  apt:
+    upgrade: yes
+    update_cache: yes
+  tags:
+    - setup
+    - frontend
+
+- import_tasks: nodejs.yml
+  tags:
+    - setup
+
+- name: Clone Donut Frontend Repository
+  git:
+    repo: "{{ donut_frontend_repo }}"
+    dest: /root/donut_frontend
+    version: "{{ donut_frontend_repo_branch }}"
+    force: "yes"
+  tags:
+    - deploy
+    - frontend
+
+- name: Install Frontend Dependencies
+  shell: npm install
+  args:
+    chdir: donut_frontend/
+  tags:
+    - deploy
+    - frontend
+
+- name: delete env production file
+  file:
+    path: /root/donut_frontend/.env.production
+    state: absent
+  tags:
+    - deploy
+    - frontend
+
+- name: Create new env file
+  template:
+    src: "env.j2"
+    dest: /root/donut_frontend/.env.production
+    mode: 0644
+  become: yes
+  tags:
+    - deploy
+    - frontend
+
+- name: Contructing Frontend Production Build
+  shell: npm run build
+  args:
+    chdir: donut_frontend/
+  tags:
+    - deploy
+    - frontend
