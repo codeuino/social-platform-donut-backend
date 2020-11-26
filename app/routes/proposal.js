@@ -1,7 +1,8 @@
 const express = require('express')
 const router = express.Router()
 const proposalController = require('../controllers/proposal')
-const uploader = require('../utils/uploader')
+const fileToBuffer = require('../utils/fileToBuffer')
+const compressAndUpload = require('../utils/compressAndUpload')
 
 // Create a new proposal
 router.post('/', proposalController.createProposal)
@@ -10,7 +11,11 @@ router.post('/', proposalController.createProposal)
 router.patch('/:proposalId', proposalController.saveProposal)
 
 // Attach file to the given proposal
-router.post('/attach/:proposalId', uploader.upload.single('file'), proposalController.attachFile)
+router.post('/attach/:proposalId',
+  fileToBuffer.processFile.single('file'),
+  compressAndUpload.imageCompressor,
+  proposalController.attachFile
+)
 
 // Get proposals by userId
 router.get('/user/:userId', proposalController.getByUserId)

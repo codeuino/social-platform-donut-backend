@@ -18,8 +18,18 @@ const PostSchema = new Schema({
     ref: 'User'
   },
   image: {
-    data: Buffer,
-    contentType: String
+    name: String,
+    contentType: String,
+    key: String,
+    href:  {
+      type: String,
+      trim: true,
+      validator (imgUrl) {
+        if (!validator.isURL(imgUrl)) {
+          throw new Error('Invalid image URL!')
+        }
+      }
+    }
   },
   imgUrl: {
     type: String,

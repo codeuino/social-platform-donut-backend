@@ -2,14 +2,16 @@ const express = require('express')
 const router = express.Router()
 const auth = require('../middleware/auth')
 const OrgController = require('../controllers/organization')
-const uploader = require('../utils/uploader')
+const fileToBuffer = require('../utils/fileToBuffer')
 const isUnderMaintenance = require('../middleware/maintenance')
+const compressAndUpload = require('../utils/compressAndUpload')
 
 // CREATE ORG
 router.post(
   '/',
   isUnderMaintenance,
-  uploader.upload.single('image'),
+  fileToBuffer.processFile.single('image'),
+  compressAndUpload.imageCompressor,
   OrgController.createOrganization
 )
 
@@ -25,7 +27,8 @@ router.get(
 router.patch(
   '/:id',
   isUnderMaintenance,
-  uploader.upload.single('image'),
+  fileToBuffer.processFile.single('image'),
+  compressAndUpload.imageCompressor,
   auth,
   OrgController.updateOrgDetails
 )

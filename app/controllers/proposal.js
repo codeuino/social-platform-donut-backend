@@ -69,7 +69,7 @@ module.exports = {
       const file = req.file
 
       let newFileUploaded = {
-        fileLink: file.location,
+        fileLink: file.href,
         s3_key: file.key
       }
 
