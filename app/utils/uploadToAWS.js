@@ -1,9 +1,6 @@
 const aws = require('aws-sdk')
 
-const uploadToAWS = async (compressedBuffer, file, next) => {
-
-  console.log('compressedBuffer: ', compressedBuffer)
-
+const uploadToAWS = async (compressedBuffer, file) => {
   const awsS3 = new aws.S3({
     accessKeyId: process.env.AWS_ACCESS_KEY,
     secretAccessKey: process.env.AWS_SECRET_KEY,
@@ -19,13 +16,7 @@ const uploadToAWS = async (compressedBuffer, file, next) => {
     ContentType: file.mimetype,
     ACL: 'public-read'
   }
-  awsS3.upload(params, function (err, data) {
-    if (err) {
-      next(err, false)
-    } else {
-      return next(null, data)
-    }
-  })
+  return awsS3.upload(params).promise()
 }
 
 module.exports = {

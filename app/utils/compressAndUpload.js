@@ -1,49 +1,43 @@
-const fs = require('fs')
-var Jimp = require('jimp');
 const uploader = require('./uploadToAWS')
+var Promise = require("bluebird")
+const Jimp = Promise.promisifyAll(require('jimp'))
 const MAX_WIDTH = 768
 
-const imageCompressor = (req, res, next) => {
+const imageCompressor = async (req, res, next) => {
   try {
-    if(req.file && req.file.buffer){
-      Jimp.read(req.file.buffer, (err, image) => {
-        if (err) throw err;
-
-        if (image.bitmap.width > MAX_WIDTH) {
-          image.resize(768, Jimp.AUTO)
-            .getBuffer(Jimp.AUTO, (err, image) => {
-              if (err) throw err
-
-              uploader.uploadToAWS(image, req.file, (err, data) => {
-                if (err) throw err
-
-                req.file.href = data.Location
-                req.file.key = data.Key
-                next(null, true);
-              })
-            })
-        } else {
-          image.getBuffer(Jimp.AUTO, (err, image) => {
-            if (err) throw err;
-
-            uploader.uploadToAWS(image, req.file, (err, data) => {
-              if (err) throw err
-
-              req.file.href = data.Location
-              req.file.key = data.Key
-              next(null, true);
-            })
-          })
-        }
-      })
+    if (req.file && req.file.buffer && req.file.originalname.match(/\.(jpg|JPG|jpeg|JPEG|png|PNG)$/)) {
+      Jimp.readAsync(req.file.buffer)
+        .then(image => {
+          if(image.bitmap.width > MAX_WIDTH) {
+            return image.resize(768, Jimp.AUTO).getBufferAsync(Jimp.AUTO)
+          } else {
+            return image.getBufferAsync(Jimp.AUTO)
+          }
+        })
+        .then(async (imageBuffer) => {
+          return uploader.uploadToAWS(imageBuffer, req.file)
+        })
+        .then(data => {
+          req.file.href = data.Location
+          req.file.key = data.Key
+          next(null, true);
+        })
+        .catch(err => {
+          throw err
+        })
     } else {
-      next()
+      uploader.uploadToAWS(req.file.buffer, req.file)
+        .then(data => {
+          req.file.href = data.Location
+          req.file.key = data.Key
+          next(null, true);
+        })
     }
-  } catch(error) {
+  } catch (error) {
+    console.log(error.message)
     next(error, false)
   }
 }
-
 module.exports = {
   imageCompressor
 }

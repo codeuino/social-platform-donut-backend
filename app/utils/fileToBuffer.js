@@ -1,8 +1,4 @@
 const multer = require('multer')
-const fs = require('fs')
-const path = require('path')
-const aws = require('aws-sdk')
-const multerS3 = require('multer-s3');
 
 // type of files allowed
 const fileFilter = (req, file, cb) => {
