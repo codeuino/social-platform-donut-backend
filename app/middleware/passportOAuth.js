@@ -18,16 +18,16 @@ module.exports = {
       proxy: true
     }, (accessToken, refreshToken, profile, next) => {
 
-      const provider="google";
+      const provider='google';
       user.findOrCreateForOAuth(profile, provider)
         .then(details => {
           if (details) {
             next(null, details);
           } else {
-            next(null, false);
+            next(null, false)
           }
         }).catch(err=>next(err))
-    }));
+    }))
   },
   initGitHubAuth: () => {
     passport.use(new GitHubStrategy({
@@ -37,15 +37,15 @@ module.exports = {
       proxy: true,
       scope: ['user:email']
     }, (accessToken, refreshToken, profile, next) => {
-      const provider="github";
+      const provider='github'
       user.findOrCreateForOAuth(profile, provider)
         .then(details => {
           if (details) {
-            next(null, details);
+            next(null, details)
           } else {
-            next(null, false);
+            next(null, false)
           }
         }).catch(err=>next(err))
-    }));
+    }))
   }
 }

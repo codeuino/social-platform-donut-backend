@@ -4,7 +4,7 @@ const afterAuthRedirect = (process.env.clientbaseurl + '/login') ||  'http://loc
 
 const isOAuthAllowed = async (req, res, next) => {
   try {
-    const org = await Organisation.find({});
+    const org = await Organisation.find({})
     if (org.length === 0) {
       return res.status(HttpStatus.NOT_FOUND).json({
         error: 'Organization does not exist!'
@@ -17,7 +17,7 @@ const isOAuthAllowed = async (req, res, next) => {
         }else {
           throw new Error('Google OAuth Not Allowed')
         }
-        break;
+        break
       }
       case 'github': {
         if(org[0].options.authentication.github) {
@@ -25,7 +25,7 @@ const isOAuthAllowed = async (req, res, next) => {
         }else {
           throw new Error('GitHub OAuth Not Allowed')
         }
-        break;
+        break
       }
       default: {
         if(org[0].options.authentication.email) {
@@ -33,7 +33,7 @@ const isOAuthAllowed = async (req, res, next) => {
         }else {
           throw new Error('Email Auth has beed turned off!')
         }
-        break;
+        break
       }
     }
   } catch (Error) {

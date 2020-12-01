@@ -1,0 +1,6 @@
+---
+- name: Setup Donut Frontend
+  hosts: all
+  roles:
+    - setup_client
+    - setup_nginx
