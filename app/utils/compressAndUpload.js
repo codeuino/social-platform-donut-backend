@@ -1,5 +1,5 @@
 const uploader = require('./uploadToAWS')
-var Promise = require("bluebird")
+const Promise = require('bluebird')
 const Jimp = Promise.promisifyAll(require('jimp'))
 const MAX_WIDTH = 768
 
