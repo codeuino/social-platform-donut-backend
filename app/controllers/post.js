@@ -2,7 +2,7 @@ const PostModel = require('../models/Post')
 const UserModel = require('../models/User')
 const HANDLER = require('../utils/response-helper')
 const HttpStatus = require('http-status-codes')
-const imgUploadHelper = require('../utils/uploader')
+const fileUploadHelper = require('../utils/fileToBuffer')
 const permission = require('../utils/permission')
 const helper = require('../utils/paginate')
 const settingsHelper = require('../utils/settingHelpers')
@@ -16,7 +16,7 @@ module.exports = {
     const userId = req.user.id.toString()
     post.userId = userId
     if (req.file) {
-      imgUploadHelper.mapToDb(req, post)
+      fileUploadHelper.mapToDb(req, post)
     }
     try {
       await post.save()
@@ -90,7 +90,7 @@ module.exports = {
         post[update] = req.body[update]
       })
       if (req.file) {
-        imgUploadHelper.mapToDb(req, post)
+        fileUploadHelper.mapToDb(req, post)
       }
       await post.save()
       res.status(HttpStatus.OK).json({ post: post })

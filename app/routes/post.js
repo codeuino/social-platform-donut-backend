@@ -2,16 +2,18 @@ require('../../config/mongoose')
 const express = require('express')
 const router = express.Router()
 const postController = require('../controllers/post')
-const uploader = require('../utils/uploader')
+const fileToBuffer = require('../utils/fileToBuffer')
 const auth = require('../middleware/auth')
 const isUnderMaintenance = require('../middleware/maintenance')
+const compressAndUpload = require('../utils/compressAndUpload')
 
 // CREATE A POST
 router.post(
   '/',
   isUnderMaintenance,
   auth,
-  uploader.upload.single('image'),
+  fileToBuffer.processFile.single('image'),
+  compressAndUpload.imageCompressor,
   postController.create
 )
 
@@ -28,7 +30,8 @@ router.patch(
   '/:id',
   isUnderMaintenance,
   auth,
-  uploader.upload.single('image'),
+  fileToBuffer.processFile.single('image'),
+  compressAndUpload.imageCompressor,
   postController.updatePost
 )
 

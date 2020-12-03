@@ -1,6 +1,6 @@
 const passport = require('passport')
 const HttpStatus = require('http-status-codes')
-const afterAuthRedirect = (process.env.clientbaseurl + '/login') ||  'http://localhost:3000/login'
+const afterAuthRedirect = (process.env.clientbaseurl + '/login') || 'http://localhost:3000/login'
 
 const passportGoogleAuthenticate = async (req, res, next) => {
   passport.authenticate('google', { scope: ['profile','email'], session: false })(req, res, next)

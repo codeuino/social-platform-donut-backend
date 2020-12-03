@@ -1,16 +1,4 @@
 const multer = require('multer')
-const fs = require('fs')
-const path = require('path')
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../uploads/'))
-  },
-  filename: (req, file, cb) => {
-    console.log('files ', file.originalname)
-    cb(null, file.originalname)
-  }
-})
 
 // type of files allowed
 const fileFilter = (req, file, cb) => {
@@ -21,7 +9,9 @@ const fileFilter = (req, file, cb) => {
   }
 }
 
-exports.upload = multer({
+const storage = multer.memoryStorage()
+
+exports.processFile = multer({
   storage: storage,
   limits: {
     fileSize: 1024 * 1024 * 10 // 10 mb
@@ -35,7 +25,9 @@ exports.upload = multer({
 })
 
 exports.mapToDb = (req, db) => {
-  const img = fs.readFileSync(req.file.path)
-  db.image.data = img
-  db.image.contentType = 'image/png'
+  const file = req.file
+  db.image.name = file.name
+  db.image.href = file.href
+  db.image.contentType = file.mime
+  db.image.key = file.key
 }
