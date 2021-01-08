@@ -1,5 +1,5 @@
 const mongoose = require('mongoose')
-const bcrypt = require('bcrypt')
+const bcryptjs = require('bcryptjs')
 const validator = require('validator')
 const jwt = require('jsonwebtoken')
 
@@ -285,7 +285,7 @@ UserSchema.statics.findByCredentials = async (email, password) => {
   } else if(!user.hasOwnProperty('password') && user.provider!=='email'){
     throw new Error(`Please use ${user.provider} to login!`)
   } else {
-    const isMatch = await bcrypt.compare(password, user.password)
+    const isMatch = await bcryptjs.compare(password, user.password)
     if (!isMatch) {
       throw new Error('Incorrect password provided')
     } else {
@@ -299,7 +299,7 @@ UserSchema.pre('save', async function (next) {
   const user = this
 
   if (user.isModified('password')) {
-    user.password = await bcrypt.hash(user.password, saltRounds)
+    user.password = await bcryptjs.hash(user.password, saltRounds)
   }
 
   next()
