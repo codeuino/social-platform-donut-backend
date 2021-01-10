@@ -38,7 +38,7 @@ module.exports = {
           .status(HttpStatus.NOT_FOUND)
           .json({ message: 'No post exists' })
       }
-      if (!permission.check(req, res, post.userId)) {
+      if (! await permission.check(req, res, post.userId)) {
         return res
           .status(HttpStatus.BAD_REQUEST)
           .json({ message: 'Bad delete request' })
@@ -73,7 +73,7 @@ module.exports = {
       }
       // permission check for admin and creator || edit allowed or not
       if (
-        !permission.check(req, res, post.userId) ||
+        ! await permission.check(req, res, post.userId) ||
         !settingsHelper.canEdit()
       ) {
         return res
