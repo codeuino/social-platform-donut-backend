@@ -41,7 +41,8 @@ module.exports = {
         return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No post exists' })
       }
       // check for permission and edit permission
-      if (!permission.check(req, res, event.createdBy) || (!settingsHelper.canEdit())) {
+      if (! await 
+permission.check(req, res, event.createdBy) || (!settingsHelper.canEdit())) {
         return res.status(HttpStatus.FORBIDDEN).json({ msg: 'Bad update request' })
       }
       // if edit allowed check allowed limit time

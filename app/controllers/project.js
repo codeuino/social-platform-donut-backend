@@ -69,7 +69,8 @@ module.exports = {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such project exits!' })
       }
       // permission check for admin and creator || is edit allowed
-      if (!permission.check(req, res, project.createdBy) || (!settingsHelper.canEdit())) {
+      if (! await 
+permission.check(req, res, project.createdBy) || (!settingsHelper.canEdit())) {
         return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Bad Update Request!' })
       }
       // if allowed check edit limit

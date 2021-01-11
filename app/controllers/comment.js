@@ -32,7 +32,8 @@ module.exports = {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No comment exist' })
       }
       // Add rights for admins and moderators as well (TODO)
-      if (!permission.check(req, res, comment.userId)) {
+      if (! await 
+permission.check(req, res, comment.userId)) {
         return res.status(HttpStatus.FORBIDDEN).json({ message: 'Bad delete request' })
       }
       await CommentModel.findByIdAndRemove(id)
@@ -59,7 +60,8 @@ module.exports = {
         return res.status(HttpStatus.NOT_FOUND).json({ error: 'No comment exist' })
       }
       // also add admin or moderator control (TODO)
-      if (!permission.check(req, res, comment.userId)) {
+      if (! await 
+permission.check(req, res, comment.userId)) {
         return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Wrong update' })
       }
       updates.forEach(update => {
