@@ -75,6 +75,16 @@ permission.check(req, res, event.createdBy) || (!settingsHelper.canEdit())) {
         res.status(HttpStatus.BAD_REQUEST).json({ error: 'No Event is available' })
         return
       }
+
+      if (data.createdBy.toString() === req.user.id.toString()) {
+        req.io.emit('User is creator', { data: 'You cant RSVP to your created event' })
+        notification.heading = 'Its Your Event'
+        notification.content = 'You cant RSVP to your created event'
+        notificationHelper.addToNotificationForUser(req.user._id, res, notification, next)
+        res.status(HttpStatus.OK).json({ msg: 'You cant RSVP to your created event' })
+        return
+      }
+
       if (data.rsvpMaybe.includes(req.user.id) ||
       data.rsvpNo.includes(req.user.id) ||
       data.rsvpYes.includes(req.user.id)) {

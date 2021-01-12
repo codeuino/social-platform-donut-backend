@@ -462,11 +462,13 @@ module.exports = {
 
   // GET OVERALL PERSONAL OVERVIEW
   getPersonalOverview: async (req, res, next) => {
-    const userId = req.user._id
+    const userId = req.user.id
     const personalOverview = {}
     try {
-      personalOverview.projects = await Projects.find({ createdBy: userId }).estimatedDocumentCount()
-      personalOverview.events = await Events.find({ createdBy: userId }).estimatedDocumentCount()
+      personalOverview.projects = await Projects.find({ createdBy: userId })
+      personalOverview.events = await Events.find({ createdBy: userId })
+      personalOverview.projects = personalOverview.projects.length
+      personalOverview.events = personalOverview.events.length
       return res.status(HttpStatus.OK).json({ personalOverview })
     } catch (error) {
       HANDLER.handleError(req, error)

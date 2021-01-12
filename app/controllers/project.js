@@ -69,8 +69,7 @@ module.exports = {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such project exits!' })
       }
       // permission check for admin and creator || is edit allowed
-      if (! await 
-permission.check(req, res, project.createdBy) || (!settingsHelper.canEdit())) {
+      if (! await permission.check(req, res, project.createdBy) || (!settingsHelper.canEdit())) {
         return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'Bad Update Request!' })
       }
       // if allowed check edit limit
@@ -98,7 +97,7 @@ permission.check(req, res, project.createdBy) || (!settingsHelper.canEdit())) {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'No such project exits!' })
       }
       // check if admin or user who created this project
-      if (permission.check(req, res, project.createdBy)) {
+      if (! await permission.check(req, res, project.createdBy)) {
         await Project.findByIdAndRemove(id)
         return res.status(HttpStatus.OK).json({ msg: 'Project deleted!' })
       }
