@@ -25,7 +25,7 @@ module.exports = {
   createUser: async (req, res, next) => {
     try {
       const { password } = req.body
-      if(!password) throw new Error('Password is required!')
+      if(!password) throw new Error("Password is required")
 
       const user = new User(req.body)
       const isRegisteredUserExists = await User.findOne({ firstRegister: true })
@@ -302,6 +302,8 @@ module.exports = {
       if (!user) {
         return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user exists!' })
       }
+      if (user.followings.indexOf(id) >= 0)
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You are already following the user' })
       user.followings.unshift(id)
       await user.save()
       next()
