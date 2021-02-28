@@ -171,17 +171,14 @@ module.exports = {
   updatePassword: async (req, res, next) => {
     const { password, id } = req.body
     const { token } = req.params
-    let preChange = true;
     try {
       const user = await User.findById(id)
       const decodedToken = jwt.verify(token, user.password, (err, token) => {
         if (err){
-          preChange = false;
-          return res.status(HttpStatus.BAD_REQUEST).json({ error: 'Token Expired' })
+          throw new Error("Token is expired")
         }
         return token
       })
-      console.log(decodedToken)
       if (Date.now() <= decodedToken.expiry) {
         if (!user) {
           return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user' })
@@ -202,8 +199,7 @@ module.exports = {
         res.status(HttpStatus.BAD_REQUEST).json({ error: 'Token expired' })
       }
     } catch (error) {
-      console.log(error)
-      if (preChange)
+        console.error(error)
         res.status(HttpStatus.BAD_REQUEST).json({ error: "Internal Server Error" })
     }
   },
