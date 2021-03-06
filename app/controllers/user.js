@@ -160,7 +160,7 @@ module.exports = {
       if (!user) {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'User not found!' })
       }
-      const token = jwt.sign({ _id: user._id, expiry: Date.now() + 10800000 }, process.env.JWT_SECRET)
+      const token = jwt.sign({ _id: user._id, expiry: Date.now() + 10800000 }, user.password)
       await user.save()
       return res.status(HttpStatus.OK).json({ success: true, token })
     } catch (error) {
@@ -172,10 +172,14 @@ module.exports = {
     const { password, id } = req.body
     const { token } = req.params
     try {
-      const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
-
+      const user = await User.findById(id)
+      const decodedToken = jwt.verify(token, user.password, (err, token) => {
+        if (err){
+          throw new Error("Token is expired")
+        }
+        return token
+      })
       if (Date.now() <= decodedToken.expiry) {
-        const user = await User.findById(id)
         if (!user) {
           return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user' })
         }
@@ -191,10 +195,12 @@ module.exports = {
         await notificationHelper.addToNotificationForUser(id, res, notification, next)
         return res.status(HttpStatus.OK).json({ updated: true })
       } else {
+
         res.status(HttpStatus.BAD_REQUEST).json({ error: 'Token expired' })
       }
     } catch (error) {
-      res.status(HttpStatus.BAD_REQUEST).json({ error })
+        console.error(error)
+        res.status(HttpStatus.BAD_REQUEST).json({ error: "Internal Server Error" })
     }
   },
 
