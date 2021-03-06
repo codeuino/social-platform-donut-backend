@@ -63,7 +63,7 @@ module.exports = {
     try {
       const org = await Organization.findById(id)
       // check for permission (ONLY ADMINS CAN UPDATE)
-      if (!permission.check(req, res)) {
+      if (! await permission.check(req, res)) {
         return res
           .status(HttpStatus.BAD_REQUEST)
           .json({ msg: "You don't have the permission" })
@@ -122,7 +122,7 @@ module.exports = {
           .json({ error: 'No such organization exists!' })
       }
       // check for permission
-      if (!permission.check(req, res)) {
+      if (! await permission.check(req, res)) {
         return res
           .status(HttpStatus.BAD_REQUEST)
           .json({ msg: "You don't have the permission!" })
