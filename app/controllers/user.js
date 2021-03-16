@@ -25,7 +25,7 @@ module.exports = {
   createUser: async (req, res, next) => {
     try {
       const { password } = req.body
-      if(!password) throw new Error('Password is required!')
+      if(!password) throw new Error("Password is required")
 
       const user = new User(req.body)
       const isRegisteredUserExists = await User.findOne({ firstRegister: true })
@@ -160,7 +160,7 @@ module.exports = {
       if (!user) {
         return res.status(HttpStatus.NOT_FOUND).json({ msg: 'User not found!' })
       }
-      const token = jwt.sign({ _id: user._id, expiry: Date.now() + 10800000 }, process.env.JWT_SECRET)
+      const token = jwt.sign({ _id: user._id, expiry: Date.now() + 10800000 }, user.password)
       await user.save()
       return res.status(HttpStatus.OK).json({ success: true, token })
     } catch (error) {
@@ -172,10 +172,14 @@ module.exports = {
     const { password, id } = req.body
     const { token } = req.params
     try {
-      const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
-
+      const user = await User.findById(id)
+      const decodedToken = jwt.verify(token, user.password, (err, token) => {
+        if (err){
+          throw new Error("Token is expired")
+        }
+        return token
+      })
       if (Date.now() <= decodedToken.expiry) {
-        const user = await User.findById(id)
         if (!user) {
           return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user' })
         }
@@ -191,10 +195,12 @@ module.exports = {
         await notificationHelper.addToNotificationForUser(id, res, notification, next)
         return res.status(HttpStatus.OK).json({ updated: true })
       } else {
+
         res.status(HttpStatus.BAD_REQUEST).json({ error: 'Token expired' })
       }
     } catch (error) {
-      res.status(HttpStatus.BAD_REQUEST).json({ error })
+        console.error(error)
+        res.status(HttpStatus.BAD_REQUEST).json({ error: "Internal Server Error" })
     }
   },
 
@@ -302,6 +308,8 @@ module.exports = {
       if (!user) {
         return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'No such user exists!' })
       }
+      if (user.followings.indexOf(id) >= 0)
+        return res.status(HttpStatus.BAD_REQUEST).json({ msg: 'You are already following the user' })
       user.followings.unshift(id)
       await user.save()
       next()
@@ -453,11 +461,13 @@ module.exports = {
 
   // GET OVERALL PERSONAL OVERVIEW
   getPersonalOverview: async (req, res, next) => {
-    const userId = req.user._id
+    const userId = req.user.id
     const personalOverview = {}
     try {
-      personalOverview.projects = await Projects.find({ createdBy: userId }).estimatedDocumentCount()
-      personalOverview.events = await Events.find({ createdBy: userId }).estimatedDocumentCount()
+      let projects = await Projects.find({ createdBy: userId })
+      let events = await Events.find({ createdBy: userId })
+      personalOverview.projects = projects.length;
+      personalOverview.events = events.length;
       return res.status(HttpStatus.OK).json({ personalOverview })
     } catch (error) {
       HANDLER.handleError(req, error)

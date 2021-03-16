@@ -27,7 +27,7 @@ const orgSchema = new Schema({
         if (validator.isEmpty(shortDescription)) {
           throw new Error('Short description is required!')
         }
-        if (!validator.isLength(shortDescription, { min: 10 })) {
+        if (!validator.isLength(shortDescription, { min: 5 })) {
           throw new Error('Short description should be min 5 characters long!')
         }
       }
