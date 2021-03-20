@@ -20,7 +20,6 @@ router.post(
 // GET ALL POSTS
 router.get(
   '/all_posts',
-  isUnderMaintenance,
   auth,
   postController.getAllPost
 )
@@ -46,7 +45,6 @@ router.delete(
 // GET POST BY ID
 router.get(
   '/:id',
-  isUnderMaintenance,
   auth,
   postController.getPostById
 )
@@ -77,7 +75,6 @@ router.get(
 // PIN THE POST
 router.patch(
   '/pin/:id/',
-  isUnderMaintenance,
   auth,
   postController.pinPost
 )
@@ -85,7 +82,6 @@ router.patch(
 // GET ALL PINNED POSTS
 router.get(
   '/all/pinned/',
-  isUnderMaintenance,
   auth,
   postController.getPinned
 )

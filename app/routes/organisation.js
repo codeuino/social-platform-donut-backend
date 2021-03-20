@@ -18,7 +18,6 @@ router.post(
 // GET ORG DETAILS BY ID
 router.get(
   '/:id',
-  isUnderMaintenance,
   auth,
   OrgController.getOrgDetailsById
 )
@@ -89,7 +88,6 @@ router.patch(
 // GET ORG LOGIN OPTIONS (CALLED JUST BEFORE LOGIN)
 router.get(
   '/login/options',
-  isUnderMaintenance,
   OrgController.getOrgLoginOptions
 )
 

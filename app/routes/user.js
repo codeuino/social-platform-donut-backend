@@ -18,7 +18,6 @@ router.post(
 // load user (endpoint used to call when someone opens app)
 router.get(
   '/load_user',
-  isUnderMaintenance,
   auth,
   userController.loadUser
 )
@@ -26,7 +25,6 @@ router.get(
 // get user profile
 router.get(
   '/:id',
-  isUnderMaintenance,
   auth,
   userController.userProfile
 )
@@ -56,7 +54,6 @@ router.patch(
 // get invite link (for sender)
 router.get(
   '/link/invite',
-  isUnderMaintenance,
   auth,
   userController.getInviteLink
 )
@@ -64,14 +61,12 @@ router.get(
 // process invite link (for receiver)
 router.get(
   '/invite/:token',
-  isUnderMaintenance,
   userController.processInvite
 )
 
 // activate account
 router.get(
   '/activate/:token',
-  isUnderMaintenance,
   userController.activateAccount
 )
 
@@ -127,8 +122,7 @@ router.patch(
 // GET PERSONAL OVERVIEW
 router.get(
   '/me/overview',
-  isUnderMaintenance,
-  auth,
+    auth,
   userController.getPersonalOverview
 )
 
@@ -151,7 +145,6 @@ router.patch(
 // Redirect user to Google Accounts
 router.get(
   '/auth/google',
-  isUnderMaintenance,
   isOAuthAllowed,
   OAuthMiddlewares.passportGoogleAuthenticate
 )
@@ -159,7 +152,6 @@ router.get(
 // Receive Callback from Google Accounts after successful Auth
 router.get(
   '/auth/google/callback',
-  isUnderMaintenance,
   isOAuthAllowed,
   OAuthMiddlewares.passportGoogleAuthenticateCallback
 )
@@ -167,14 +159,12 @@ router.get(
 // Redirect user to GitHub Accounts
 router.get(
   '/auth/github',
-  isUnderMaintenance,
   isOAuthAllowed,
   OAuthMiddlewares.passportGitHubAuthenticate
 )
 // Receive Callback from GitHub Accounts after successful Auth
 router.get(
   '/auth/github/callback',
-  isUnderMaintenance,
   isOAuthAllowed,
   OAuthMiddlewares.passportGitHubAuthenticateCallback
 )

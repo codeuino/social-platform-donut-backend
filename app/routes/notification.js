@@ -7,7 +7,6 @@ const notificationController = require('../controllers/notification')
 // GET NOTIFICATIONS FOR ALL
 router.get(
   '/org/all',
-  isUnderMaintenance,
   auth,
   notificationController.getOrgNotifications
 )
@@ -15,7 +14,6 @@ router.get(
 // GET NOTIFICATIONS FOR LOGGED IN USER
 router.get(
   '/user/all',
-  isUnderMaintenance,
   auth,
   notificationController.getUserNotification
 )
@@ -23,7 +21,6 @@ router.get(
 // GET NOTICATIONS FOR PROPOSALS
 router.get(
   '/proposal/all',
-  isUnderMaintenance,
   auth,
   notificationController.getProposalNotifications
 )
@@ -31,7 +28,6 @@ router.get(
 // GET TICKET NOTIFICATIONS FOR LOGGED IN USER
 router.get(
   '/ticket/user/all',
-  isUnderMaintenance,
   auth,
   notificationController.getTicketNotifications
 )

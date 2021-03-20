@@ -31,7 +31,6 @@ router.patch(
 // GET COMMENT BY POST ID
 router.get(
   '/:id',
-  isUnderMaintenance,
   auth,
   commentController.getCommentByPost
 )

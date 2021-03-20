@@ -7,7 +7,6 @@ const isUnderMaintenance = require('../middleware/maintenance')
 // get all the events
 router.get(
   '/all',
-  isUnderMaintenance,
   auth,
   eventController.GetAllEvent
 )
@@ -15,7 +14,6 @@ router.get(
 // get all the events
 router.get(
   '/upcoming',
-  isUnderMaintenance,
   auth,
   eventController.UpComingEvents
 )
@@ -30,7 +28,6 @@ router.post(
 // get event by id
 router.get(
   '/:id',
-  isUnderMaintenance,
   auth,
   eventController.GetEventById
 )
@@ -59,7 +56,6 @@ router.delete(
 // GET ALL EVENT POSTED BY A USER
 router.get(
   '/:id/all',
-  isUnderMaintenance,
   auth,
   eventController.getAllEventByUser
 )

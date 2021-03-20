@@ -15,7 +15,6 @@ router.post(
 // GET ALL PROJECTS
 router.get(
   '/',
-  isUnderMaintenance,
   auth,
   projectController.getAllProjects
 )
@@ -23,7 +22,6 @@ router.get(
 // GET PROJECT BY ID
 router.get(
   '/:id',
-  isUnderMaintenance,
   auth,
   projectController.getProjectById
 )
@@ -47,7 +45,6 @@ router.delete(
 // GET PROJECTS CREATED BY A USER
 router.get(
   '/:id/all',
-  isUnderMaintenance,
   auth,
   projectController.projectCreatedByUser
 )

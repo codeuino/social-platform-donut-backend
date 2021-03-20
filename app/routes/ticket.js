@@ -15,7 +15,6 @@ router.post(
 // GET ALL TICKETS (Brief)
 router.get(
   '/',
-  isUnderMaintenance,
   auth,
   ticketController.getTicket
 )
@@ -23,7 +22,6 @@ router.get(
 // GET TICKET (ALL DETAILS)
 router.get(
   '/:id',
-  isUnderMaintenance,
   auth,
   ticketController.getTicketFull
 )
@@ -74,7 +72,6 @@ router.post(
 // GET TICKET COMMENTS BY TICKET ID
 router.get(
   '/:id/comments',
-  isUnderMaintenance,
   auth,
   ticketController.getComments
 )
@@ -113,7 +110,6 @@ router.post(
 // GET ALL TICKET MODERATORS
 router.get(
   '/moderator',
-  isUnderMaintenance,
   auth,
   ticketController.getModerators
 )

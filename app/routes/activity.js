@@ -8,7 +8,6 @@ const auth = require('../middleware/auth')
 // get a User activity
 router.get(
   '/user/:id',
-  isUnderMaintenance,
   auth,
   activityController.getActivity
 )
