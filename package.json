@@ -12,7 +12,7 @@
   "dependencies": {
     "@sendgrid/mail": "^7.0.0",
     "app-root-path": "^3.0.0",
-    "aws-sdk": "^2.691.0",
+    "aws-sdk": "^2.814.0",
     "base-64": "^0.1.0",
     "bcrypt": "^3.0.6",
     "bluebird": "^3.7.2",
